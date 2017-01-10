@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>F# and Dynamic Time Warping | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Today I look at using F# with the NDtw package.  This is so I can play with some dynamic time warping.  In case you’re not familar with DTW, the TLDR version is that it is a method to compare timeseri">
+<meta property="og:type" content="article">
+<meta property="og:title" content="F# and Dynamic Time Warping">
+<meta property="og:url" content="http://codesuji.com/2016/12/13/F-and-Dynamic-Time-Warping/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Today I look at using F# with the NDtw package.  This is so I can play with some dynamic time warping.  In case you’re not familar with DTW, the TLDR version is that it is a method to compare timeseri">
+<meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_7.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_4.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_2.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_9.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_8.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_0.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_6.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_3.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_5.png">
+<meta property="og:updated_time" content="2017-01-07T20:15:56.010Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="F# and Dynamic Time Warping">
+<meta name="twitter:description" content="Today I look at using F# with the NDtw package.  This is so I can play with some dynamic time warping.  In case you’re not familar with DTW, the TLDR version is that it is a method to compare timeseri">
+<meta name="twitter:image" content="http://codesuji.com/images/dtw1/chart_1_7.png">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-and-Dynamic-Time-Warping" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/12/13/F-and-Dynamic-Time-Warping/" class="article-date">
+  <time datetime="2016-12-14T02:07:21.000Z" itemprop="datePublished">2016-12-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      F# and Dynamic Time Warping
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Today I look at using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> with the <a href="https://github.com/doblak/ndtw" target="_blank" rel="external">NDtw</a> package.  This is so I can play with some <a href="https://en.wikipedia.org/wiki/Dynamic_time_warping" target="_blank" rel="external">dynamic time warping</a>.  In case you’re not familar with DTW, the TLDR version is that it is a method to compare timeseries data that can differ in frequency.  This allows for a more nuanced data comparison that can capture shifted, compressed, and extended patterns.  It’s a fun little algorithm to use and worth reading more about.</p>
+<p>Onto the data. I’ve pulled an <a href="https://www.kaggle.com/wanghaohan/eeg-brain-wave-for-confusion" target="_blank" rel="external">EEG</a> dataset from Kaggle.  I’ve also included a copy <a href="/data/EEG_data.zip">here</a> for posterity sake.  It contains EEG data of subjects watching short videos.  The goal of the dataset is mental state classification.  I won’t be doing that here, but I can see using DTW as a method to facilitate classification based on channel smiliarties.</p>
+<p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget FSharp.Charting</div><div class="line">nuget FSharp.Data</div><div class="line">nuget NDtw</div></pre></td></tr></table></figure>
+<p>Here is my standard boilerplate code, along with the VideoId that I will be using for testing.  As a note, all of the data columns are floats, including the subject and video ids.  If I was doing something more serious I’d be inclined to convert these, but do do something quick I’ll deal with it.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">#r <span class="string">"../packages/FSharp.Charting/lib/net40/FSharp.Charting.dll"</span></div><div class="line">#r <span class="string">"../packages/FSharp.Data/lib/net40/FSharp.Data.dll"</span></div><div class="line">#r <span class="string">"../packages/ndtw/lib/net40/ndtw.dll"</span></div><div class="line">#load <span class="string">"../packages/FSharp.Charting/FSharp.Charting.fsx"</span></div><div class="line"></div><div class="line"><span class="keyword">open</span> System</div><div class="line"><span class="keyword">open</span> System.IO</div><div class="line"><span class="keyword">open</span> FSharp.Charting</div><div class="line"><span class="keyword">open</span> FSharp.Data</div><div class="line"><span class="keyword">open</span> NDtw</div><div class="line"></div><div class="line"><span class="comment">// Limit to only video 6</span></div><div class="line"><span class="keyword">let</span> videoIdFilter = <span class="number">6.</span> </div></pre></td></tr></table></figure>
+<p>Load data using a type provider.  Since the file doesn’t have headers, I’ll use Schema to define the column names.  As a note, the <code>[&lt;Literal&gt;]</code> attribute on eegDataFile is so I can use the string in the CsvProvider.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="meta">[&lt;Literal&gt;]</span></div><div class="line"><span class="keyword">let</span> eegDataFile = <span class="string">"..\\data\\eeg\\eeg_data.csv"</span></div><div class="line"></div><div class="line"><span class="class"><span class="keyword">type</span> <span class="title">EegData</span> </span>= CsvProvider&lt;eegDataFile, HasHeaders = <span class="keyword">false</span>, Schema = <span class="string">"SubjectID,VideoID,Attention,Mediation,RawEEG,Delta,Theta,Alpha1,Alpha2,Beta1,Beta2,Gamma1,Gamma2,PredefinedLabel,UserDefinedLabel"</span>&gt;</div><div class="line"></div><div class="line"><span class="keyword">let</span> fileData = EegData.Load eegDataFile</div><div class="line"><span class="keyword">let</span> allData = fileData.Rows </div><div class="line"></div><div class="line"><span class="keyword">let</span> subjectIds = fileData.Rows |&gt; Seq.map (<span class="keyword">fun</span> x -&gt; x.SubjectID) |&gt; Seq.distinct </div></pre></td></tr></table></figure>
+<p>I now create a function to extract subject and video specific rows from the dataset.  I also reduce the dataset to a single value for the signal.  I’ve decided to use the Theta channel.  This is arbitrary, but is primarily due to this quote from the dataset’s Kaggle page “Past research has indicated that Theta signal is correlated with confusion level.”  This leads me to believe it might be the most likely channel to find interesting comparisons.  So the resulting charts are easier to read, I limit the dataset to the first 100 rows of data per subject/video combination.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Get subject &amp; video specific data, only pull the first 100 records of the dataset</span></div><div class="line"><span class="keyword">let</span> dataset subjectId videoId = </div><div class="line">    allData</div><div class="line">    |&gt; Seq.filter(<span class="keyword">fun</span> x -&gt; x.SubjectID = subjectId &amp;&amp; x.VideoID = videoId)</div><div class="line">    |&gt; Seq.map (<span class="keyword">fun</span> x -&gt; x.Theta) </div><div class="line">    |&gt; Seq.take <span class="number">100</span></div><div class="line">    |&gt; Seq.toList</div></pre></td></tr></table></figure>
+<p>Here is the dynamic time warping distance calculation function.  The call is straight foward.  After all this setup its almost anticlimatic. It expects 2 parameters, both being an array of values. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Get the distance between two signals</span></div><div class="line"><span class="keyword">let</span> distance (a:float seq) (b:float seq) = </div><div class="line">    <span class="keyword">let</span> dtw = <span class="keyword">new</span> Dtw(</div><div class="line">        a |&gt; Seq.toArray,</div><div class="line">        b |&gt; Seq.toArray)</div><div class="line">    dtw.GetCost()</div></pre></td></tr></table></figure>
+<p>The NDtw library allows for a more complicated DTW call if so desired.  I’ve made an alternate distance function using the more complex version.  As an example, it allows for different distance calculations: Euclidean, Manhattan, Maximum, SquaredEuclidean. It also allows for limitations how much the path diverges from the standard path.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Get the distance between two signals (using more advanced dtw call)</span></div><div class="line"><span class="keyword">let</span> distanceAdvanced (a:float seq) (b:float seq) = </div><div class="line">    <span class="keyword">let</span> dtw = <span class="keyword">new</span> Dtw(</div><div class="line">        a |&gt; Seq.toArray,</div><div class="line">        b |&gt; Seq.toArray,</div><div class="line">        DistanceMeasure.Euclidean,</div><div class="line">        <span class="keyword">true</span>, <span class="comment">// boundaryConstraintStart </span></div><div class="line">        <span class="keyword">true</span>, <span class="comment">// boundaryConstraintEnd</span></div><div class="line">        Nullable&lt;int&gt;(<span class="number">2</span>), <span class="comment">// slopeStepSizeDiagonal</span></div><div class="line">        Nullable&lt;int&gt;(<span class="number">2</span>), <span class="comment">// slopStepSizeAside</span></div><div class="line">        Nullable&lt;int&gt;(<span class="number">2</span>)) <span class="comment">// sakoeChibaMaxShift</span></div><div class="line">    dtw.GetCost()</div></pre></td></tr></table></figure>
+<p>As a short aside, the library offers a couple other bits of useful functionality that I am not using right now, but worth mentioning.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Example comparison of 2 small datasets</span></div><div class="line"><span class="keyword">let</span> exampleDtw = <span class="keyword">new</span> Dtw(</div><div class="line">    [| <span class="number">1.</span>; <span class="number">3.</span>; <span class="number">7.</span>; <span class="number">8.</span>; <span class="number">11.</span>;  <span class="number">6.</span>; <span class="number">6.</span>; |],</div><div class="line">    [| <span class="number">3.</span>; <span class="number">6.</span>; <span class="number">3.</span>; <span class="number">7.</span>; <span class="number">13.</span>; <span class="number">12.</span>; <span class="number">7.</span>; |])</div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">// Get the coordinate path used for the best match between the datasets</span></div><div class="line">exampleDtw.GetPath()</div><div class="line"></div><div class="line"><span class="keyword">val</span> it : (int * int) [] =</div><div class="line">  [|(<span class="number">0</span>, <span class="number">0</span>); (<span class="number">1</span>, <span class="number">1</span>); (<span class="number">1</span>, <span class="number">2</span>); (<span class="number">2</span>, <span class="number">3</span>); (<span class="number">3</span>, <span class="number">3</span>); (<span class="number">4</span>, <span class="number">4</span>); (<span class="number">4</span>, <span class="number">5</span>); (<span class="number">5</span>, <span class="number">6</span>); (<span class="number">6</span>, <span class="number">6</span>)|]</div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">// Get the matrix of distance comparisons on a point by point basis</span></div><div class="line">exampleDtw.GetDistanceMatrix()</div><div class="line"></div><div class="line"><span class="keyword">val</span> it : float [] [] =</div><div class="line">  [|[|<span class="number">2.0</span>; <span class="number">5.0</span>; <span class="number">2.0</span>; <span class="number">6.0</span>; <span class="number">12.0</span>; <span class="number">11.0</span>; <span class="number">6.0</span>; <span class="number">0.0</span>|];</div><div class="line">    [|<span class="number">0.0</span>; <span class="number">3.0</span>; <span class="number">0.0</span>; <span class="number">4.0</span>; <span class="number">10.0</span>; <span class="number">9.0</span>; <span class="number">4.0</span>; <span class="number">0.0</span>|];</div><div class="line">    [|<span class="number">4.0</span>; <span class="number">1.0</span>; <span class="number">4.0</span>; <span class="number">0.0</span>; <span class="number">6.0</span>; <span class="number">5.0</span>; <span class="number">0.0</span>; <span class="number">0.0</span>|];</div><div class="line">    [|<span class="number">5.0</span>; <span class="number">2.0</span>; <span class="number">5.0</span>; <span class="number">1.0</span>; <span class="number">5.0</span>; <span class="number">4.0</span>; <span class="number">1.0</span>; <span class="number">0.0</span>|];</div><div class="line">    [|<span class="number">8.0</span>; <span class="number">5.0</span>; <span class="number">8.0</span>; <span class="number">4.0</span>; <span class="number">2.0</span>; <span class="number">1.0</span>; <span class="number">4.0</span>; <span class="number">0.0</span>|];</div><div class="line">    [|<span class="number">3.0</span>; <span class="number">0.0</span>; <span class="number">3.0</span>; <span class="number">1.0</span>; <span class="number">7.0</span>; <span class="number">6.0</span>; <span class="number">1.0</span>; <span class="number">0.0</span>|];</div><div class="line">    [|<span class="number">3.0</span>; <span class="number">0.0</span>; <span class="number">3.0</span>; <span class="number">1.0</span>; <span class="number">7.0</span>; <span class="number">6.0</span>; <span class="number">1.0</span>; <span class="number">0.0</span>|];</div><div class="line">    [|<span class="number">0.0</span>; <span class="number">0.0</span>; <span class="number">0.0</span>; <span class="number">0.0</span>; <span class="number">0.0</span>; <span class="number">0.0</span>; <span class="number">0.0</span>; <span class="number">0.0</span>|]|]</div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">// Get the matrix of cost (aka difference) between the datasets </span></div><div class="line">exampleDtw.GetCostMatrix()</div><div class="line"></div><div class="line"><span class="keyword">val</span> it : float [] [] =</div><div class="line">  [|[|<span class="number">11.0</span>; <span class="number">11.0</span>; <span class="number">8.0</span>; <span class="number">16.0</span>; <span class="number">28.0</span>; <span class="number">22.0</span>; <span class="number">17.0</span>; infinity|];</div><div class="line">    [|<span class="number">9.0</span>; <span class="number">9.0</span>; <span class="number">6.0</span>; <span class="number">10.0</span>; <span class="number">22.0</span>; <span class="number">16.0</span>; <span class="number">11.0</span>; infinity|];</div><div class="line">    [|<span class="number">15.0</span>; <span class="number">11.0</span>; <span class="number">10.0</span>; <span class="number">6.0</span>; <span class="number">13.0</span>; <span class="number">12.0</span>; <span class="number">7.0</span>; infinity|];</div><div class="line">    [|<span class="number">18.0</span>; <span class="number">13.0</span>; <span class="number">11.0</span>; <span class="number">6.0</span>; <span class="number">8.0</span>; <span class="number">7.0</span>; <span class="number">7.0</span>; infinity|];</div><div class="line">    [|<span class="number">26.0</span>; <span class="number">22.0</span>; <span class="number">17.0</span>; <span class="number">9.0</span>; <span class="number">5.0</span>; <span class="number">3.0</span>; <span class="number">6.0</span>; infinity|];</div><div class="line">    [|<span class="number">21.0</span>; <span class="number">18.0</span>; <span class="number">18.0</span>; <span class="number">15.0</span>; <span class="number">14.0</span>; <span class="number">7.0</span>; <span class="number">2.0</span>; infinity|];</div><div class="line">    [|<span class="number">21.0</span>; <span class="number">18.0</span>; <span class="number">18.0</span>; <span class="number">15.0</span>; <span class="number">14.0</span>; <span class="number">7.0</span>; <span class="number">1.0</span>; infinity|];</div><div class="line">    [|infinity; infinity; infinity; infinity; infinity; infinity; infinity; infinity|]|]</div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">// Get difference between datasets</span></div><div class="line">exampleDtw.GetCost()</div><div class="line"></div><div class="line"><span class="keyword">val</span> it : float = <span class="number">11.0</span></div></pre></td></tr></table></figure>
+<p>Back to the task at hand, I build a function to compare each subject’s signal against each other subject’s signal.  Then I get the best match I can find and store the results in subject1, subject2, and difference.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Compare each subject against every other subject</span></div><div class="line"><span class="keyword">let</span> comparisons = </div><div class="line">    subjectIds</div><div class="line">    |&gt; Seq.map (<span class="keyword">fun</span> x -&gt; </div><div class="line">        subjectIds</div><div class="line">        |&gt; Seq.filter (<span class="keyword">fun</span> y -&gt; y &lt;&gt; x)</div><div class="line">        |&gt; Seq.map (<span class="keyword">fun</span> y -&gt; </div><div class="line">            <span class="keyword">let</span> d = distance (dataset x videoIdFilter) (dataset y videoIdFilter)</div><div class="line">            (x, y, d)))</div><div class="line">    |&gt; Seq.concat</div><div class="line">    |&gt; Seq.sortBy (<span class="keyword">fun</span> (_, _, d) -&gt; d)</div><div class="line"></div><div class="line"><span class="keyword">let</span> (subject1, subject2, difference) = </div><div class="line">    comparisons</div><div class="line">    |&gt; Seq.take <span class="number">1</span></div><div class="line">    |&gt; Seq.exactlyOne</div></pre></td></tr></table></figure>
+<p>For visualization purposes, I create a comparison chart for each subject against Subject 1.  Then I save the charts to files.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">Chart.Combine([</div><div class="line">    Chart.FastLine(dataset subject1 videoIdFilter, Name=sprintf <span class="string">"Subject %1.0f"</span> subject1).WithLegend(<span class="keyword">true</span>);</div><div class="line">    Chart.FastLine(dataset subject2 videoIdFilter, Name=sprintf <span class="string">"Subject %1.0f"</span> subject2).WithLegend(<span class="keyword">true</span>)])</div><div class="line">|&gt; Chart.WithTitle(String.Format(<span class="string">"Difference: &#123;0:n1&#125;"</span>, difference))</div><div class="line">|&gt; Chart.Show</div><div class="line"></div><div class="line"><span class="comment">// Show comparison charts</span></div><div class="line">comparisons</div><div class="line"><span class="comment">// Only include matches against subject1</span></div><div class="line">|&gt; Seq.filter (<span class="keyword">fun</span> (s1, s2, d) -&gt; s1 = subject1)</div><div class="line"><span class="comment">// Exclude subject1 vs. subject1</span></div><div class="line">|&gt; Seq.filter (<span class="keyword">fun</span> (s1, s2, d) -&gt; s2 &lt;&gt; subject1)</div><div class="line"><span class="comment">// Chart each pair</span></div><div class="line">|&gt; Seq.iter (<span class="keyword">fun</span> (s1, s2, d) -&gt; </div><div class="line">    Chart.Combine([</div><div class="line">        Chart.FastLine(dataset s1 videoIdFilter, Name=sprintf <span class="string">"Subject %1.0f"</span> s1).WithLegend(<span class="keyword">true</span>);</div><div class="line">        Chart.FastLine(dataset s2 videoIdFilter, Name=sprintf <span class="string">"Subject %1.0f"</span> s2).WithLegend(<span class="keyword">true</span>)])</div><div class="line">    |&gt; Chart.WithTitle(String.Format(<span class="string">"Difference: &#123;0:n1&#125;)"</span>, d))</div><div class="line">    |&gt; Chart.WithYAxis(Min = <span class="number">0.</span>, Max = <span class="number">1000000.</span>)</div><div class="line">    |&gt; Chart.Save (Path.Combine(__SOURCE_DIRECTORY__, String.Format(<span class="string">@"..\\data\\eeg\\chart_&#123;0:n0&#125;_&#123;1:n0&#125;.png"</span>, s1, s2)))</div><div class="line">    <span class="comment">//|&gt; Chart.Show</span></div><div class="line">    )</div></pre></td></tr></table></figure>
+<p>Here are the top couple matches, in the format (subject1, subject2, distance).</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Show distances for our winner </span></div><div class="line">comparisons</div><div class="line">|&gt; Seq.filter (<span class="keyword">fun</span> (s1, _, _) -&gt; s1 = <span class="number">1.0</span>)</div><div class="line">|&gt; Seq.sortBy (<span class="keyword">fun</span> (_, _, d) -&gt; d)</div><div class="line">|&gt; Seq.iter (<span class="keyword">fun</span> (s1, s2, d) -&gt; printfn <span class="string">"%1.0f %1.0f %10.1f"</span> s1 s2 d)</div><div class="line"></div><div class="line"><span class="number">1</span> <span class="number">7</span>  <span class="number">4442366.0</span></div><div class="line"><span class="number">1</span> <span class="number">4</span>  <span class="number">5256824.0</span></div><div class="line"><span class="number">1</span> <span class="number">2</span>  <span class="number">6801045.0</span></div><div class="line"><span class="number">1</span> <span class="number">9</span>  <span class="number">9462037.0</span></div><div class="line"><span class="number">1</span> <span class="number">8</span> <span class="number">11714938.0</span></div><div class="line"><span class="number">1</span> <span class="number">0</span> <span class="number">12763188.0</span></div><div class="line">...</div></pre></td></tr></table></figure>
+<p>Here is the top signal match.</p>
+<p><img src="/images/dtw1/chart_1_7.png" alt="Best Match"></p>
+<p>Here are the other subjects compared to subject 1.</p>
+<p><img src="/images/dtw1/chart_1_4.png" alt="Comparison: Signal 1 and Signal 4"></p>
+<p><img src="/images/dtw1/chart_1_2.png" alt="Comparison: Signal 1 and Signal 2"></p>
+<p><img src="/images/dtw1/chart_1_9.png" alt="Comparison: Signal 1 and Signal 9"></p>
+<p><img src="/images/dtw1/chart_1_8.png" alt="Comparison: Signal 1 and Signal 8"></p>
+<p><img src="/images/dtw1/chart_1_0.png" alt="Comparison: Signal 1 and Signal 0"></p>
+<p><img src="/images/dtw1/chart_1_6.png" alt="Comparison: Signal 1 and Signal 6"></p>
+<p><img src="/images/dtw1/chart_1_3.png" alt="Comparison: Signal 1 and Signal 3"></p>
+<p><img src="/images/dtw1/chart_1_5.png" alt="Comparison: Signal 1 and Signal 5"></p>
+<p>There is it.  The best match it can find is between subjects 1 and 7, although 1 and 4 are a close second. This has been a fun experiment.  Until next time.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2016/12/13/F-and-Dynamic-Time-Warping/" data-id="cixqwgo5100070olis0lvqlp2" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/DTW/">DTW</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Data/">Data</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Dynamic-Time-Warping/">Dynamic Time Warping</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/EEG/">EEG</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Kaggle/">Kaggle</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Signals/">Signals</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Similarity/">Similarity</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/12/17/Dynamic-Time-Warping-an-F-Implementation/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Dynamic Time Warping, an F# Implementation
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Decision Trees with F# and Accord.NET (Part 2)</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Accord-NET/" style="font-size: 17.5px;">Accord.NET</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Classification/" style="font-size: 12.5px;">Classification</a> <a href="/tags/Computer-Vision/" style="font-size: 10px;">Computer Vision</a> <a href="/tags/DTW/" style="font-size: 12.5px;">DTW</a> <a href="/tags/Data/" style="font-size: 17.5px;">Data</a> <a href="/tags/Decision-Trees/" style="font-size: 12.5px;">Decision Trees</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.5px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Faces/" style="font-size: 10px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Images/" style="font-size: 12.5px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 10px;">Kaggle</a> <a href="/tags/Legos/" style="font-size: 12.5px;">Legos</a> <a href="/tags/Machine-Learning/" style="font-size: 15px;">Machine Learning</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Signals/" style="font-size: 12.5px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 12.5px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/12/">December 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/11/">November 2016</a></li></ul>
+    </div>
+  </div>
+
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
