@@ -5,19 +5,16 @@
   
   <title>Decision Trees with F# and Accord.NET (Part 2) | codesuji</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="This is part 2 of my attempt to use an Accord.NET Decision Tree to classify Lego set themes using F#.  Just as a reminder, the original data source is Rebrickable.  You can find Part 1 here.
-Using Pak">
+  <meta name="description" content="This is part 2 of my attempt to use an Accord.NET Decision Tree to classify Lego set themes using F#.  Just as a reminder, the original data source is Rebrickable.  You can find Part 1 here.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Decision Trees with F# and Accord.NET (Part 2)">
 <meta property="og:url" content="http://codesuji.com/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2/index.html">
 <meta property="og:site_name" content="codesuji">
-<meta property="og:description" content="This is part 2 of my attempt to use an Accord.NET Decision Tree to classify Lego set themes using F#.  Just as a reminder, the original data source is Rebrickable.  You can find Part 1 here.
-Using Pak">
-<meta property="og:updated_time" content="2017-01-14T12:52:23.464Z">
+<meta property="og:description" content="This is part 2 of my attempt to use an Accord.NET Decision Tree to classify Lego set themes using F#.  Just as a reminder, the original data source is Rebrickable.  You can find Part 1 here.">
+<meta property="og:updated_time" content="2017-01-14T19:46:30.263Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Decision Trees with F# and Accord.NET (Part 2)">
-<meta name="twitter:description" content="This is part 2 of my attempt to use an Accord.NET Decision Tree to classify Lego set themes using F#.  Just as a reminder, the original data source is Rebrickable.  You can find Part 1 here.
-Using Pak">
+<meta name="twitter:description" content="This is part 2 of my attempt to use an Accord.NET Decision Tree to classify Lego set themes using F#.  Just as a reminder, the original data source is Rebrickable.  You can find Part 1 here.">
   
     <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
   
@@ -102,6 +99,7 @@ ga('send', 'pageview');
     <div class="article-entry" itemprop="articleBody">
       
         <p>This is part 2 of my attempt to use an <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a> Decision Tree to classify Lego set themes using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  Just as a reminder, the original data source is <a href="http://rebrickable.com/downloads" target="_blank" rel="external">Rebrickable</a>.  You can find <a href="/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1">Part 1</a> here.</p>
+<a id="more"></a>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget Accord</div><div class="line">nuget Accord.Math</div><div class="line">nuget Accord.Statistics</div><div class="line">nuget Accord.MachineLearning</div><div class="line">nuget FSharp.Data</div></pre></td></tr></table></figure>
 <p>This is the boring setup stuff.  It also includes some utility functions.  Not specific just to the utility functions, but one of my goals for these functions is flexibility.  I can add and remove features from the extract script without impacting code here.  This dynamic aspect of function building makes testing changes easier.</p>

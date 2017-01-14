@@ -20,7 +20,7 @@
 <meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_6.png">
 <meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_3.png">
 <meta property="og:image" content="http://codesuji.com/images/dtw1/chart_1_5.png">
-<meta property="og:updated_time" content="2017-01-07T20:15:56.010Z">
+<meta property="og:updated_time" content="2017-01-14T19:47:13.533Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="F# and Dynamic Time Warping">
 <meta name="twitter:description" content="Today I look at using F# with the NDtw package.  This is so I can play with some dynamic time warping.  In case you’re not familar with DTW, the TLDR version is that it is a method to compare timeseri">
@@ -109,6 +109,7 @@ ga('send', 'pageview');
     <div class="article-entry" itemprop="articleBody">
       
         <p>Today I look at using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> with the <a href="https://github.com/doblak/ndtw" target="_blank" rel="external">NDtw</a> package.  This is so I can play with some <a href="https://en.wikipedia.org/wiki/Dynamic_time_warping" target="_blank" rel="external">dynamic time warping</a>.  In case you’re not familar with DTW, the TLDR version is that it is a method to compare timeseries data that can differ in frequency.  This allows for a more nuanced data comparison that can capture shifted, compressed, and extended patterns.  It’s a fun little algorithm to use and worth reading more about.</p>
+<a id="more"></a>
 <p>Onto the data. I’ve pulled an <a href="https://www.kaggle.com/wanghaohan/eeg-brain-wave-for-confusion" target="_blank" rel="external">EEG</a> dataset from Kaggle.  I’ve also included a copy <a href="/data/EEG_data.zip">here</a> for posterity sake.  It contains EEG data of subjects watching short videos.  The goal of the dataset is mental state classification.  I won’t be doing that here, but I can see using DTW as a method to facilitate classification based on channel smiliarties.</p>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget FSharp.Charting</div><div class="line">nuget FSharp.Data</div><div class="line">nuget NDtw</div></pre></td></tr></table></figure>

@@ -11,7 +11,7 @@
 <meta property="og:url" content="http://codesuji.com/2016/12/17/Dynamic-Time-Warping-an-F-Implementation/index.html">
 <meta property="og:site_name" content="codesuji">
 <meta property="og:description" content="My recent post about Dynamic Time Warping used an external library.  It inspired me to implement the algorithm in F#.  This is mostly just to see it in F#.  My last implementation was in Racket, and I">
-<meta property="og:updated_time" content="2017-01-04T11:13:23.306Z">
+<meta property="og:updated_time" content="2017-01-14T19:46:40.076Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Dynamic Time Warping, an F# Implementation">
 <meta name="twitter:description" content="My recent post about Dynamic Time Warping used an external library.  It inspired me to implement the algorithm in F#.  This is mostly just to see it in F#.  My last implementation was in Racket, and I">
@@ -99,6 +99,7 @@ ga('send', 'pageview');
     <div class="article-entry" itemprop="articleBody">
       
         <p>My recent post about <a href="/2016/12/13/F-and-Dynamic-Time-Warping/">Dynamic Time Warping</a> used an external library.  It inspired me to implement the algorithm in <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  This is mostly just to see it in F#.  My last implementation was in <a href="http://racket-lang.org/" target="_blank" rel="external">Racket</a>, and I’m interested in the different language implementations. I use a pretty basic <a href="https://en.wikipedia.org/wiki/Dynamic_time_warping#Implementation" target="_blank" rel="external">Algorithm</a>, nothing fancy. As part of this process I’ll be doing comparisons between <a href="https://github.com/doblak/ndtw" target="_blank" rel="external">NDtw</a> and my code.  To be upfront, its not a perfect comparison.  NDtw has additional options and tracking that will reduce it’s max performance capabilities.  But for hacking around, the implementations will be close enough for alittle fun.  For anyone interested, unless otherwise specified, all of my results will be from the REPL in <a href="https://code.visualstudio.com/" target="_blank" rel="external">VS Code</a> + <a href="http://ionide.io/" target="_blank" rel="external">Ionide</a> using <a href="http://www.mono-project.com/" target="_blank" rel="external">Mono</a> version 4.6.2.</p>
+<a id="more"></a>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget FSharp.Data</div><div class="line">nuget NDtw</div></pre></td></tr></table></figure>
 <p>Here is the basic setup stuff.  </p>

@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://codesuji.com/"/>
-  <updated>2017-01-14T15:49:22.619Z</updated>
+  <updated>2017-01-14T19:47:36.275Z</updated>
   <id>http://codesuji.com/</id>
   
   <author>
@@ -20,9 +20,10 @@
     <link href="http://codesuji.com/2017/01/12/Linear-Regression-and-F/"/>
     <id>http://codesuji.com/2017/01/12/Linear-Regression-and-F/</id>
     <published>2017-01-13T02:39:24.000Z</published>
-    <updated>2017-01-14T15:49:22.619Z</updated>
+    <updated>2017-01-14T19:47:36.275Z</updated>
     
     <content type="html"><![CDATA[<p>Today I look into performing linear regression using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  The implementations of interest will be the <a href="https://numerics.mathdotnet.com/" target="_blank" rel="external">MathNet</a> and <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a> libraries.  This isn’t a math lesson, my presumption is you know how and why you’d want to use linear regression.  My goal is to provide a simple explanation of how to leverage some existing F# accessible libraries.</p>
+<a id="more"></a>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget Accord</div><div class="line">nuget Accord.Math</div><div class="line">nuget Accord.Statistics</div><div class="line">nuget Accord.MachineLearning</div><div class="line">nuget FSharp.Charting</div><div class="line">nuget MathNet.Numerics</div><div class="line">nuget MathNet.Numerics.FSharp</div></pre></td></tr></table></figure>
 <p>Here is the library loading. </p>
@@ -54,7 +55,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;Today I look into performing linear regression using &lt;a href=&quot;http://fsharp.org/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;F#&lt;/a&gt;.  The implementat
+      &lt;p&gt;Today I look into performing linear regression using &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt;.  The implementations of interest will be the &lt;a href=&quot;https://numerics.mathdotnet.com/&quot;&gt;MathNet&lt;/a&gt; and &lt;a href=&quot;http://accord-framework.net/&quot;&gt;Accord.NET&lt;/a&gt; libraries.  This isn’t a math lesson, my presumption is you know how and why you’d want to use linear regression.  My goal is to provide a simple explanation of how to leverage some existing F# accessible libraries.&lt;/p&gt;
     
     </summary>
     
@@ -105,9 +106,10 @@
     <link href="http://codesuji.com/2016/12/23/F-Morse-Coder/"/>
     <id>http://codesuji.com/2016/12/23/F-Morse-Coder/</id>
     <published>2016-12-24T01:49:34.000Z</published>
-    <updated>2017-01-04T11:28:18.261Z</updated>
+    <updated>2017-01-14T19:47:00.908Z</updated>
     
     <content type="html"><![CDATA[<h2 id="In-other-words-–-–-…-…-–"><a href="#In-other-words-–-–-…-…-–" class="headerlink" title="In other words: -.– .- -.– / ..-. / … …. .- .-. .–."></a>In other words: -.– .- -.– / ..-. / … …. .- .-. .–.</h2><p>As I was explaining <a href="https://en.wikipedia.org/wiki/Morse_code" target="_blank" rel="external">Morse Code</a> to a young mind, I started thinking.  It is fine to explain the encoding and uses, but experiencing the audial component makes the lessons stick better.  Enter <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  Yes, I know I could use any of a hundred phone apps or websites that produce sound, but what’s the fun in that?  For me, this is the perfect opportunity to hack out a quick text to morse code translator.  </p>
+<a id="more"></a>
 <p>Getting started, I setup a <code>Map</code> as the codebook for letter/number to morse code translation.  It’s not meant to be comprehensive, but enough to play with.  Then I code in some constants and helpers to make my life easier later. </p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">open</span> System</div><div class="line"><span class="keyword">open</span> System.IO</div><div class="line"></div><div class="line"><span class="keyword">let</span> codebook = </div><div class="line">    Map [ </div><div class="line">        (' ', <span class="string">" "</span>); </div><div class="line">        (<span class="symbol">'a</span>', <span class="string">".-"</span>);</div><div class="line">        (<span class="symbol">'b</span>', <span class="string">"-..."</span>);</div><div class="line">        (<span class="symbol">'c</span>', <span class="string">"-.-."</span>);</div><div class="line">        (<span class="symbol">'d</span>', <span class="string">"-.."</span>);</div><div class="line">        (<span class="symbol">'e</span>', <span class="string">"."</span>);</div><div class="line">        (<span class="symbol">'f</span>', <span class="string">"..-."</span>);</div><div class="line">        (<span class="symbol">'g</span>', <span class="string">"--."</span>);</div><div class="line">        (<span class="symbol">'h</span>', <span class="string">"...."</span>);</div><div class="line">        (<span class="symbol">'i</span>', <span class="string">".."</span>);</div><div class="line">        (<span class="symbol">'j</span>', <span class="string">".---"</span>);</div><div class="line">        (<span class="symbol">'k</span>', <span class="string">"-.-"</span>);</div><div class="line">        (<span class="symbol">'l</span>', <span class="string">".-.."</span>);</div><div class="line">        (<span class="symbol">'m</span>', <span class="string">"--"</span>);</div><div class="line">        (<span class="symbol">'n</span>', <span class="string">"-."</span>);</div><div class="line">        (<span class="symbol">'o</span>', <span class="string">"---"</span>);</div><div class="line">        (<span class="symbol">'p</span>', <span class="string">".--."</span>);</div><div class="line">        (<span class="symbol">'q</span>', <span class="string">"--.-"</span>);</div><div class="line">        (<span class="symbol">'r</span>', <span class="string">".-."</span>);</div><div class="line">        (<span class="symbol">'s</span>', <span class="string">"..."</span>);</div><div class="line">        (<span class="symbol">'t</span>', <span class="string">"-"</span>);</div><div class="line">        (<span class="symbol">'u</span>', <span class="string">"..-"</span>);</div><div class="line">        (<span class="symbol">'v</span>', <span class="string">"...-"</span>);</div><div class="line">        (<span class="symbol">'w</span>', <span class="string">".--"</span>);</div><div class="line">        (<span class="symbol">'x</span>', <span class="string">"-..-"</span>);</div><div class="line">        (<span class="symbol">'y</span>', <span class="string">"-.--"</span>);</div><div class="line">        (<span class="symbol">'z</span>', <span class="string">"--.."</span>);</div><div class="line">        ('<span class="number">1</span>',<span class="string">".----"</span>);</div><div class="line">        ('<span class="number">2</span>',<span class="string">"..---"</span>);</div><div class="line">        ('<span class="number">3</span>',<span class="string">"...--"</span>);</div><div class="line">        ('<span class="number">4</span>',<span class="string">"....-"</span>);</div><div class="line">        ('<span class="number">5</span>',<span class="string">"....."</span>);</div><div class="line">        ('<span class="number">6</span>',<span class="string">"-...."</span>);</div><div class="line">        ('<span class="number">7</span>',<span class="string">"--..."</span>);</div><div class="line">        ('<span class="number">8</span>',<span class="string">"---.."</span>);</div><div class="line">        ('<span class="number">9</span>',<span class="string">"----."</span>);</div><div class="line">        ('<span class="number">0</span>',<span class="string">"-----"</span>)]</div><div class="line"></div><div class="line"><span class="keyword">let</span> dotDuration = <span class="number">200</span></div><div class="line"><span class="keyword">let</span> dashDuration = dotDuration * <span class="number">3</span></div><div class="line"><span class="keyword">let</span> letterTrailDuration = dotDuration</div><div class="line"><span class="keyword">let</span> charTrailDuration = dotDuration * <span class="number">2</span> <span class="comment">// 3</span></div><div class="line"><span class="keyword">let</span> wordTrailDuration = dotDuration * <span class="number">6</span> <span class="comment">// 7</span></div><div class="line"><span class="keyword">let</span> frequency = <span class="number">700</span></div><div class="line"></div><div class="line"><span class="comment">// Sleep wrapper</span></div><div class="line"><span class="keyword">let</span> sleep (ms:int) = System.Threading.Thread.Sleep(ms)</div></pre></td></tr></table></figure>
 <p>This is the translation and audio portion.  The approach is basically: string -&gt; char -&gt; code -&gt; dot/dash -&gt; sound. I do lookups in the codebook with <code>TryFind</code>.  This allows me to leverage <code>Some</code> and <code>None</code>.  For illustrative purposes, the character is displayed as its going audio.  Then the character’s code is fed into the morseToSound function.  Here the code is broken apart and the dots (.) and dashes (-) are translated into audio sounds.  Luckily I can just just use <code>Console.Beep</code> for easy tone creation.  I code spaces as a word seperator and visibilty display unknown characters and patterns with a ‘!’.  </p>
@@ -121,7 +123,7 @@
     
     <summary type="html">
     
-      &lt;h2 id=&quot;In-other-words-–-–-…-…-–&quot;&gt;&lt;a href=&quot;#In-other-words-–-–-…-…-–&quot; class=&quot;headerlink&quot; title=&quot;In other words: -.– .- -.– / ..-. / … …. .- 
+      &lt;h2 id=&quot;In-other-words-–-–-…-…-–&quot;&gt;&lt;a href=&quot;#In-other-words-–-–-…-…-–&quot; class=&quot;headerlink&quot; title=&quot;In other words: -.– .- -.– / ..-. / … …. .- .-. .–.&quot;&gt;&lt;/a&gt;In other words: -.– .- -.– / ..-. / … …. .- .-. .–.&lt;/h2&gt;&lt;p&gt;As I was explaining &lt;a href=&quot;https://en.wikipedia.org/wiki/Morse_code&quot;&gt;Morse Code&lt;/a&gt; to a young mind, I started thinking.  It is fine to explain the encoding and uses, but experiencing the audial component makes the lessons stick better.  Enter &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt;.  Yes, I know I could use any of a hundred phone apps or websites that produce sound, but what’s the fun in that?  For me, this is the perfect opportunity to hack out a quick text to morse code translator.  &lt;/p&gt;
     
     </summary>
     
@@ -145,9 +147,10 @@
     <link href="http://codesuji.com/2016/12/17/Dynamic-Time-Warping-an-F-Implementation/"/>
     <id>http://codesuji.com/2016/12/17/Dynamic-Time-Warping-an-F-Implementation/</id>
     <published>2016-12-18T03:34:13.000Z</published>
-    <updated>2017-01-04T11:13:23.306Z</updated>
+    <updated>2017-01-14T19:46:40.076Z</updated>
     
     <content type="html"><![CDATA[<p>My recent post about <a href="/2016/12/13/F-and-Dynamic-Time-Warping/">Dynamic Time Warping</a> used an external library.  It inspired me to implement the algorithm in <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  This is mostly just to see it in F#.  My last implementation was in <a href="http://racket-lang.org/" target="_blank" rel="external">Racket</a>, and I’m interested in the different language implementations. I use a pretty basic <a href="https://en.wikipedia.org/wiki/Dynamic_time_warping#Implementation" target="_blank" rel="external">Algorithm</a>, nothing fancy. As part of this process I’ll be doing comparisons between <a href="https://github.com/doblak/ndtw" target="_blank" rel="external">NDtw</a> and my code.  To be upfront, its not a perfect comparison.  NDtw has additional options and tracking that will reduce it’s max performance capabilities.  But for hacking around, the implementations will be close enough for alittle fun.  For anyone interested, unless otherwise specified, all of my results will be from the REPL in <a href="https://code.visualstudio.com/" target="_blank" rel="external">VS Code</a> + <a href="http://ionide.io/" target="_blank" rel="external">Ionide</a> using <a href="http://www.mono-project.com/" target="_blank" rel="external">Mono</a> version 4.6.2.</p>
+<a id="more"></a>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget FSharp.Data</div><div class="line">nuget NDtw</div></pre></td></tr></table></figure>
 <p>Here is the basic setup stuff.  </p>
@@ -181,7 +184,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;My recent post about &lt;a href=&quot;/2016/12/13/F-and-Dynamic-Time-Warping/&quot;&gt;Dynamic Time Warping&lt;/a&gt; used an external library.  It inspired me
+      &lt;p&gt;My recent post about &lt;a href=&quot;/2016/12/13/F-and-Dynamic-Time-Warping/&quot;&gt;Dynamic Time Warping&lt;/a&gt; used an external library.  It inspired me to implement the algorithm in &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt;.  This is mostly just to see it in F#.  My last implementation was in &lt;a href=&quot;http://racket-lang.org/&quot;&gt;Racket&lt;/a&gt;, and I’m interested in the different language implementations. I use a pretty basic &lt;a href=&quot;https://en.wikipedia.org/wiki/Dynamic_time_warping#Implementation&quot;&gt;Algorithm&lt;/a&gt;, nothing fancy. As part of this process I’ll be doing comparisons between &lt;a href=&quot;https://github.com/doblak/ndtw&quot;&gt;NDtw&lt;/a&gt; and my code.  To be upfront, its not a perfect comparison.  NDtw has additional options and tracking that will reduce it’s max performance capabilities.  But for hacking around, the implementations will be close enough for alittle fun.  For anyone interested, unless otherwise specified, all of my results will be from the REPL in &lt;a href=&quot;https://code.visualstudio.com/&quot;&gt;VS Code&lt;/a&gt; + &lt;a href=&quot;http://ionide.io/&quot;&gt;Ionide&lt;/a&gt; using &lt;a href=&quot;http://www.mono-project.com/&quot;&gt;Mono&lt;/a&gt; version 4.6.2.&lt;/p&gt;
     
     </summary>
     
@@ -219,9 +222,10 @@
     <link href="http://codesuji.com/2016/12/13/F-and-Dynamic-Time-Warping/"/>
     <id>http://codesuji.com/2016/12/13/F-and-Dynamic-Time-Warping/</id>
     <published>2016-12-14T02:07:21.000Z</published>
-    <updated>2017-01-07T20:15:56.010Z</updated>
+    <updated>2017-01-14T19:47:13.533Z</updated>
     
     <content type="html"><![CDATA[<p>Today I look at using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> with the <a href="https://github.com/doblak/ndtw" target="_blank" rel="external">NDtw</a> package.  This is so I can play with some <a href="https://en.wikipedia.org/wiki/Dynamic_time_warping" target="_blank" rel="external">dynamic time warping</a>.  In case you’re not familar with DTW, the TLDR version is that it is a method to compare timeseries data that can differ in frequency.  This allows for a more nuanced data comparison that can capture shifted, compressed, and extended patterns.  It’s a fun little algorithm to use and worth reading more about.</p>
+<a id="more"></a>
 <p>Onto the data. I’ve pulled an <a href="https://www.kaggle.com/wanghaohan/eeg-brain-wave-for-confusion" target="_blank" rel="external">EEG</a> dataset from Kaggle.  I’ve also included a copy <a href="/data/EEG_data.zip">here</a> for posterity sake.  It contains EEG data of subjects watching short videos.  The goal of the dataset is mental state classification.  I won’t be doing that here, but I can see using DTW as a method to facilitate classification based on channel smiliarties.</p>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget FSharp.Charting</div><div class="line">nuget FSharp.Data</div><div class="line">nuget NDtw</div></pre></td></tr></table></figure>
@@ -259,7 +263,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;Today I look at using &lt;a href=&quot;http://fsharp.org/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;F#&lt;/a&gt; with the &lt;a href=&quot;https://github.com/doblak/ndtw
+      &lt;p&gt;Today I look at using &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt; with the &lt;a href=&quot;https://github.com/doblak/ndtw&quot;&gt;NDtw&lt;/a&gt; package.  This is so I can play with some &lt;a href=&quot;https://en.wikipedia.org/wiki/Dynamic_time_warping&quot;&gt;dynamic time warping&lt;/a&gt;.  In case you’re not familar with DTW, the TLDR version is that it is a method to compare timeseries data that can differ in frequency.  This allows for a more nuanced data comparison that can capture shifted, compressed, and extended patterns.  It’s a fun little algorithm to use and worth reading more about.&lt;/p&gt;
     
     </summary>
     
@@ -289,9 +293,10 @@
     <link href="http://codesuji.com/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2/"/>
     <id>http://codesuji.com/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2/</id>
     <published>2016-12-08T03:12:19.000Z</published>
-    <updated>2017-01-14T12:52:23.464Z</updated>
+    <updated>2017-01-14T19:46:30.263Z</updated>
     
     <content type="html"><![CDATA[<p>This is part 2 of my attempt to use an <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a> Decision Tree to classify Lego set themes using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  Just as a reminder, the original data source is <a href="http://rebrickable.com/downloads" target="_blank" rel="external">Rebrickable</a>.  You can find <a href="/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1">Part 1</a> here.</p>
+<a id="more"></a>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget Accord</div><div class="line">nuget Accord.Math</div><div class="line">nuget Accord.Statistics</div><div class="line">nuget Accord.MachineLearning</div><div class="line">nuget FSharp.Data</div></pre></td></tr></table></figure>
 <p>This is the boring setup stuff.  It also includes some utility functions.  Not specific just to the utility functions, but one of my goals for these functions is flexibility.  I can add and remove features from the extract script without impacting code here.  This dynamic aspect of function building makes testing changes easier.</p>
@@ -319,7 +324,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;This is part 2 of my attempt to use an &lt;a href=&quot;http://accord-framework.net/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Accord.NET&lt;/a&gt; Decision Tree
+      &lt;p&gt;This is part 2 of my attempt to use an &lt;a href=&quot;http://accord-framework.net/&quot;&gt;Accord.NET&lt;/a&gt; Decision Tree to classify Lego set themes using &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt;.  Just as a reminder, the original data source is &lt;a href=&quot;http://rebrickable.com/downloads&quot;&gt;Rebrickable&lt;/a&gt;.  You can find &lt;a href=&quot;/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1&quot;&gt;Part 1&lt;/a&gt; here.&lt;/p&gt;
     
     </summary>
     
@@ -349,10 +354,11 @@
     <link href="http://codesuji.com/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1/"/>
     <id>http://codesuji.com/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1/</id>
     <published>2016-12-06T02:13:22.000Z</published>
-    <updated>2016-12-14T02:14:14.280Z</updated>
+    <updated>2017-01-14T19:46:17.309Z</updated>
     
     <content type="html"><![CDATA[<p>It is time for an exploration into using a Decision Tree to classify Lego set themes using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> and <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a>.  </p>
 <p>First things first, the data. <a href="http://rebrickable.com/downloads" target="_blank" rel="external">Rebrickable</a> has downloadable datasets for Lego sets and pieces.  I’ll use the <code>sets.csv</code> file as the primary dataset driver, but will grab information from <code>sets_pieces.csv</code>, <code>pieces.csv</code>, and <code>colors.csv</code> for feature creation.  The files are not in an format appropriate for a decision tree, so some transformations will need to happen first.  I don’t want the post to get too long, so this project will be broken into two components.  Part 1 will be building the feature file and getting the data into the desired comsumable format, <a href="/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2">Part 2</a> will actually use the file to get to the end goal.</p>
+<a id="more"></a>
 <p>Second, the approach.  The goal of part 1 is to do all transformations here.  I want the end result to be a file that can be directly loaded into part 2’s code.  I will use/create a series of features.  Year is the set’s year, and is directly provided.  The following features will need to be grouped and calculated.  First is “% of the set’s pieces are <x> type” for a couple major piece types.  Second, is “% of the set’s pieces are <x> color” for major color groups.  Lastly, the prediction target is theme.  The dataset has up to three themes per set (T1, T2, T3).  For simplicity sake I am only going to use one theme (T1) as the target theme to predict.  This will restrict the quality of my results, but as a proof-of-concept it will be good enough.  Hopefully all this give me some interesting results.</x></x></p>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample <code>paket.dependencies</code> file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget FSharp.Data</div></pre></td></tr></table></figure>
@@ -381,7 +387,8 @@
     
     <summary type="html">
     
-      &lt;p&gt;It is time for an exploration into using a Decision Tree to classify Lego set themes using &lt;a href=&quot;http://fsharp.org/&quot; target=&quot;_blank&quot; r
+      &lt;p&gt;It is time for an exploration into using a Decision Tree to classify Lego set themes using &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt; and &lt;a href=&quot;http://accord-framework.net/&quot;&gt;Accord.NET&lt;/a&gt;.  &lt;/p&gt;
+&lt;p&gt;First things first, the data. &lt;a href=&quot;http://rebrickable.com/downloads&quot;&gt;Rebrickable&lt;/a&gt; has downloadable datasets for Lego sets and pieces.  I’ll use the &lt;code&gt;sets.csv&lt;/code&gt; file as the primary dataset driver, but will grab information from &lt;code&gt;sets_pieces.csv&lt;/code&gt;, &lt;code&gt;pieces.csv&lt;/code&gt;, and &lt;code&gt;colors.csv&lt;/code&gt; for feature creation.  The files are not in an format appropriate for a decision tree, so some transformations will need to happen first.  I don’t want the post to get too long, so this project will be broken into two components.  Part 1 will be building the feature file and getting the data into the desired comsumable format, &lt;a href=&quot;/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2&quot;&gt;Part 2&lt;/a&gt; will actually use the file to get to the end goal.&lt;/p&gt;
     
     </summary>
     
@@ -409,9 +416,10 @@
     <link href="http://codesuji.com/2016/11/23/Edge-Filter-using-F-and-Accord-NET/"/>
     <id>http://codesuji.com/2016/11/23/Edge-Filter-using-F-and-Accord-NET/</id>
     <published>2016-11-23T12:56:08.000Z</published>
-    <updated>2016-12-14T02:14:25.422Z</updated>
+    <updated>2017-01-14T19:46:50.360Z</updated>
     
     <content type="html"><![CDATA[<p>This is a sample of how to apply edge filters to a set of images using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> and <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a>.  The framework provides several <a href="http://accord-framework.net/docs/html/N_Accord_Imaging_Filters.htm" target="_blank" rel="external">Filters</a> for image manipulating.  Since I’m interested in edge enhancement I’ll limit my scope to those filters.  In particular I’ve selected the <code>DifferenceEdgeDetector()</code>.</p>
+<a id="more"></a>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample <code>paket.dependencies</code> file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget Accord</div><div class="line">nuget Accord.Imaging</div></pre></td></tr></table></figure>
 <p>This is the boring setup stuff.  </p>
@@ -427,7 +435,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;This is a sample of how to apply edge filters to a set of images using &lt;a href=&quot;http://fsharp.org/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;F#&lt;/a&gt;
+      &lt;p&gt;This is a sample of how to apply edge filters to a set of images using &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt; and &lt;a href=&quot;http://accord-framework.net/&quot;&gt;Accord.NET&lt;/a&gt;.  The framework provides several &lt;a href=&quot;http://accord-framework.net/docs/html/N_Accord_Imaging_Filters.htm&quot;&gt;Filters&lt;/a&gt; for image manipulating.  Since I’m interested in edge enhancement I’ll limit my scope to those filters.  In particular I’ve selected the &lt;code&gt;DifferenceEdgeDetector()&lt;/code&gt;.&lt;/p&gt;
     
     </summary>
     
@@ -451,9 +459,10 @@
     <link href="http://codesuji.com/2016/11/21/Face-Detection-with-FSharp-and-Accord-NET/"/>
     <id>http://codesuji.com/2016/11/21/Face-Detection-with-FSharp-and-Accord-NET/</id>
     <published>2016-11-21T14:48:50.000Z</published>
-    <updated>2016-12-14T02:14:38.451Z</updated>
+    <updated>2017-01-14T19:47:24.748Z</updated>
     
     <content type="html"><![CDATA[<p>This is a quick sample using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> and <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a> to do face detection.  The method uses the provided Haar-like feature detection.  The results aren’t particularly good, but for little effort it’s an ok start.  At a minimum, it does reasonably well at detecting potential regions of interest.  For the test images, the best improvements were found when constraining the min/max range based on the known sizes of faces in the pictures.</p>
+<a id="more"></a>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample <code>paket.dependencies</code> file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget Accord</div><div class="line">nuget Accord.Math</div><div class="line">nuget Accord.Statistics</div><div class="line">nuget Accord.MachineLearning</div><div class="line">nuget Accord.Vision</div><div class="line">nuget Accord.Imaging</div></pre></td></tr></table></figure>
 <p>This is the boring setup stuff.  </p>
@@ -471,7 +480,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;This is a quick sample using &lt;a href=&quot;http://fsharp.org/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;F#&lt;/a&gt; and &lt;a href=&quot;http://accord-framework.net/
+      &lt;p&gt;This is a quick sample using &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt; and &lt;a href=&quot;http://accord-framework.net/&quot;&gt;Accord.NET&lt;/a&gt; to do face detection.  The method uses the provided Haar-like feature detection.  The results aren’t particularly good, but for little effort it’s an ok start.  At a minimum, it does reasonably well at detecting potential regions of interest.  For the test images, the best improvements were found when constraining the min/max range based on the known sizes of faces in the pictures.&lt;/p&gt;
     
     </summary>
     

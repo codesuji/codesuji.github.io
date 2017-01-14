@@ -13,7 +13,7 @@
 <meta property="og:description" content="Today I look into performing linear regression using F#.  The implementations of interest will be the MathNet and Accord.NET libraries.  This isn’t a math lesson, my presumption is you know how and wh">
 <meta property="og:image" content="http://codesuji.com/images/lr1/lr1_mathnet.png">
 <meta property="og:image" content="http://codesuji.com/images/lr1/lr1_accordnet.png">
-<meta property="og:updated_time" content="2017-01-14T15:49:22.619Z">
+<meta property="og:updated_time" content="2017-01-14T19:47:36.275Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Linear Regression and F#">
 <meta name="twitter:description" content="Today I look into performing linear regression using F#.  The implementations of interest will be the MathNet and Accord.NET libraries.  This isn’t a math lesson, my presumption is you know how and wh">
@@ -102,6 +102,7 @@ ga('send', 'pageview');
     <div class="article-entry" itemprop="articleBody">
       
         <p>Today I look into performing linear regression using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  The implementations of interest will be the <a href="https://numerics.mathdotnet.com/" target="_blank" rel="external">MathNet</a> and <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a> libraries.  This isn’t a math lesson, my presumption is you know how and why you’d want to use linear regression.  My goal is to provide a simple explanation of how to leverage some existing F# accessible libraries.</p>
+<a id="more"></a>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget Accord</div><div class="line">nuget Accord.Math</div><div class="line">nuget Accord.Statistics</div><div class="line">nuget Accord.MachineLearning</div><div class="line">nuget FSharp.Charting</div><div class="line">nuget MathNet.Numerics</div><div class="line">nuget MathNet.Numerics.FSharp</div></pre></td></tr></table></figure>
 <p>Here is the library loading. </p>

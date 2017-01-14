@@ -11,7 +11,7 @@
 <meta property="og:url" content="http://codesuji.com/2016/11/21/Face-Detection-with-FSharp-and-Accord-NET/index.html">
 <meta property="og:site_name" content="codesuji">
 <meta property="og:description" content="This is a quick sample using F# and Accord.NET to do face detection.  The method uses the provided Haar-like feature detection.  The results aren’t particularly good, but for little effort it’s an ok">
-<meta property="og:updated_time" content="2016-12-14T02:14:38.451Z">
+<meta property="og:updated_time" content="2017-01-14T19:47:24.748Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Face Detection with F# and Accord.NET">
 <meta name="twitter:description" content="This is a quick sample using F# and Accord.NET to do face detection.  The method uses the provided Haar-like feature detection.  The results aren’t particularly good, but for little effort it’s an ok">
@@ -99,6 +99,7 @@ ga('send', 'pageview');
     <div class="article-entry" itemprop="articleBody">
       
         <p>This is a quick sample using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> and <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a> to do face detection.  The method uses the provided Haar-like feature detection.  The results aren’t particularly good, but for little effort it’s an ok start.  At a minimum, it does reasonably well at detecting potential regions of interest.  For the test images, the best improvements were found when constraining the min/max range based on the known sizes of faces in the pictures.</p>
+<a id="more"></a>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample <code>paket.dependencies</code> file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget Accord</div><div class="line">nuget Accord.Math</div><div class="line">nuget Accord.Statistics</div><div class="line">nuget Accord.MachineLearning</div><div class="line">nuget Accord.Vision</div><div class="line">nuget Accord.Imaging</div></pre></td></tr></table></figure>
 <p>This is the boring setup stuff.  </p>

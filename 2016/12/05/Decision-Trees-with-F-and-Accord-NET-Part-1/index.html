@@ -13,7 +13,7 @@ First things first, the data. Rebrickable has downloadable datasets for Lego set
 <meta property="og:site_name" content="codesuji">
 <meta property="og:description" content="It is time for an exploration into using a Decision Tree to classify Lego set themes using F# and Accord.NET.  
 First things first, the data. Rebrickable has downloadable datasets for Lego sets and pi">
-<meta property="og:updated_time" content="2016-12-14T02:14:14.280Z">
+<meta property="og:updated_time" content="2017-01-14T19:46:17.309Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Decision Trees with F# and Accord.NET (Part 1)">
 <meta name="twitter:description" content="It is time for an exploration into using a Decision Tree to classify Lego set themes using F# and Accord.NET.  
@@ -103,6 +103,7 @@ ga('send', 'pageview');
       
         <p>It is time for an exploration into using a Decision Tree to classify Lego set themes using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> and <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a>.  </p>
 <p>First things first, the data. <a href="http://rebrickable.com/downloads" target="_blank" rel="external">Rebrickable</a> has downloadable datasets for Lego sets and pieces.  I’ll use the <code>sets.csv</code> file as the primary dataset driver, but will grab information from <code>sets_pieces.csv</code>, <code>pieces.csv</code>, and <code>colors.csv</code> for feature creation.  The files are not in an format appropriate for a decision tree, so some transformations will need to happen first.  I don’t want the post to get too long, so this project will be broken into two components.  Part 1 will be building the feature file and getting the data into the desired comsumable format, <a href="/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2">Part 2</a> will actually use the file to get to the end goal.</p>
+<a id="more"></a>
 <p>Second, the approach.  The goal of part 1 is to do all transformations here.  I want the end result to be a file that can be directly loaded into part 2’s code.  I will use/create a series of features.  Year is the set’s year, and is directly provided.  The following features will need to be grouped and calculated.  First is “% of the set’s pieces are <x> type” for a couple major piece types.  Second, is “% of the set’s pieces are <x> color” for major color groups.  Lastly, the prediction target is theme.  The dataset has up to three themes per set (T1, T2, T3).  For simplicity sake I am only going to use one theme (T1) as the target theme to predict.  This will restrict the quality of my results, but as a proof-of-concept it will be good enough.  Hopefully all this give me some interesting results.</x></x></p>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample <code>paket.dependencies</code> file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget FSharp.Data</div></pre></td></tr></table></figure>
