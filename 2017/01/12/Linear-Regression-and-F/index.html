@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Linear Regression and F# | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Today I look into performing linear regression using F#.  The implementations of interest will be the MathNet and Accord.NET libraries.  This isn’t a math lesson, my presumption is you know how and wh">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linear Regression and F#">
+<meta property="og:url" content="http://codesuji.com/2017/01/12/Linear-Regression-and-F/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Today I look into performing linear regression using F#.  The implementations of interest will be the MathNet and Accord.NET libraries.  This isn’t a math lesson, my presumption is you know how and wh">
+<meta property="og:image" content="http://codesuji.com/images/lr1/lr1_mathnet.png">
+<meta property="og:image" content="http://codesuji.com/images/lr1/lr1_accordnet.png">
+<meta property="og:updated_time" content="2017-01-14T15:49:22.619Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linear Regression and F#">
+<meta name="twitter:description" content="Today I look into performing linear regression using F#.  The implementations of interest will be the MathNet and Accord.NET libraries.  This isn’t a math lesson, my presumption is you know how and wh">
+<meta name="twitter:image" content="http://codesuji.com/images/lr1/lr1_mathnet.png">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Linear-Regression-and-F" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/Linear-Regression-and-F/" class="article-date">
+  <time datetime="2017-01-13T02:39:24.000Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Linear Regression and F#
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Today I look into performing linear regression using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  The implementations of interest will be the <a href="https://numerics.mathdotnet.com/" target="_blank" rel="external">MathNet</a> and <a href="http://accord-framework.net/" target="_blank" rel="external">Accord.NET</a> libraries.  This isn’t a math lesson, my presumption is you know how and why you’d want to use linear regression.  My goal is to provide a simple explanation of how to leverage some existing F# accessible libraries.</p>
+<p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line">nuget Accord</div><div class="line">nuget Accord.Math</div><div class="line">nuget Accord.Statistics</div><div class="line">nuget Accord.MachineLearning</div><div class="line">nuget FSharp.Charting</div><div class="line">nuget MathNet.Numerics</div><div class="line">nuget MathNet.Numerics.FSharp</div></pre></td></tr></table></figure>
+<p>Here is the library loading. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">#r <span class="string">"../packages/FSharp.Charting/lib/net40/FSharp.Charting.dll"</span></div><div class="line">#r <span class="string">"../packages/Accord/lib/net45/Accord.dll"</span></div><div class="line">#r <span class="string">"../packages/Accord.Math/lib/net45/Accord.Math.dll"</span></div><div class="line">#r <span class="string">"../packages/Accord.Statistics/lib/net45/Accord.Statistics.dll"</span></div><div class="line">#r <span class="string">"../packages/MathNet.Numerics/lib/net40/MathNet.Numerics.dll"</span></div><div class="line">#r <span class="string">"../packages/MathNet.Numerics.FSharp/lib/net40/MathNet.Numerics.FSharp.dll"</span></div><div class="line"></div><div class="line"><span class="keyword">open</span> System</div><div class="line"><span class="keyword">open</span> System.IO</div><div class="line"><span class="keyword">open</span> FSharp.Charting</div><div class="line"><span class="keyword">open</span> Accord</div><div class="line"><span class="keyword">open</span> Accord.Math</div><div class="line"><span class="keyword">open</span> Accord.Math.Distances</div><div class="line"><span class="keyword">open</span> Accord.Statistics</div><div class="line"><span class="keyword">open</span> Accord.Statistics.Models.Regression.Linear</div><div class="line"><span class="keyword">open</span> MathNet</div><div class="line"><span class="keyword">open</span> MathNet.Numerics</div><div class="line"><span class="keyword">open</span> MathNet.Numerics.LinearAlgebra</div><div class="line"><span class="keyword">open</span> MathNet.Numerics.LinearRegression</div></pre></td></tr></table></figure>
+<p>First I need to create some data. For this example, the formula is y =  x^2 + noise + occasional outlier.  The method is create 3 arrays representing x, noise, and outliers.  It is a bit convoluted, but it allows me to show off a couple bits of functionality from F# and MathNet.  The MathNet library includes methods to generate datasets, for the noise dataset <code>Generate.Normal</code> creates an array of numbers with a normal distribution.  It is worth checking out the other diverse <a href="https://numerics.mathdotnet.com/Generate.html" target="_blank" rel="external">generation</a> capabilities available.  For outliers, I define an arbitrary 30% chance of a big spike in the data, as defined by pct and range variables.  Then I use <code>|||&gt;</code> and <code>Array.zip3</code> to combine the 3 element tuple of arrays into an array of 3 element tuples.  Once in this format, a map is used to calculate the formula mentioned at the start.</p>
+<p><em>Sidenote: If you’ve coded any F#, you know <code>|&gt;</code>.  But did you know there are other, similar operators: <code>||&gt;</code> passes a tuple as two arguments, <code>|||&gt;</code> passes a 3-tuple as 3 arguments.</em></p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> xData = [| <span class="number">1.</span> .. <span class="number">0.25</span> .. <span class="number">50.</span> |]</div><div class="line"></div><div class="line"><span class="comment">// Args: length, mean, stddev</span></div><div class="line"><span class="keyword">let</span> noise = Generate.Normal(Array.length xData, <span class="number">500.</span>, <span class="number">200.</span>) </div><div class="line"></div><div class="line"><span class="keyword">let</span> makeOutliers len pct range =</div><div class="line">    <span class="keyword">let</span> rand = <span class="keyword">new</span> Random()</div><div class="line">    [|<span class="number">1.</span>.len|]</div><div class="line">    |&gt; Array.map (<span class="keyword">fun</span> _ -&gt;</div><div class="line">        <span class="keyword">if</span> rand.NextDouble() &lt; pct</div><div class="line">        <span class="keyword">then</span> range * rand.NextDouble() - (range / <span class="number">2.</span>)</div><div class="line">        <span class="keyword">else</span> <span class="number">0.</span>)</div><div class="line"></div><div class="line"><span class="keyword">let</span> outliers = makeOutliers (Array.length xData) <span class="number">0.3</span> <span class="number">2000.</span> </div><div class="line"></div><div class="line"><span class="keyword">let</span> yData = </div><div class="line">    (xData, noise, outliers) </div><div class="line">    |||&gt; Array.zip3 </div><div class="line">    |&gt; Array.map (<span class="keyword">fun</span> (x, n, o) -&gt; x**<span class="number">2.</span> + n + o)</div></pre></td></tr></table></figure>
+<h3 id="MathNet"><a href="#MathNet" class="headerlink" title="MathNet"></a>MathNet</h3><p>Starting with the MathNet implementation, it is time for the regression fitting.  The first option is <code>Fit.Line</code>, this takes the x and y data, fits a line and returns the associated intercept and slope that can be plugged into a y = mx + b formula.  The second option is to use <code>Fit.LineFunc</code>.  It also takes the x and y data to fit a line.  The difference is it creates a delegate function that can be used to directly calculate.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> mathnetIntercept, mathnetSlope = Fit.Line (xData, yData)</div><div class="line"></div><div class="line"><span class="keyword">let</span> regressionFunc = Fit.LineFunc(xData, yData)</div></pre></td></tr></table></figure>
+<p>Now it’s time to generate data based on the regression result.  <strong>pData1</strong> is calculated manually using the slope and intercept from the <code>Fit.Line</code> call.  <strong>pData2</strong> leverages the function delegate from <code>Fit.LineFunc</code>.  I need to use <code>.Invoke</code> for performing the calculation.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> pData1 =</div><div class="line">    xData</div><div class="line">    |&gt; Array.map (<span class="keyword">fun</span> x -&gt; mathnetSlope * x + mathnetIntercept)</div><div class="line"></div><div class="line"><span class="keyword">let</span> pData2 =</div><div class="line">    xData</div><div class="line">    |&gt; Array.map (<span class="keyword">fun</span> x -&gt; regressionFunc.Invoke(x))</div></pre></td></tr></table></figure>
+<p>The below code combines 3 charts; the original data, plus the regression lines.  Some of the effect is lost, since the lines are ontop of each other, but you hopefully get the point.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Chart actual versus linear regression predictions</span></div><div class="line">Chart.Combine([</div><div class="line">    (xData, yData)  ||&gt; Array.zip |&gt; Chart.Point;</div><div class="line">    (xData, pData1) ||&gt; Array.zip |&gt; Chart.Line;</div><div class="line">    (xData, pData2) ||&gt; Array.zip |&gt; Chart.Line])</div><div class="line">|&gt; Chart.Show</div></pre></td></tr></table></figure>
+<p><img src="/images/lr1/lr1_mathnet.png" alt="Regression Comparison (MathNet)"></p>
+<h3 id="Accord-NET"><a href="#Accord-NET" class="headerlink" title="Accord.NET"></a>Accord.NET</h3><p>Now it is time to look at the Accord.NET implementation.  Here,<code>OrdinaryLeastSquares</code> + <code>Learn</code> are used to determine line fitting.  The result is a <a href="http://accord-framework.net/docs/html/Methods_T_Accord_Statistics_Models_Regression_Linear_SimpleLinearRegression.htm" target="_blank" rel="external">SimpleLinearRegression</a> object.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> ols = <span class="keyword">new</span> OrdinaryLeastSquares();</div><div class="line"><span class="keyword">let</span> accordRegression = ols.Learn(xData, yData)</div><div class="line"><span class="keyword">let</span> accordSlope = accordRegression.Slope</div><div class="line"><span class="keyword">let</span> accordIntercept = accordRegression.Intercept</div></pre></td></tr></table></figure>
+<p>Now it’s time to generate data based on the regression result.  <strong>pData3</strong> is calculated manually using the slope and intercept.  <strong>pData4</strong> is calculated directly by leveraging Accord’s <code>Transform()</code> function.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> pData3 =</div><div class="line">    xData</div><div class="line">    |&gt; Array.map (<span class="keyword">fun</span> x -&gt; accordSlope * x + accordIntercept)</div><div class="line"></div><div class="line"><span class="keyword">let</span> pData4 =</div><div class="line">    xData</div><div class="line">    |&gt; Array.map (<span class="keyword">fun</span> x -&gt; accordRegression.Transform(x))</div></pre></td></tr></table></figure>
+<p>Again, the below code combines 3 charts; the original data, plus the regression lines.  As expected, these graphs are identical.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Chart.Combine([</div><div class="line">    (xData, yData)  ||&gt; Array.zip |&gt; Chart.Point;</div><div class="line">    (xData, pData3) ||&gt; Array.zip |&gt; Chart.Line;</div><div class="line">    (xData, pData4) ||&gt; Array.zip |&gt; Chart.Line])</div><div class="line">|&gt; Chart.Show</div></pre></td></tr></table></figure>
+<p><img src="/images/lr1/lr1_accordnet.png" alt="Regression Comparison (Accord.NET)"></p>
+<p>So, there it is.  A couple ways to do linear regression, but there is more.  What good is the regression model if you can’t perform scoring against the result.  Luckily, MathNet and Accord.NET have several methods of comparing datasets.  There are too many options to show them all here, but here are a couple examples scoring predicted data (pData1) versus actual data (yData).  For reference: <a href="https://numerics.mathdotnet.com/Distance.html" target="_blank" rel="external">MathNet Distances</a> and <a href="http://accord-framework.net/docs/html/N_Accord_Math_Distances.htm" target="_blank" rel="external">Accord.NET Distances</a>.  I recommend digging deeper to find the scoring method appropriate for your specific needs.  </p>
+<p>MathNet: </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">printfn <span class="string">"Scoring: R2=%.2f R=%.2f PSE=%.2f SE=%.2f SAD=%.2f SSD=%.2f MAE=%.2f MSE=%.2f"</span></div><div class="line">    (GoodnessOfFit.RSquared(pData1, yData))</div><div class="line">    (GoodnessOfFit.R(pData1, yData))</div><div class="line">    (GoodnessOfFit.PopulationStandardError(pData1, yData))</div><div class="line">    (GoodnessOfFit.StandardError(pData1, yData, <span class="number">2</span>)) <span class="comment">// 2 degrees freedom</span></div><div class="line">    (Distance.SAD(pData1, yData))</div><div class="line">    (Distance.SSD(pData1, yData))</div><div class="line">    (Distance.MAE(pData1, yData))</div><div class="line">    (Distance.MSE(pData1, yData))</div><div class="line"></div><div class="line">Scoring: R2=<span class="number">0.75</span> R=<span class="number">0.87</span> PSE=<span class="number">427.23</span> SE=<span class="number">429.41</span> SAD=<span class="number">61878.78</span> SSD=<span class="number">35957245.48</span> MAE=<span class="number">314.11</span> MSE=<span class="number">182524.09</span></div></pre></td></tr></table></figure>
+<p>Accord.NET:</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">printfn <span class="string">"Scoring SE: %.2f E: %.2f E2:%.2f M:%.2f PC:%.2f"</span></div><div class="line">    (accordRegression.GetStandardError(xData, yData))</div><div class="line">    (Euclidean().Distance(pData1, yData))</div><div class="line">    (SquareEuclidean().Distance(pData1, yData))</div><div class="line">    (Manhattan().Distance(pData1, yData))</div><div class="line">    (PearsonCorrelation().Similarity(pData1, yData))</div><div class="line"></div><div class="line">Scoring SE: <span class="number">429.41</span> E: <span class="number">5996.44</span> E2:<span class="number">35957245.48</span> M:<span class="number">61878.78</span> PC:<span class="number">0.87</span></div><div class="line"></div><div class="line"><span class="comment">// Confidence Intervals</span></div><div class="line">xData</div><div class="line">|&gt; Array.map (<span class="keyword">fun</span> x -&gt; </div><div class="line">    (x, accordRegression.GetConfidenceInterval(x, xData, yData)))</div><div class="line">|&gt; Array.iter (<span class="keyword">fun</span> (x, ci) -&gt; </div><div class="line">    printfn <span class="string">"x: %5.2f min: %7.2f max: %7.2f len:%7.2f"</span> x ci.Min ci.Max ci.Length)</div><div class="line"></div><div class="line">x:  <span class="number">1.00</span> min:  <span class="number">-90.80</span> max:  <span class="number">149.64</span> len: <span class="number">240.44</span></div><div class="line">x:  <span class="number">1.25</span> min:  <span class="number">-76.85</span> max:  <span class="number">161.76</span> len: <span class="number">238.61</span></div><div class="line">x:  <span class="number">1.50</span> min:  <span class="number">-62.90</span> max:  <span class="number">173.88</span> len: <span class="number">236.78</span></div><div class="line">x:  <span class="number">1.75</span> min:  <span class="number">-48.95</span> max:  <span class="number">186.00</span> len: <span class="number">234.95</span></div><div class="line">x:  <span class="number">2.00</span> min:  <span class="number">-35.01</span> max:  <span class="number">198.13</span> len: <span class="number">233.14</span></div><div class="line">...</div></pre></td></tr></table></figure>
+<p>I hope this has been helpful if you’re venturing into F# and regression.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2017/01/12/Linear-Regression-and-F/" data-id="cixwm9s1h000bp0lik7lfhu8w" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Accord-NET/">Accord.NET</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Data/">Data</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Delegate/">Delegate</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MathNet/">MathNet</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Regression/">Regression</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Scoring/">Scoring</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Statistics/">Statistics</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/01/09/Site-transition-complete/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Site transition complete</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Accord-NET/" style="font-size: 17.5px;">Accord.NET</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Classification/" style="font-size: 12.5px;">Classification</a> <a href="/tags/Computer-Vision/" style="font-size: 10px;">Computer Vision</a> <a href="/tags/DTW/" style="font-size: 12.5px;">DTW</a> <a href="/tags/Data/" style="font-size: 17.5px;">Data</a> <a href="/tags/Decision-Trees/" style="font-size: 12.5px;">Decision Trees</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.5px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Faces/" style="font-size: 10px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Images/" style="font-size: 12.5px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 10px;">Kaggle</a> <a href="/tags/Legos/" style="font-size: 12.5px;">Legos</a> <a href="/tags/Machine-Learning/" style="font-size: 15px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Signals/" style="font-size: 12.5px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 12.5px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 12.5px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/admin/" style="font-size: 10px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/12/">December 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/11/">November 2016</a></li></ul>
+    </div>
+  </div>
+
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
