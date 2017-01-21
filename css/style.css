@@ -365,7 +365,8 @@ body {
 #logo,
 #subtitle {
   text-decoration: none;
-  color: #fff;
+  color: #ddd;
+  font-family: Courier;
   font-weight: 300;
   text-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
@@ -940,6 +941,11 @@ a.article-title:hover {
   display: block;
   max-width: 100%;
   margin: 0 auto;
+}
+.post-count {
+  padding: 20px 20px 0;
+  font-style: italic;
+  color: #666;
 }
 #comments {
   background: #fff;
