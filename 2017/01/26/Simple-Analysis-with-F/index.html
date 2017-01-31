@@ -5,22 +5,22 @@
   
   <title>Simple Analysis with F# | codesuji</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="This post is a follow up to my previous look into Text Analytics.  It will provide additional examples of how data can be pulled and processed in F#.  At the core, all programs are about processing da">
+  <meta name="description" content="This post is a follow up to my previous look into Text Analytics.  It will provide additional examples of how data can be pulled and processed in F#.  I’ll also use this as an opportunity to draw more">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Simple Analysis with F#">
 <meta property="og:url" content="http://codesuji.com/2017/01/26/Simple-Analysis-with-F/index.html">
 <meta property="og:site_name" content="codesuji">
-<meta property="og:description" content="This post is a follow up to my previous look into Text Analytics.  It will provide additional examples of how data can be pulled and processed in F#.  At the core, all programs are about processing da">
+<meta property="og:description" content="This post is a follow up to my previous look into Text Analytics.  It will provide additional examples of how data can be pulled and processed in F#.  I’ll also use this as an opportunity to draw more">
 <meta property="og:image" content="http://codesuji.com/images/sa1/sentiment1.png">
 <meta property="og:image" content="http://codesuji.com/images/sa1/wordcount1.png">
 <meta property="og:image" content="http://codesuji.com/images/sa1/sentiment2.png">
 <meta property="og:image" content="http://codesuji.com/images/sa1/wordcount2.png">
 <meta property="og:image" content="http://codesuji.com/images/sa1/wordcount_sentiment.png">
 <meta property="og:image" content="http://codesuji.com/images/sa1/sentiment3.png">
-<meta property="og:updated_time" content="2017-01-28T15:43:40.748Z">
+<meta property="og:updated_time" content="2017-01-31T01:01:51.540Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Simple Analysis with F#">
-<meta name="twitter:description" content="This post is a follow up to my previous look into Text Analytics.  It will provide additional examples of how data can be pulled and processed in F#.  At the core, all programs are about processing da">
+<meta name="twitter:description" content="This post is a follow up to my previous look into Text Analytics.  It will provide additional examples of how data can be pulled and processed in F#.  I’ll also use this as an opportunity to draw more">
 <meta name="twitter:image" content="http://codesuji.com/images/sa1/sentiment1.png">
   
     <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
@@ -101,12 +101,12 @@ ga('send', 'pageview');
     </h1>
   
 
- 		<span class="post-count">Read Time: 11 minutes</span>
+ 		<span class="post-count">Read Time: 10 minutes</span>
  	  </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>This post is a follow up to my previous look into <a href="/2017/01/20/F-and-Text-Analytics/">Text Analytics</a>.  It will provide additional examples of how data can be pulled and processed in <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  At the core, all programs are about processing data.  How that data flows is significant.  It impacts not only technical performance, but developer productivity.  F#’s semantics provides a clean mechanism for data flow.  This leads to a lower cognitive load when parsing intent, so developers can focus on the larger problem.  Honestly, it’s one of the reasons I enjoy the language.  Philosophical ramblings aside, it’s possible I’m just looking for reasons to draw more charts.  For that to happen, I’ll be doing light analysis of the full text of Mary Shelley’s “Frankenstein”.</p>
+        <p>This post is a follow up to my previous look into <a href="/2017/01/20/F-and-Text-Analytics/">Text Analytics</a>.  It will provide additional examples of how data can be pulled and processed in <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  I’ll also use this as an opportunity to draw more charts.  For all this to happen, I’ll be doing light analysis of the full text of Mary Shelley’s “Frankenstein”.</p>
 <a id="more"></a>
 <p>Like last time, if you want to follow along, you’ll need to first get a free account from <a href="https://www.microsoft.com/cognitive-services/en-us/" target="_blank" rel="external">Cognitive Services</a>.  Then request the api access you want, for this post it is “Text Analytics”.  The apikey they provide can be used in the upcoming code if you want to make your own calls.  Microsoft offers a nice amount of free calls, providing plenty of room to play in the environment.  </p>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>

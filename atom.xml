@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://codesuji.com/"/>
-  <updated>2017-01-28T15:43:40.748Z</updated>
+  <updated>2017-01-31T01:01:51.540Z</updated>
   <id>http://codesuji.com/</id>
   
   <author>
@@ -20,9 +20,9 @@
     <link href="http://codesuji.com/2017/01/26/Simple-Analysis-with-F/"/>
     <id>http://codesuji.com/2017/01/26/Simple-Analysis-with-F/</id>
     <published>2017-01-27T03:10:36.000Z</published>
-    <updated>2017-01-28T15:43:40.748Z</updated>
+    <updated>2017-01-31T01:01:51.540Z</updated>
     
-    <content type="html"><![CDATA[<p>This post is a follow up to my previous look into <a href="/2017/01/20/F-and-Text-Analytics/">Text Analytics</a>.  It will provide additional examples of how data can be pulled and processed in <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  At the core, all programs are about processing data.  How that data flows is significant.  It impacts not only technical performance, but developer productivity.  F#’s semantics provides a clean mechanism for data flow.  This leads to a lower cognitive load when parsing intent, so developers can focus on the larger problem.  Honestly, it’s one of the reasons I enjoy the language.  Philosophical ramblings aside, it’s possible I’m just looking for reasons to draw more charts.  For that to happen, I’ll be doing light analysis of the full text of Mary Shelley’s “Frankenstein”.</p>
+    <content type="html"><![CDATA[<p>This post is a follow up to my previous look into <a href="/2017/01/20/F-and-Text-Analytics/">Text Analytics</a>.  It will provide additional examples of how data can be pulled and processed in <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  I’ll also use this as an opportunity to draw more charts.  For all this to happen, I’ll be doing light analysis of the full text of Mary Shelley’s “Frankenstein”.</p>
 <a id="more"></a>
 <p>Like last time, if you want to follow along, you’ll need to first get a free account from <a href="https://www.microsoft.com/cognitive-services/en-us/" target="_blank" rel="external">Cognitive Services</a>.  Then request the api access you want, for this post it is “Text Analytics”.  The apikey they provide can be used in the upcoming code if you want to make your own calls.  Microsoft offers a nice amount of free calls, providing plenty of room to play in the environment.  </p>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is a sample paket.dependencies file.</p>
@@ -64,7 +64,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;This post is a follow up to my previous look into &lt;a href=&quot;/2017/01/20/F-and-Text-Analytics/&quot;&gt;Text Analytics&lt;/a&gt;.  It will provide additional examples of how data can be pulled and processed in &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt;.  At the core, all programs are about processing data.  How that data flows is significant.  It impacts not only technical performance, but developer productivity.  F#’s semantics provides a clean mechanism for data flow.  This leads to a lower cognitive load when parsing intent, so developers can focus on the larger problem.  Honestly, it’s one of the reasons I enjoy the language.  Philosophical ramblings aside, it’s possible I’m just looking for reasons to draw more charts.  For that to happen, I’ll be doing light analysis of the full text of Mary Shelley’s “Frankenstein”.&lt;/p&gt;
+      &lt;p&gt;This post is a follow up to my previous look into &lt;a href=&quot;/2017/01/20/F-and-Text-Analytics/&quot;&gt;Text Analytics&lt;/a&gt;.  It will provide additional examples of how data can be pulled and processed in &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt;.  I’ll also use this as an opportunity to draw more charts.  For all this to happen, I’ll be doing light analysis of the full text of Mary Shelley’s “Frankenstein”.&lt;/p&gt;
     
     </summary>
     
