@@ -1009,4 +1009,25 @@
     
   </entry>
   
+  <entry>
+    <title>About Codesuji</title>
+    <link href="http://codesuji.com/2016/11/20/about/"/>
+    <id>http://codesuji.com/2016/11/20/about/</id>
+    <published>2016-11-20T05:00:00.000Z</published>
+    <updated>2017-05-21T23:53:17.190Z</updated>
+    
+    <content type="html"><![CDATA[<p>As time progresses, this site will flow in many directions.  With that said, the immediate focus is to bring practical and interesting examples of <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> to the masses.  </p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;As time progresses, this site will flow in many directions.  With that said, the immediate focus is to bring practical and interesting ex
+    
+    </summary>
+    
+    
+      <category term="admin" scheme="http://codesuji.com/tags/admin/"/>
+    
+  </entry>
+  
 </feed>
