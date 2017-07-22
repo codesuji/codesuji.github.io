@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://codesuji.com/"/>
-  <updated>2017-05-21T13:54:36.294Z</updated>
+  <updated>2017-07-22T15:09:12.188Z</updated>
   <id>http://codesuji.com/</id>
   
   <author>
@@ -14,6 +14,53 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>F# and SQLite</title>
+    <link href="http://codesuji.com/2017/07/22/F-and-SQLite/"/>
+    <id>http://codesuji.com/2017/07/22/F-and-SQLite/</id>
+    <published>2017-07-22T12:25:33.000Z</published>
+    <updated>2017-07-22T15:09:12.188Z</updated>
+    
+    <content type="html"><![CDATA[<p>Today I have a quick example of using <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> with <a href="https://sqlite.org/" target="_blank" rel="external">SQLite</a>.  </p>
+<a id="more"></a>
+<p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="external">Paket</a>, here is the paket.dependencies file.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">source https:<span class="comment">//nuget.org/api/v2</span></div><div class="line"></div><div class="line">nuget System.Data.SQLite</div></pre></td></tr></table></figure>
+<p>As usual there is some initial setup.  First, include references.  Second, I create the sample data to be used for this exercise.  It’s a simple list of distances between locations.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">#r <span class="string">"../packages/System.Data.SQLite.Core/lib/net46/System.Data.SQLite.dll"</span></div><div class="line"></div><div class="line"><span class="keyword">open</span> System.Data.SQLite</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">type</span> <span class="title">DistanceData</span> </span>= &#123; </div><div class="line">    Location1:string; </div><div class="line">    Location2:string; </div><div class="line">    Distance:float &#125;</div><div class="line"></div><div class="line"><span class="comment">// Sample data</span></div><div class="line"><span class="keyword">let</span> distances = [</div><div class="line">    &#123; Location1 = <span class="string">"Home"</span>;   Location2 = <span class="string">"Store"</span>;  Distance = <span class="number">6.5</span> &#125;;</div><div class="line">    &#123; Location1 = <span class="string">"Home"</span>;   Location2 = <span class="string">"Work"</span>;   Distance = <span class="number">12.9</span> &#125;;</div><div class="line">    &#123; Location1 = <span class="string">"Home"</span>;   Location2 = <span class="string">"School"</span>; Distance = <span class="number">2.5</span> &#125;;</div><div class="line">    &#123; Location1 = <span class="string">"School"</span>; Location2 = <span class="string">"Store"</span>;  Distance = <span class="number">4.</span> &#125;;</div><div class="line">    ]</div></pre></td></tr></table></figure>
+<p>Now it is time to create the database.  I need a filename for creation, the <code>connectionString</code> is for later.  As you can see, creating a database is straightforward.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> databaseFilename = <span class="string">"sample.sqlite"</span></div><div class="line"></div><div class="line"><span class="keyword">let</span> connectionString = sprintf <span class="string">"Data Source=%s;Version=3;"</span> databaseFilename  </div><div class="line"></div><div class="line">SQLiteConnection.CreateFile(databaseFilename)</div></pre></td></tr></table></figure>
+<p>Once created, I open the connection for future use.  As a note, this example is just a single fsx script. Because of this, I use let.  In a real implementation I would most likely have this in a function somewhere.  In cases like that, I use <code>use</code> instead of <code>let</code> when creating connections and commands.  That way the connection properly disposes when it goes out of scope.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> connection = <span class="keyword">new</span> SQLiteConnection(connectionString)</div><div class="line">connection.Open()</div></pre></td></tr></table></figure>
+<p>As an aside, perhaps I want my instance to be an in-memory database.  Instead of doing the above <code>CreateFile</code> and connect, I can use SQLite’s <code>:memory:</code> datasource to spin this up in memory.  For particular use-cases, this can be a nice option, so I thought it was worth mentioning.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> connectionStringMemory = sprintf <span class="string">"Data Source=:memory:;Version=3;New=True;"</span> </div><div class="line"><span class="keyword">let</span> connection = <span class="keyword">new</span> SQLiteConnection(connectionStringMemory)</div><div class="line">connection.Open()</div></pre></td></tr></table></figure>
+<p>Time to give the database some structure. A simple table will suffice.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> structureSql =</div><div class="line">    <span class="string">"create table distances ("</span> +</div><div class="line">    <span class="string">"location1 varchar(20), "</span> +</div><div class="line">    <span class="string">"location2 varchar(20), "</span> + </div><div class="line">    <span class="string">"distance float)"</span></div><div class="line"></div><div class="line"><span class="keyword">let</span> structureCommand = <span class="keyword">new</span> SQLiteCommand(structureSql, connection)</div><div class="line">structureCommand.ExecuteNonQuery() </div></pre></td></tr></table></figure>
+<p>Once the structure is created, I can start to do more interesting things.  First I need to insert some records. Since <code>ExecuteNonQuery()</code> returns records impacted, I can leverage <code>map</code> and <code>sum</code> to count the number of records added.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Add records</span></div><div class="line"><span class="keyword">let</span> insertSql = </div><div class="line">    <span class="string">"insert into distances(location1, location2, distance) "</span> + </div><div class="line">    <span class="string">"values (@loc1, @loc2, @distance)"</span></div><div class="line"></div><div class="line">distances </div><div class="line">|&gt; List.map(<span class="keyword">fun</span> x -&gt;</div><div class="line">    <span class="keyword">use</span> command = <span class="keyword">new</span> SQLiteCommand(insertSql, connection)</div><div class="line">    command.Parameters.AddWithValue(<span class="string">"@loc1"</span>, x.Location1) |&gt; ignore</div><div class="line">    command.Parameters.AddWithValue(<span class="string">"@loc2"</span>, x.Location2) |&gt; ignore</div><div class="line">    command.Parameters.AddWithValue(<span class="string">"@distance"</span>, x.Distance) |&gt; ignore</div><div class="line"></div><div class="line">    command.ExecuteNonQuery())</div><div class="line">|&gt; List.sum</div><div class="line">|&gt; (<span class="keyword">fun</span> recordsAdded -&gt; printfn <span class="string">"Records added: %d"</span> recordsAdded)</div></pre></td></tr></table></figure>
+<p>Once the records are inserted, it is trival to query them.  Below is a simple select and iteration through the recordset.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> selectSql = <span class="string">"select * from distances order by distance"</span></div><div class="line"><span class="keyword">let</span> selectCommand = <span class="keyword">new</span> SQLiteCommand(selectSql, connection)</div><div class="line"><span class="keyword">let</span> reader = selectCommand.ExecuteReader()</div><div class="line"><span class="keyword">while</span> reader.Read() <span class="keyword">do</span></div><div class="line">    printfn <span class="string">"%-7s -&gt; %-7s = %.2f miles "</span> </div><div class="line">        (reader.[<span class="string">"location1"</span>].ToString()) </div><div class="line">        (reader.[<span class="string">"location2"</span>].ToString())</div><div class="line">        (System.Convert.ToDouble(reader.[<span class="string">"distance"</span>])) </div><div class="line"></div></pre></td></tr></table></figure>
+<p>Finally, the connection cleanup.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">connection.Close()</div></pre></td></tr></table></figure>
+<p>Here is the output from the above actions.</p>
+<p><img src="/images/db1/output.png" alt="Insert and query output"></p>
+<p>Hopefully you found this simple SQLite example useful.  Until next time.    </p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;Today I have a quick example of using &lt;a href=&quot;http://fsharp.org/&quot;&gt;F#&lt;/a&gt; with &lt;a href=&quot;https://sqlite.org/&quot;&gt;SQLite&lt;/a&gt;.  &lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="F#" scheme="http://codesuji.com/tags/F/"/>
+    
+      <category term="FSharp" scheme="http://codesuji.com/tags/FSharp/"/>
+    
+      <category term="Database" scheme="http://codesuji.com/tags/Database/"/>
+    
+  </entry>
   
   <entry>
     <title>Facial Recognition using F# and EmguCV</title>
@@ -443,11 +490,11 @@
     
       <category term="FSharp" scheme="http://codesuji.com/tags/FSharp/"/>
     
+      <category term="Text" scheme="http://codesuji.com/tags/Text/"/>
+    
       <category term="Data" scheme="http://codesuji.com/tags/Data/"/>
     
       <category term="Statistics" scheme="http://codesuji.com/tags/Statistics/"/>
-    
-      <category term="Text" scheme="http://codesuji.com/tags/Text/"/>
     
       <category term="Cognitive Services" scheme="http://codesuji.com/tags/Cognitive-Services/"/>
     
@@ -507,9 +554,9 @@
     
       <category term="Machine Learning" scheme="http://codesuji.com/tags/Machine-Learning/"/>
     
-      <category term="Data" scheme="http://codesuji.com/tags/Data/"/>
-    
       <category term="Text" scheme="http://codesuji.com/tags/Text/"/>
+    
+      <category term="Data" scheme="http://codesuji.com/tags/Data/"/>
     
       <category term="Cognitive Services" scheme="http://codesuji.com/tags/Cognitive-Services/"/>
     
@@ -778,6 +825,8 @@
     
       <category term="FSharp" scheme="http://codesuji.com/tags/FSharp/"/>
     
+      <category term="Kaggle" scheme="http://codesuji.com/tags/Kaggle/"/>
+    
       <category term="Data" scheme="http://codesuji.com/tags/Data/"/>
     
       <category term="DTW" scheme="http://codesuji.com/tags/DTW/"/>
@@ -789,8 +838,6 @@
       <category term="Similarity" scheme="http://codesuji.com/tags/Similarity/"/>
     
       <category term="EEG" scheme="http://codesuji.com/tags/EEG/"/>
-    
-      <category term="Kaggle" scheme="http://codesuji.com/tags/Kaggle/"/>
     
   </entry>
   
@@ -839,11 +886,11 @@
     
       <category term="FSharp" scheme="http://codesuji.com/tags/FSharp/"/>
     
+      <category term="Machine Learning" scheme="http://codesuji.com/tags/Machine-Learning/"/>
+    
       <category term="Accord.NET" scheme="http://codesuji.com/tags/Accord-NET/"/>
     
       <category term="Decision Trees" scheme="http://codesuji.com/tags/Decision-Trees/"/>
-    
-      <category term="Machine Learning" scheme="http://codesuji.com/tags/Machine-Learning/"/>
     
       <category term="Legos" scheme="http://codesuji.com/tags/Legos/"/>
     
@@ -903,11 +950,11 @@
     
       <category term="FSharp" scheme="http://codesuji.com/tags/FSharp/"/>
     
+      <category term="Machine Learning" scheme="http://codesuji.com/tags/Machine-Learning/"/>
+    
       <category term="Accord.NET" scheme="http://codesuji.com/tags/Accord-NET/"/>
     
       <category term="Decision Trees" scheme="http://codesuji.com/tags/Decision-Trees/"/>
-    
-      <category term="Machine Learning" scheme="http://codesuji.com/tags/Machine-Learning/"/>
     
       <category term="Legos" scheme="http://codesuji.com/tags/Legos/"/>
     
@@ -995,9 +1042,9 @@
     
       <category term="FSharp" scheme="http://codesuji.com/tags/FSharp/"/>
     
-      <category term="Accord.NET" scheme="http://codesuji.com/tags/Accord-NET/"/>
-    
       <category term="Machine Learning" scheme="http://codesuji.com/tags/Machine-Learning/"/>
+    
+      <category term="Accord.NET" scheme="http://codesuji.com/tags/Accord-NET/"/>
     
       <category term="Images" scheme="http://codesuji.com/tags/Images/"/>
     
