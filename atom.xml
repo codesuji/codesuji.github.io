@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://codesuji.com/"/>
-  <updated>2017-08-20T19:26:40.996Z</updated>
+  <updated>2017-08-22T22:25:13.654Z</updated>
   <id>http://codesuji.com/</id>
   
   <author>
@@ -20,13 +20,13 @@
     <link href="http://codesuji.com/2017/08/20/F-and-Serilog/"/>
     <id>http://codesuji.com/2017/08/20/F-and-Serilog/</id>
     <published>2017-08-20T19:12:47.000Z</published>
-    <updated>2017-08-20T19:26:40.996Z</updated>
+    <updated>2017-08-22T22:25:13.654Z</updated>
     
     <content type="html"><![CDATA[<p>Today I’ll discuss two topics.  The primary topic is implementing logging by leveraging <a href="https://serilog.net/" target="_blank" rel="external">Serilog</a> with <a href="http://fsharp.org/" target="_blank" rel="external">F#</a>.  The secondary topic is <a href="http://fsharp.org/" target="_blank" rel="external">F#</a> and <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="external">.NET Core version 2.0</a>.  Due to the recent release of .NET Core 2.0 (now with better F# support), I thought this would be a good time to show how to implement an F# .NET Core project.</p>
 <a id="more"></a>
 <p>Going forward I’ll assume you have .NET Core 2.0 installed.  If you don’t, head out to the <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="external">.NET Core Downloads</a> page.  Select <strong>SDK</strong> for your platform.  Tangential, but you can also get here by going to <a href="https://dot.net" target="_blank" rel="external">dot.net</a>, then navigating to <code>Downloads</code> and <code>.NET Core</code>.</p>
 <p>Getting started, create the project.  For this post, the example will be a console app.  I also have a preference for the <a href="https://fsprojects.github.io/Paket/" target="_blank" rel="external">Paket</a> package manager.  This isn’t strictly necessary, but the benefits are worth the adjustment.  To do this I need to convert the project to use Paket.  If you want to stick with the default nuget, that’s fine, you’ll just need to do ignore a couple commands and mentally map <code>paket add</code> to <code>nuget install</code>. </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">dotnet new console --language F# --name SerilogExample</div><div class="line">cd SerilogExample</div><div class="line">paket init</div><div class="line">paket convert-from-nuget</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">dotnet new console --language F# --name SerilogExample</div><div class="line">cd SerilogExample</div><div class="line">paket convert-from-nuget</div></pre></td></tr></table></figure>
 <p>Next, add the required packages for configuration and logging.  Since I will use config file based configuration, I use the <code>ConfigurationBuilder</code> that .NET Core apps commonly use.  At this point I should note that Serilog has additional Sinks as logging targets.  Check them out if you want more than plain logfiles.</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">paket add Microsoft.Extensions.ConfigurationBuilder --project SerilogExample.fsproj</div><div class="line">paket add Microsoft.Extensions.ConfigurationBuilder.Json --project SerilogExample.fsproj</div><div class="line">paket add Serilog --project SerilogExample.fsproj</div><div class="line">paket add Serilog.Settings.Configuration --project SerilogExample.fsproj</div><div class="line">paket add Serilog.Sinks.Literate --project SerilogExample.fsproj</div><div class="line">paket add Serilog.Sinks.RollingFile --project SerilogExample.fsproj</div></pre></td></tr></table></figure>
 <p>Time to open up <code>Program.fs</code> and get to work.  First, add the necessary namespaces.</p>
