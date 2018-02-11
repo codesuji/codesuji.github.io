@@ -3,18 +3,23 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Tag: EmguCV | codesuji</title>
+  <title>Coding with Color | codesuji</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="An exploration of code and its dynamics">
-<meta property="og:type" content="website">
-<meta property="og:title" content="codesuji">
-<meta property="og:url" content="http://codesuji.com/tags/EmguCV/index.html">
+  <meta name="description" content="Code comes in many shapes and sizes.  Often this means differing paradigms with text or gui workflow tools, but there are other ways.  Enter Evo, a robot that leverages coding in the form of color.  I">
+<meta name="keywords" content="Robotics">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Coding with Color">
+<meta property="og:url" content="http://codesuji.com/2018/02/10/Coding-with-Color/index.html">
 <meta property="og:site_name" content="codesuji">
-<meta property="og:description" content="An exploration of code and its dynamics">
+<meta property="og:description" content="Code comes in many shapes and sizes.  Often this means differing paradigms with text or gui workflow tools, but there are other ways.  Enter Evo, a robot that leverages coding in the form of color.  I">
 <meta property="og:locale" content="en">
+<meta property="og:image" content="http://codesuji.com/images/evo1/colorcodes.png">
+<meta property="og:image" content="http://codesuji.com/images/evo1/example.png">
+<meta property="og:updated_time" content="2018-02-11T14:04:34.648Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="codesuji">
-<meta name="twitter:description" content="An exploration of code and its dynamics">
+<meta name="twitter:title" content="Coding with Color">
+<meta name="twitter:description" content="Code comes in many shapes and sizes.  Often this means differing paradigms with text or gui workflow tools, but there are other ways.  Enter Evo, a robot that leverages coding in the form of color.  I">
+<meta name="twitter:image" content="http://codesuji.com/images/evo1/colorcodes.png">
   
     <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
   
@@ -76,39 +81,67 @@ ga('send', 'pageview');
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2017" class="archive-year">2017</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2017/05/20/F-and-EmguCV/" class="archive-article-date">
-  <time datetime="2017-05-21T00:32:04.000Z" itemprop="datePublished">May 20</time>
+        <section id="main"><article id="post-Coding-with-Color" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/02/10/Coding-with-Color/" class="article-date">
+  <time datetime="2018-02-10T16:42:52.000Z" itemprop="datePublished">2018-02-10</time>
 </a>
-      
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/20/F-and-EmguCV/">Facial Recognition using F# and EmguCV</a>
+    <h1 class="article-title" itemprop="name">
+      Coding with Color
     </h1>
   
 
-    </header>
+ 		<span class="post-count">Read Time: 3 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Code comes in many shapes and sizes.  Often this means differing paradigms with text or gui workflow tools, but there are other ways.  Enter <a href="https://ozobot.com/products/ozobot-evo" target="_blank" rel="noopener">Evo</a>, a robot that leverages coding in the form of color.  I recently had the opportunity to play with one of the little bots.  It is intended as an educational toy for kids, and it fits the bill perfectly.  More than that, it is an interesting case study in seeing the world differently.  Take code beyond text, and into a realm that can easily appeal to kids (young and old).</p>
+<a id="more"></a>
+<p>Although the Evo has multiple levels of functionality, the one of interest here is the sensor on its underside.  The intended interaction with the bot is to draw black lines on a white piece of paper, the Evo will follow the lines.  Where it really gets interesting is using markers other than black.  The Evo responds to patterns of black, red, green, and blue.  It is an elegant method of code, instead of thinking in binary, it uses a quaternary system. Using patterns of these 4 colors, the Evo can be programmed to perform actions.  A program looks like a series of lines with dots of color.  </p>
+<p><img src="/images/evo1/colorcodes.png" alt="Color Codes"></p>
+<p><a href="http://play.ozobot.com/print/guides/ozobot-ozocodes-reference.pdf" target="_blank" rel="noopener">Color Codes PDF</a></p>
+<p>Here is an example program.</p>
+<p><img src="/images/evo1/example.png" alt="Example"></p>
+<p>Do you see the bug?  <em>Hint: Green-Red-Green jumps to the next line on the robot’s left. Go the wrong way at the top and he’ll run off the paper</em><br>This isn’t just about play, but it is about diagnosising bugs and figuring out solutions to them.</p>
+<p>These codes provide a fun way for the bot to interact with the world, and allow kids to program with tools, and in a way, they feel comfortable.  This alone is enough, but I appreciate the forethought into some of the codes.  Knowing the Evo could run in either direction on a line, many of the codes work in both directions.  </p>
+<p>When coding with markers isn’t enough, <a href="http://ozoblockly.com/" target="_blank" rel="noopener">Blockly</a> is available.  For those not familiar with Blockly, it is meant to be a kid-friendly drag-and-drop coding experience.  It is a great option for taking the next step.  They also offer a clever program upload method.  The Evo can be placed against the screen as the program uploads to the Evo using flashes of color. Again, data encoding and transfer can happen in cool and interesting ways.</p>
+<p>The Evo is fascinating, and a great reminder how code comes in many forms.  Keep a lookout for different approaches to coding, you may be surprised what you find.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<p class="related-posts-none">No related post.</p>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2018/02/10/Coding-with-Color/" data-id="cjdiv3cdy000177m07dgrvqvv" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Robotics/">Robotics</a></li></ul>
+
+    </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/01/06/Tackling-Kaggle-FSharp-XGBoost/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Tackling Kaggle with F# and XGBoost</div>
+    </a>
+  
+</nav>
+
+  
 </article>
-  
-  
-    </div></section>
-  
 
 
 </section>
