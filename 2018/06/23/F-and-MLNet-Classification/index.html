@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>F# and ML.Net Classification | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Expanding on my previous post, F# and ML.NET Regression, the current post will take a look at performing classification using Microsoft’s new ML.NET framework.  The task at hand will be to use biomech">
+<meta name="keywords" content="F#,FSharp,Machine Learning,.NET Core,MLNet">
+<meta property="og:type" content="article">
+<meta property="og:title" content="F# and ML.Net Classification">
+<meta property="og:url" content="http://codesuji.com/2018/06/23/F-and-MLNet-Classification/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Expanding on my previous post, F# and ML.NET Regression, the current post will take a look at performing classification using Microsoft’s new ML.NET framework.  The task at hand will be to use biomech">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://codesuji.com/images/mlnet2/184px-SpondylolisthesisL5S1.jpg">
+<meta property="og:updated_time" content="2018-06-23T13:59:17.285Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="F# and ML.Net Classification">
+<meta name="twitter:description" content="Expanding on my previous post, F# and ML.NET Regression, the current post will take a look at performing classification using Microsoft’s new ML.NET framework.  The task at hand will be to use biomech">
+<meta name="twitter:image" content="http://codesuji.com/images/mlnet2/184px-SpondylolisthesisL5S1.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-and-MLNet-Classification" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/06/23/F-and-MLNet-Classification/" class="article-date">
+  <time datetime="2018-06-23T12:34:25.000Z" itemprop="datePublished">2018-06-23</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      F# and ML.Net Classification
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 11 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Expanding on my previous post, <a href="/2018/06/09/F-and-MLNet-Regression">F# and ML.NET Regression</a>, the current post will take a look at performing classification using Microsoft’s new <a href="https://www.microsoft.com/net/learn/apps/machine-learning-and-ai/ml-dotnet" target="_blank" rel="noopener">ML.NET</a> framework.  The task at hand will be to use biomechanical attributes to classify patient vertebra conditions into normal (NO), disk hernia (DH), or spondilolysthesis (SL) categories.</p>
+<a id="more"></a>
+<p>As I mentioned in the previous post, there is a disclaimer: ML.NET is in its early stages.  I found a couple implementation and interface idiosyncrasies I suspect will change over time.  Just keep that in mind moving forward.  But knowing that, I’ve been pleased with what I’ve seen so far.  </p>
+<p>Make sure you have <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core version 2.1</a> installed.  If you don’t, head out to the <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core Downloads</a> page.  Select <strong>SDK</strong> for your platform.  Tangential, but you can also get here by going to <a href="https://dot.net" target="_blank" rel="noopener">dot.net</a>, then navigating to <code>Downloads</code> and <code>.NET Core</code>.</p>
+<p>First, create a console F# project, then add the ML.NET package.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dotnet new console --language F# --name MLNet-Vertebral</span><br><span class="line">cd MLNet-Vertebral</span><br><span class="line">dotnet add package Microsoft.ML</span><br></pre></td></tr></table></figure>
+<p>Next, it is time to get the data.  The source I used for this post is from <a href="https://archive.ics.uci.edu/ml/datasets/Vertebral+Column" target="_blank" rel="noopener">UCI</a>.  The datafile can be found <a href="https://archive.ics.uci.edu/ml/machine-learning-databases/00212/vertebral_column_data.zip" target="_blank" rel="noopener">here</a>.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir data &amp;&amp; cd data</span><br><span class="line">curl -O https://archive.ics.uci.edu/ml/machine-learning-databases/00212/vertebral_column_data.zip</span><br></pre></td></tr></table></figure>
+<p>Here is a sample of what the data looks like.  There is no header row.  The columns represent 6 features and 1 classification column:</p>
+<ul>
+<li>pelvic_incidence</li>
+<li>pelvic_tilt</li>
+<li>lumbar_lordosis_angle</li>
+<li>sacral_slope</li>
+<li>pelvic_radius</li>
+<li>degree_spondylolisthesis</li>
+<li>class</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># Data Rows</span><br><span class="line">63.03,22.55,39.61,40.48,98.67,-0.25,DH</span><br><span class="line">39.06,10.06,25.02,29,114.41,4.56,DH</span><br><span class="line">68.83,22.22,50.09,46.61,105.99,-3.53,DH</span><br><span class="line">69.3,24.65,44.31,44.64,101.87,11.21,DH</span><br></pre></td></tr></table></figure>
+<p>Now that the project is setup and data is local, we can get to the code.  Time to open up the already created <code>Program.fs</code>.  First, add the necessary namespaces.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML.Runtime.Api</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML.Trainers</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML.Transforms</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML.Models</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML.Runtime.Learners</span><br></pre></td></tr></table></figure>
+<p>The ML.NET pipeline expects the data in a specific format.  In the C# world, this is a class, for F# we can use a type.  Below are the required types; <code>VertebralData</code> is the input data, <code>VertebralPrediction</code> is the output prediction.  For <code>VertebralData</code>, this is basically a a map of columns to member variables.  There are a couple notable points to ensure the pipeline can properly consume the data.  Each attribute must be <code>mutable public</code>, it also requires the <code>[&lt;Column(&quot;#&quot;)&gt;]</code> to specify it’s column position, and <code>[&lt;DefaultValue&gt;]</code> attributes.  For <code>VertebralPrediction</code>, a single attribute is required, the prediction value.  For the input data, the label variable must be named <code>Label</code>.  For the prediction type, the variable must be labeled <code>PredictedLabel</code>.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">VertebralData</span></span>() =</span><br><span class="line">    <span class="meta">[&lt;Column("0")&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> PelvicIncidence :float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;Column("1")&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> PelvicTilt :float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;Column("2")&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> LumbarLordosisAngle :float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;Column("3")&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> SacralSlope :float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;Column("4")&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> PelvicRadius :float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;Column("5")&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> DegreeSpondylolisthesis :float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;Column("6")&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Label:string</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">VertebralPrediction</span></span>() =</span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> PredictedLabel:string</span><br></pre></td></tr></table></figure>
+<p>Building the pipeline structure is reasonably intuitive.  First, create a pipeline.  Then, add components to the pipeline in the order to be executed.  So first, load the data with a <code>TextLoader</code>.  This data is comma delimited and has a header row.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> pipeline = <span class="keyword">new</span> LearningPipeline()</span><br><span class="line"><span class="keyword">let</span> dataPath = <span class="string">"./data/column_3C.dat"</span></span><br><span class="line">pipeline.Add(<span class="keyword">new</span> TextLoader&lt;VertebralData&gt;(dataPath, separator = <span class="string">","</span>, useHeader = <span class="keyword">false</span>))</span><br></pre></td></tr></table></figure>
+<p>After the data is loaded, feature columns need to be added to the pipeline.  I’m going to use all feature columns from the file, but I don’t have to.  The classification model requires features to be numeric.  The features don’t need anything special done to them, but the class does need converted to numeric values.  For this I use <code>Dictionarizer</code>.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pipeline.Add(<span class="keyword">new</span> Dictionarizer(<span class="string">"Label"</span>))</span><br><span class="line">pipeline.Add(<span class="keyword">new</span> ColumnConcatenator(<span class="string">"Features"</span>, <span class="string">"PelvicIncidence"</span>, <span class="string">"PelvicTilt"</span>, <span class="string">"LumbarLordosisAngle"</span>, <span class="string">"SacralSlope"</span>, <span class="string">"PelvicRadius"</span>, <span class="string">"DegreeSpondylolisthesis"</span>))</span><br></pre></td></tr></table></figure>
+<p>Now that the features are defined, it is time to determine what training method to use.  For this post <code>StochasticDualCoordinateAscentClassifier</code> is used.  Custom hyperparameters can also be defined.  I have a commented out example that changes bias and convergence tolerance.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pipeline.Add(<span class="keyword">new</span> StochasticDualCoordinateAscentClassifier())</span><br><span class="line"><span class="comment">// pipeline.Add(new StochasticDualCoordinateAscentClassifier(BiasLearningRate = 0.1f, ConvergenceTolerance = 0.3f))</span></span><br></pre></td></tr></table></figure>
+<p>For the dataset in question, the <code>StochasticDualCoordinateAscentClassifier</code> worked well, but I could’ve used a <code>NaiveBayesClassifier</code> as well.  Since this is multiclass, I had less options, but ML.NET seems to have a fair amount of binary classifiers, when that is the desired use case.</p>
+<p>The last part, train the model.  Note the <code>VertebralData</code> and <code>VertebralPrediction</code> types as part of the <code>Train</code> call.  I also need to define the prediction label column name.  Unfortunantly the function name is really long, but it is at least descriptive…</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pipeline.Add(<span class="keyword">new</span> PredictedLabelColumnOriginalValueConverter(PredictedLabelColumn = <span class="string">"PredictedLabel"</span>) )    </span><br><span class="line"><span class="keyword">let</span> model = pipeline.Train&lt;VertebralData, VertebralPrediction&gt;()</span><br></pre></td></tr></table></figure>
+<p>Validation of any model is important.  For a real case, I would train on one dataset and validate against a previously unseen dataset.  Since this is just an example, I validate against the training data.  As a result, I expect the results to be very good, and they are.  ML.NET offers multiple Evaluator classes, based on specific needs. This makes getting some of those crucial high-level numbers pretty easy.  It takes a trained model and a dataset, and produces critical metrics.  One specific call-out I will make is to the <code>TopKAccuracy</code>.  The evaluator allows an additional accuracy result based on if the correct class was in the top <code>k</code> rankings for a prediction.  Here I have choosen <code>2</code>, which is a little silly in a 3 class problem, but obviously in larger problems this is a valuable analysis tool.  The confusion matrix takes a bit of coercing to print nicely, but at least the data is there.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Evaluate results</span></span><br><span class="line"><span class="keyword">let</span> testData = <span class="keyword">new</span> TextLoader&lt;VertebralData&gt;(dataPath, separator = <span class="string">","</span>, useHeader = <span class="keyword">false</span>)</span><br><span class="line"><span class="keyword">let</span> evaluator = <span class="keyword">new</span> ClassificationEvaluator()</span><br><span class="line">evaluator.OutputTopKAcc &lt;- Option.toNullable(Some(<span class="number">2</span>))</span><br><span class="line"><span class="keyword">let</span> metrics = evaluator.Evaluate(model, testData) </span><br><span class="line">printfn <span class="string">""</span></span><br><span class="line">printfn <span class="string">"Macro-Average Accuracy : %f"</span> &lt;| metrics.AccuracyMacro</span><br><span class="line">printfn <span class="string">"Micro-Average Accuracy : %f"</span> &lt;| metrics.AccuracyMicro</span><br><span class="line">printfn <span class="string">"Average Log-loss       : %f"</span> &lt;| metrics.LogLoss</span><br><span class="line">printfn <span class="string">"Relative Log-loss      : %f"</span> &lt;| metrics.LogLossReduction</span><br><span class="line">printfn <span class="string">"Classes                : %A"</span> &lt;| metrics.ConfusionMatrix.ClassNames</span><br><span class="line">printfn <span class="string">"Log-loss by class      : %A"</span> &lt;| metrics.PerClassLogLoss</span><br><span class="line">printfn <span class="string">"Top-k Accuracy         : %f"</span> &lt;| metrics.TopKAccuracy</span><br><span class="line"></span><br><span class="line"><span class="comment">// Confusion Matrix Header</span></span><br><span class="line">printfn <span class="string">"Confusion Matrix       :"</span></span><br><span class="line">[<span class="number">0.</span>.metrics.ConfusionMatrix.Order - <span class="number">1</span>]</span><br><span class="line">|&gt; List.map (<span class="keyword">fun</span> a -&gt; sprintf <span class="string">"%4s "</span> (metrics.ConfusionMatrix.ClassNames.[a]))</span><br><span class="line">|&gt; List.fold (+) <span class="string">"     "</span></span><br><span class="line">|&gt; printfn <span class="string">"%s"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Confusion Matrix Data </span></span><br><span class="line">[<span class="number">0.</span>.metrics.ConfusionMatrix.Order - <span class="number">1</span>]</span><br><span class="line">|&gt; List.iter (<span class="keyword">fun</span> a -&gt; </span><br><span class="line">  [<span class="number">0.</span>.metrics.ConfusionMatrix.Order - <span class="number">1</span>]</span><br><span class="line">  |&gt; List.map (<span class="keyword">fun</span> b -&gt; sprintf <span class="string">"%4d "</span> (int (metrics.ConfusionMatrix.Item(a,b))))</span><br><span class="line">  |&gt; List.fold (+) (sprintf <span class="string">"%4s "</span> (metrics.ConfusionMatrix.ClassNames.[a]))</span><br><span class="line">  |&gt; printfn <span class="string">"%s"</span></span><br><span class="line">)</span><br><span class="line">printfn <span class="string">""</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># Evaluator Results:</span><br><span class="line">Macro-Average Accuracy : 0.817778</span><br><span class="line">Micro-Average Accuracy : 0.858065</span><br><span class="line">Average Log-loss       : 0.313334</span><br><span class="line">Relative Log-loss      : 69.699239</span><br><span class="line">Classes                : [|&quot;DH&quot;; &quot;SL&quot;; &quot;NO&quot;|]</span><br><span class="line">Log-loss by class      : [|0.5853304274; 0.1233100547; 0.4351712598|]</span><br><span class="line">Top-k Accuracy         : 0.996774</span><br><span class="line"></span><br><span class="line">Confusion Matrix       :</span><br><span class="line">       DH   SL   NO </span><br><span class="line">  DH   40    1   19 </span><br><span class="line">  SL    3  142    5 </span><br><span class="line">  NO   13    3   84 </span><br></pre></td></tr></table></figure>
+<p>With the initial evaluation out of the way, here is an example of how individual predictions can be made.  Create a <code>VertebralData</code> object and provide it to the <code>Predict</code> method.  For this example, I pull one of those rows from the training data.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> test1 = VertebralData()</span><br><span class="line">test1.PelvicTilt &lt;- <span class="number">63.03</span>f</span><br><span class="line">test1.LumbarLordosisAngle &lt;- <span class="number">22.55</span>f</span><br><span class="line">test1.SacralSlope &lt;- <span class="number">39.61</span>f</span><br><span class="line">test1.PelvicRadius &lt;- <span class="number">40.48</span>f</span><br><span class="line">test1.DegreeSpondylolisthesis &lt;- <span class="number">-0.25</span>f</span><br><span class="line"><span class="keyword">let</span> prediction = model.Predict(test1)</span><br><span class="line"></span><br><span class="line">printfn <span class="string">"Predicted Category: %s"</span> prediction.PredictedLabel</span><br><span class="line">printfn <span class="string">"Actual Category   : DH"</span></span><br><span class="line">printfn <span class="string">""</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># Prediction Result:</span><br><span class="line">Predicted Category: DH</span><br><span class="line">Actual Category   : DH</span><br></pre></td></tr></table></figure>
+<p>Once a model is trained, it can also be saved to a file a reloaded at a later time.  This is supported by the <code>WriteAsync</code> and <code>ReadAsync</code> methods of a model.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Save model to file </span></span><br><span class="line">model.WriteAsync(<span class="string">"test-model"</span>)</span><br><span class="line">|&gt; Async.AwaitTask</span><br><span class="line">|&gt; ignore</span><br><span class="line"></span><br><span class="line"><span class="comment">// Load model from file and run a prediction</span></span><br><span class="line"><span class="keyword">let</span> modelReloaded =</span><br><span class="line">  PredictionModel.ReadAsync&lt;VertebralData, VertebralPrediction&gt;(<span class="string">"test-model"</span>) </span><br><span class="line">  |&gt; Async.AwaitTask </span><br><span class="line">  |&gt; Async.RunSynchronously</span><br><span class="line"><span class="keyword">let</span> predictionReloaded = modelReloaded.Predict(test1)</span><br><span class="line">printfn <span class="string">"Predicted Category (Reloaded): %s"</span> predictionReloaded.PredictedLabel</span><br><span class="line">printfn <span class="string">"Actual Category (Reloaded)   : DH"</span></span><br><span class="line">printfn <span class="string">""</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># Prediction Result: (model reloaded):</span><br><span class="line">Predicted Category (Reloaded): DH</span><br><span class="line">Actual Category (Reloaded)   : DH</span><br></pre></td></tr></table></figure>
+<p>Throughout the post, portions of the output have been provided out of band.  Here is how the whole thing looks when run with <code>dotnet run</code>.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">Automatically adding a MinMax normalization transform, use &apos;norm=Warn&apos; or &apos;norm=No&apos; to turn this behavior off.</span><br><span class="line">Using 2 threads to train.</span><br><span class="line">Automatically choosing a check frequency of 2.</span><br><span class="line">Auto-tuning parameters: maxIterations = 4836.</span><br><span class="line">Auto-tuning parameters: L2 = 2.668161E-05.</span><br><span class="line">Auto-tuning parameters: L1Threshold (L1/L2) = 0.</span><br><span class="line">Using best model from iteration 448.</span><br><span class="line">Not training a calibrator because it is not needed.</span><br><span class="line"></span><br><span class="line">Macro-Average Accuracy : 0.817778</span><br><span class="line">Micro-Average Accuracy : 0.858065</span><br><span class="line">Average Log-loss       : 0.313334</span><br><span class="line">Relative Log-loss      : 69.699239</span><br><span class="line">Classes                : [|&quot;DH&quot;; &quot;SL&quot;; &quot;NO&quot;|]</span><br><span class="line">Log-loss by class      : [|0.5853304274; 0.1233100547; 0.4351712598|]</span><br><span class="line">Top-k Accuracy         : 0.996774</span><br><span class="line">Confusion Matrix       :</span><br><span class="line">       DH   SL   NO </span><br><span class="line">  DH   40    1   19 </span><br><span class="line">  SL    3  142    5 </span><br><span class="line">  NO   13    3   84 </span><br><span class="line"></span><br><span class="line">Predicted Category: DH</span><br><span class="line">Actual Category   : DH</span><br><span class="line"></span><br><span class="line">Predicted Category (Reloaded): DH</span><br><span class="line">Actual Category (Reloaded)   : DH</span><br></pre></td></tr></table></figure>
+<p>This has been a brief look into training and using an ML.NET classification model.  There were two interesting takeaways for me.  The first is just how to interact with the framework for classification.  The second, and more interesting, is how little is different between the regressor and classification pipelines.  I really appreciate a consistent framework where I can leverage a similar pipeline for most of my projects, and only really need to change out the appropriate logic bits for my specfic current problem.  ML.NET has some really good components, and it will be interesting to see it grows, hopefully with more F#-centric support as well. Until next time.</p>
+<p><img src="/images/mlnet2/184px-SpondylolisthesisL5S1.jpg" alt=""></p>
+<!-- Image available under the Creative Commons license.  Source: https://commons.wikimedia.org/wiki/File:SpondylolisthesisL5S1.jpg Author: Lucien Monfils -->
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2018/06/09/F-and-MLNet-Regression/">F# and ML.Net Regression</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/08/20/F-and-Serilog/">F# and Serilog</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/20/F-and-Text-Analytics/">F# and Text Analytics</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2018/06/23/F-and-MLNet-Classification/" data-id="cjirc45zk0000zzm0tj6p5ey3" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NET-Core/">.NET Core</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MLNet/">MLNet</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Machine-Learning/">Machine Learning</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/06/09/F-and-MLNet-Regression/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">F# and ML.Net Regression</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 12.5px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 16.25px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 15px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Classification/" style="font-size: 11.25px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.25px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.75px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.25px;">Computer Vision</a> <a href="/tags/DTW/" style="font-size: 11.25px;">DTW</a> <a href="/tags/Data/" style="font-size: 17.5px;">Data</a> <a href="/tags/Database/" style="font-size: 11.25px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.25px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 11.25px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.5px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Faces/" style="font-size: 11.25px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.25px;">Http</a> <a href="/tags/Images/" style="font-size: 12.5px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.5px;">Kaggle</a> <a href="/tags/Legos/" style="font-size: 11.25px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 11.25px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.5px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.75px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.5px;">Parsing</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Signals/" style="font-size: 11.25px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.25px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.75px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 12.5px;">Text</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Webapi/" style="font-size: 11.25px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.25px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">June 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">January 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">December 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">August 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">July 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">May 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">March 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">February 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/12/">December 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/11/">November 2016</a></li></ul>
+    </div>
+  </div>
+
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
