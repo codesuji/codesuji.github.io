@@ -13,10 +13,12 @@
 <meta property="og:site_name" content="codesuji">
 <meta property="og:description" content="Recently I was working on a project using F# and Elasticsearch.  I thought it would be fun to post a light introduction.  Nicely enough, Elastic provides a .NET client, two actually here.  They are a">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2018-10-11T02:04:57.753Z">
+<meta property="og:image" content="http://codesuji.com/images/es1/es1.png">
+<meta property="og:updated_time" content="2018-10-11T02:35:34.034Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="F# and Elasticsearch">
 <meta name="twitter:description" content="Recently I was working on a project using F# and Elasticsearch.  I thought it would be fun to post a light introduction.  Nicely enough, Elastic provides a .NET client, two actually here.  They are a">
+<meta name="twitter:image" content="http://codesuji.com/images/es1/es1.png">
   
     <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
   
@@ -124,9 +126,10 @@ ga('send', 'pageview');
 <p>Now that I’ve shown an insert and searches, here is how to delete an index.  Deleting an index is easy enough, but it doesn’t take an index name as a string directly.  So an <code>Indices</code> object needs created from the index name string.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> result = client.DeleteIndex(<span class="keyword">new</span> DeleteIndexRequest(Indices.Parse(SearchIndex)))</span><br><span class="line">printfn <span class="string">"%A"</span> result</span><br></pre></td></tr></table></figure>
 <p>There you have it.  This has been a short introduction into using F# with the Elasticsearch NEST library.  There is certainly more, but most of interesting composition exists in constructing custom searches.  The above patterns should be enough to guide the rest of the way.  One way this process could improve is to use discriminated and records.  To that end, a quick search found some projects in various states of completeness. I certainly enjoy finding these, since coding the F#-way is often more pleasant.  That puts these on my list for future evaluation.  That is all for today, until next time.  Thanks.</p>
+<p><img src="/images/es1/es1.png" alt="Elasticsearch Client"></p>
 
         <div class="related-posts-box">
-        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/20/F-and-Text-Analytics/">F# and Text Analytics</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/26/Simple-Analysis-with-F/">Simple Analysis with F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/04/24/FSharp-and-Word-Stems/">F# and Word Stems</a></li></ul>        </div>
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/20/F-and-Text-Analytics/">F# and Text Analytics</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/04/24/FSharp-and-Word-Stems/">F# and Word Stems</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/26/Simple-Analysis-with-F/">Simple Analysis with F#</a></li></ul>        </div>
       
     </div>
     <footer class="article-footer">
