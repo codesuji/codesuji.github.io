@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>F# Benchmarking | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Occasionally the need arises in an F# project to perform benchmarking.  BenchmarkDotNet is a powerful tool made exactly for this purpose.  Today’s post provides an introductory look into the process.">
+<meta name="keywords" content="F#,FSharp,Benchmarking">
+<meta property="og:type" content="article">
+<meta property="og:title" content="F# Benchmarking">
+<meta property="og:url" content="http://codesuji.com/2018/12/18/F-Benchmarking/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Occasionally the need arises in an F# project to perform benchmarking.  BenchmarkDotNet is a powerful tool made exactly for this purpose.  Today’s post provides an introductory look into the process.">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://codesuji.com/images/be1/results.png">
+<meta property="og:updated_time" content="2018-12-19T03:50:11.257Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="F# Benchmarking">
+<meta name="twitter:description" content="Occasionally the need arises in an F# project to perform benchmarking.  BenchmarkDotNet is a powerful tool made exactly for this purpose.  Today’s post provides an introductory look into the process.">
+<meta name="twitter:image" content="http://codesuji.com/images/be1/results.png">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-Benchmarking" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/12/18/F-Benchmarking/" class="article-date">
+  <time datetime="2018-12-19T04:17:32.000Z" itemprop="datePublished">2018-12-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      F# Benchmarking
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 6 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Occasionally the need arises in an <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a> project to perform benchmarking.  <a href="https://benchmarkdotnet.org/" target="_blank" rel="noopener">BenchmarkDotNet</a> is a powerful tool made exactly for this purpose.  Today’s post provides an introductory look into the process.</p>
+<a id="more"></a>
+<p>Although <code>#time</code> and <code>Stopwatch</code> are useful for quick and dirty checks, BenchmarkDotNet allows a more comprehensive look at performance characteristics. This post will use <code>sort</code> for a case study to display a sample of what can be done.  Before getting started ensure you have <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core version 2.2</a>.  Select <strong>SDK</strong> for your platform.  After that create a console F# project and install the BenchmarkDotNet package.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dotnet new console --language F# --name BenchmarkSort</span><br><span class="line">cd BenchmarkSort </span><br><span class="line">dotnet add package BenchmarkDotNet --version 0.11.3</span><br></pre></td></tr></table></figure>
+<p>First, the initial stuff.  One note here is that I decided to use a complex type <code>Foo</code> for my sorting benchmark.  I could’ve used <code>int</code>, but .NET has highly optimized methods for sorting native types like <code>int</code>.  To the level the playing field a bit I wanted to take this out of the equation.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> Program</span><br><span class="line"></span><br><span class="line"><span class="keyword">open</span> System</span><br><span class="line"><span class="keyword">open</span> BenchmarkDotNet.Attributes</span><br><span class="line"><span class="keyword">open</span> BenchmarkDotNet.Running</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> rand = <span class="keyword">new</span> Random()</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Foo</span> </span>= &#123; Id: int; Name: string &#125;</span><br></pre></td></tr></table></figure>
+<p>Time to create the test functions.  The comparison targets will be .NET’s built in <code>List.sort</code>, then a hand-written <code>QuickSort</code>, and <code>BubbleSort</code>.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> listSort (l :Foo list) =</span><br><span class="line">  List.sort l</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">rec</span> quickSort (l :Foo list) =</span><br><span class="line">  <span class="keyword">match</span> l <span class="keyword">with</span> </span><br><span class="line">  | []   -&gt; []</span><br><span class="line">  | h::t -&gt; <span class="keyword">let</span> (smaller, larger) = List.partition (<span class="keyword">fun</span> x -&gt; x.Id &lt;= h.Id) t</span><br><span class="line">            List.concat [ quickSort smaller; [h]; quickSort larger ]</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> bubbleSortMutable (l :Foo list) = </span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> l' = l |&gt; Array.ofList</span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> keepGoing = <span class="keyword">true</span></span><br><span class="line">  <span class="keyword">while</span> keepGoing <span class="keyword">do</span></span><br><span class="line">    keepGoing &lt;- <span class="keyword">false</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">1.</span>.(Array.length l' - <span class="number">1</span>)] <span class="keyword">do</span></span><br><span class="line">      <span class="keyword">if</span> l'.[i<span class="number">-1</span>] &gt; l'.[i] <span class="keyword">then</span></span><br><span class="line">        <span class="keyword">let</span> t = l'.[i<span class="number">-1</span>]</span><br><span class="line">        l'.[i<span class="number">-1</span>] &lt;- l'.[i]</span><br><span class="line">        l'.[i] &lt;- t</span><br><span class="line">        keepGoing &lt;- <span class="keyword">true</span></span><br><span class="line">  l' |&gt; List.ofArray</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> bubbleSortRecursive (l :Foo list) = </span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">rec</span> bubbleSort' a rev l =</span><br><span class="line">    <span class="keyword">match</span> l, rev <span class="keyword">with</span></span><br><span class="line">    | [], <span class="keyword">true</span>     -&gt; List.rev a</span><br><span class="line">    | [], <span class="keyword">false</span>    -&gt; List.rev a |&gt; bubbleSort' [] <span class="keyword">true</span></span><br><span class="line">    | h1::h2::t, _ -&gt; <span class="keyword">if</span> h1 &gt; h2 </span><br><span class="line">                      <span class="keyword">then</span> bubbleSort' (h2::a) <span class="keyword">false</span> (h1::t)</span><br><span class="line">                      <span class="keyword">else</span> bubbleSort' (h1::a) rev (h2::t)</span><br><span class="line">    | h::t, _      -&gt; bubbleSort' (h::a) rev t</span><br><span class="line">  bubbleSort' [] <span class="keyword">true</span> l</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> initList n = </span><br><span class="line">  [<span class="number">1.</span>.n] </span><br><span class="line">  |&gt; List.map (<span class="keyword">fun</span> _ -&gt;</span><br><span class="line">    <span class="keyword">let</span> id = rand.Next(<span class="number">10</span>*n)</span><br><span class="line">    &#123; Foo.Id = id; Name = id.ToString() &#125;)</span><br></pre></td></tr></table></figure>
+<p>Now it is time to setup the benchmarking methods.  First, I make a type <code>SortComparison</code>.  I have attached a <code>MemoryDiagnoser</code> attribute so that I’ll get GC statistics back from the benchmarking run.  The sorting methods will be tested against different list sizes (10, 1000, and 10000).  This is defined in <code>ListSize</code>, where the <code>Params</code> attribute defines what BenchmarkDotNet should use for parameterization during the tests.  Next, it is time to define what will be compared.  To do this there are member functions marked with the <code>Benchmark</code> attribute.  That’s all there is to setting up the tests.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">[&lt;MemoryDiagnoser&gt;]</span></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">SortComparison</span> </span>() =</span><br><span class="line"></span><br><span class="line">  <span class="meta">[&lt;Params (10,1000,10000)&gt;]</span> </span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> ListSize :int = <span class="number">0</span> <span class="keyword">with</span> get, set</span><br><span class="line"></span><br><span class="line">  <span class="keyword">member</span> self.mainList = initList self.ListSize</span><br><span class="line">  </span><br><span class="line">  <span class="meta">[&lt;Benchmark&gt;]</span></span><br><span class="line">  <span class="keyword">member</span> self.ListSort() = listSort self.mainList</span><br><span class="line"></span><br><span class="line">  <span class="meta">[&lt;Benchmark&gt;]</span></span><br><span class="line">  <span class="keyword">member</span> self.ListQuickSort () = quickSort self.mainList</span><br><span class="line"></span><br><span class="line">  <span class="meta">[&lt;Benchmark&gt;]</span></span><br><span class="line">  <span class="keyword">member</span> self.ListBubbleSortMutable () = bubbleSortMutable self.mainList</span><br><span class="line">  </span><br><span class="line">  <span class="meta">[&lt;Benchmark&gt;]</span></span><br><span class="line">  <span class="keyword">member</span> self.ListBubbleSortRecursive () = bubbleSortRecursive self.mainList</span><br></pre></td></tr></table></figure>
+<p>In Main, all that is needed is a simple runner.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">[&lt;EntryPoint&gt;]</span></span><br><span class="line"><span class="keyword">let</span> Main args =</span><br><span class="line">  BenchmarkRunner.Run typeof&lt;SortComparison&gt; |&gt; ignore</span><br></pre></td></tr></table></figure>
+<p>Once everything is together, they just need to run.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">~/Benchmark(master)$ dotnet run -c release</span><br></pre></td></tr></table></figure>
+<p>Time to look at the results. The benchmark spews a ton of data, but I’ll just focus on the final results here.</p>
+<p><img src="/images/be1/results.png" alt="Results"></p>
+<p>The test results aren’t too surprising.  .NET’s built in sort is more efficient for large lists, although QuickSort holds its own as long as the list isn’t too large.  Both are faster than BubbleSort.  With the GC stats, we can also see where additional GC’s start to hinder some of the algorithms.</p>
+<p>This is great, and time to make it a bit more advanced.  Multiple benchmarks can be placed and run in the same file.  Here I add <code>FakeComparison</code> and add a selector when the application is run.  This is helpful when you want to keep different sets of benchmarking tests.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">FakeComparison</span> </span>() =</span><br><span class="line">  <span class="meta">[&lt;Benchmark&gt;]</span></span><br><span class="line">  <span class="keyword">member</span> self.Fake1 () = <span class="number">1</span></span><br><span class="line">  </span><br><span class="line">  <span class="meta">[&lt;Benchmark&gt;]</span></span><br><span class="line">  <span class="keyword">member</span> self.Fake2 () = <span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> defaultSwitch () = BenchmarkSwitcher [| typeof&lt;SortComparison&gt;; typeof&lt;FakeComparison&gt; |]</span><br><span class="line"></span><br><span class="line"><span class="meta">[&lt;EntryPoint&gt;]</span></span><br><span class="line"><span class="keyword">let</span> Main args =</span><br><span class="line">  defaultSwitch().Run args |&gt; ignore </span><br></pre></td></tr></table></figure>
+<p>Now, when running, a prompt is provided.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">~/Benchmark(master)$ dotnet run -c release</span><br><span class="line">Available Benchmarks:</span><br><span class="line">  #0 SortComparison</span><br><span class="line">  #1 FakeComparison</span><br><span class="line"></span><br><span class="line">You should select the target benchmark(s). Please, print a number of a benchmark (e.g. &apos;0&apos;) or a contained benchmark caption (e.g. &apos;SortComparison&apos;):</span><br><span class="line">If you want to select few, please separate them with space ` ` (e.g. `1 2 3`)</span><br><span class="line">You can also provide the class name in console arguments by using --filter. (e.g. &apos;--filter *SortComparison*&apos;):</span><br></pre></td></tr></table></figure>
+<p>There is one more aspect of reporting, and that is the final results.  What I’ve shown has been part of the console output, but there is more.  A <code>BenchmarkDotNet.Artifacts</code> directory contains a detailed run log.  It also contains specially formatted results, namely: csv, html, and github markdown.  All of these being very useful for more advanced reporting or just simply dropping into a repo.</p>
+<p>This provides the basis to explore BenchmarkDotNet in your next performance comparison endeavor.  Be sure to check out the <a href="https://benchmarkdotnet.org/" target="_blank" rel="noopener">BenchmarkDotNet</a> site for additional documentation. Until next time.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2017/12/26/The-Power-of-the-Forward-Pipe/">The Power of the Forward Pipe</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/04/24/FSharp-and-Word-Stems/">F# and Word Stems</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/03/04/bf-compiler-part3-compiler/">BF Compiler Part 3 - Compiler</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2018/12/18/F-Benchmarking/" data-id="cjpqyirmy0000ham0xukunum7" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Benchmarking/">Benchmarking</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/11/30/F-and-MLNet-Clustering-V2/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">F# and ML.Net Clustering (V2)</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 15px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 16.25px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 15px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Classification/" style="font-size: 11.25px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.25px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.75px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.25px;">Computer Vision</a> <a href="/tags/DTW/" style="font-size: 11.25px;">DTW</a> <a href="/tags/Data/" style="font-size: 17.5px;">Data</a> <a href="/tags/Database/" style="font-size: 11.25px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.25px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 11.25px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.5px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Faces/" style="font-size: 11.25px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.25px;">Http</a> <a href="/tags/Images/" style="font-size: 12.5px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.5px;">Kaggle</a> <a href="/tags/Legos/" style="font-size: 11.25px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 13.75px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.5px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.75px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.5px;">Parsing</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Signals/" style="font-size: 11.25px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.25px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.75px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 13.75px;">Text</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Webapi/" style="font-size: 11.25px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.25px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">December 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">November 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">October 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">July 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">June 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">January 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">December 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">August 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">July 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">May 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">March 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">February 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/12/">December 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/11/">November 2016</a></li></ul>
+    </div>
+  </div>
+
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
