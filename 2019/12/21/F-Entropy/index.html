@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Examing Entropy with F# | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Measuring entropy can be a useful heuristic when performing analysis.  This is a short introduction into performing entropy analysis on binary and text files using F#.">
+<meta name="keywords" content="F#,FSharp,Entropy">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Examing Entropy with F#">
+<meta property="og:url" content="http://codesuji.com/2019/12/21/F-Entropy/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Measuring entropy can be a useful heuristic when performing analysis.  This is a short introduction into performing entropy analysis on binary and text files using F#.">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://codesuji.com/images/entropy1/program-secret.png">
+<meta property="og:image" content="http://codesuji.com/images/entropy1/fake.png">
+<meta property="og:updated_time" content="2019-12-22T14:17:51.133Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Examing Entropy with F#">
+<meta name="twitter:description" content="Measuring entropy can be a useful heuristic when performing analysis.  This is a short introduction into performing entropy analysis on binary and text files using F#.">
+<meta name="twitter:image" content="http://codesuji.com/images/entropy1/program-secret.png">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-Entropy" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/12/21/F-Entropy/" class="article-date">
+  <time datetime="2019-12-21T22:09:22.000Z" itemprop="datePublished">2019-12-21</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Examing Entropy with F#
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 9 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
+<p>Measuring entropy can be a useful heuristic when performing analysis.  This is a short introduction into performing entropy analysis on binary and text files using <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a>.</p>
+<a id="more"></a>
+<p>What can entropy based analysis be used for? One specific use case is searching for secret keys in files.  In particular, scanning for hardcoded secrets or passwords that are accidently committed to git.  Scanning tools can be used to catch these kinds of issues.  Another use case is scanning binaries for reverse engineering purposes.  It is an interesting exercise to see what goes on behind the scenes with these types of tools.  The ability to scan successfully is predicated on the keys being blocks of random characters (a fair assumption for good passwords).  The randomness can be extracted from code files that have a certain level of predictability.  At the core of this process is Information Theory, namely <a href="https://en.wikipedia.org/wiki/Entropy_%28information_theory%29" target="_blank" rel="noopener">Shannon Entropy</a>. If you want to follow along, you’ll need to get <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core</a> installed.  For visualizations, XPlot will provide the necessary functionality. </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dotnet new console -lang F# -n Entropy</span><br><span class="line">cd Entropy</span><br><span class="line">dotnet new package XPlot.GoogleCharts --version 3.0.1</span><br></pre></td></tr></table></figure>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System</span><br><span class="line"><span class="keyword">open</span> System.IO</span><br><span class="line"><span class="keyword">open</span> XPlot.GoogleCharts</span><br></pre></td></tr></table></figure>
+<p>$$ {H = - \sum^N_{i=1}p_i \log p_i} $$</p>
+<p>The above equation is our starting point, where p<sub>i</sub> is the probability of seeing a particular character.  Implementation of the Shannon Entropy calculation is deceptively simple.  First, take a byte array and count the frequency of each byte value.  Second, sum the probabilities of seeing each byte in the byte array times the Log of the respective probability.  Here is where I diverge from the typical implementation.  Discussion often focuses on Log<sub>2</sub>, since so many instances focus on bits.  I prefer to work with a normalized value.  For 256 possible values I use Log<sub>256</sub> to scale between 0 and 1, where 0 is no entropy and 1 is high entropy. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> NormalizedEntropy (data: byte[]) =</span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> frequency = Array.create <span class="number">256</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Populate byte frequencies</span></span><br><span class="line">  <span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">0</span> .. (data.Length - <span class="number">1</span>) <span class="keyword">do</span> </span><br><span class="line">    <span class="keyword">let</span> newByte = int data.[i]</span><br><span class="line">    frequency.[newByte] &lt;- frequency.[newByte] + <span class="number">1</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Calculate entropy based on character frequencies</span></span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> entropy = <span class="number">0.</span></span><br><span class="line">  <span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">0</span> .. <span class="number">255</span> <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">let</span> probX = (float frequency.[i]) / (float data.Length)</span><br><span class="line">    <span class="keyword">if</span> probX &gt; <span class="number">0.</span> <span class="keyword">then</span> entropy &lt;- entropy - (probX * Math.Log(probX, <span class="number">256.</span>))</span><br><span class="line">  </span><br><span class="line">  entropy</span><br></pre></td></tr></table></figure>
+<p>Since one of the possible uses of entropy analysis is checking files for secrets, a simple example is looking at <code>Program.fs</code>.  For comparison I copied the file and added a couple random passwords.  Taking it a step further, I generated a <code>fake.pem</code> just to demonstrate how the entropy of code differs from pem files (something else that might want to be scanned for in code repos).</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[ <span class="string">"Program.fs"</span> </span><br><span class="line">  <span class="string">"Program-Secret.fs"</span> </span><br><span class="line">  <span class="string">"fake.pem"</span> ]</span><br><span class="line">  |&gt; List.iter (<span class="keyword">fun</span> filename -&gt;</span><br><span class="line">    <span class="keyword">let</span> bytes = File.ReadAllBytes(filename)</span><br><span class="line">    <span class="keyword">let</span> e = NormalizedEntropy bytes</span><br><span class="line">    printfn <span class="string">"%20s - %3.2f"</span> filename e)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>As the results show below, putting some randomized strings (like secret keys or passwords) in a code file increases it’s entropy.  For comparison, the pem file is noticeably higher.  Although this is interesting, it has its limitations for any type of real scanning.  Perhaps I could scan all my code files to see if there is a typical range and use that to find anomalies, but I have a better idea.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">       Program.fs - 0.60</span><br><span class="line">Program-Secret.fs - 0.63</span><br><span class="line">         fake.pem - 0.75</span><br></pre></td></tr></table></figure>
+<p>Details can be lost by looking at a file as a whole.  Another approach is to using a sliding window through the file.  Additionally leverage a threshold to show any blocks of the the file that have a high entropy.  A little refactoring for readability, the entropy calculation is broken out.  Then a sliding window is applied against the file.  Whenever a window is above the entropy threshold, show that block (at least the printable characters).  To cut down on excessive printing, don’t show overlapping windows.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Given a frequency array, calculate normalized entropy for a specified window size</span></span><br><span class="line"><span class="keyword">let</span> windowNormalizedEntropy (windowSize: int) (frequency: int[])=</span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> entropy = <span class="number">0.</span></span><br><span class="line">  <span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">0</span> .. <span class="number">255</span> <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">let</span> probX = (float frequency.[i]) / (float windowSize)</span><br><span class="line">    <span class="keyword">if</span> probX &gt; <span class="number">0.</span> <span class="keyword">then</span> entropy &lt;- entropy - (probX * Math.Log(probX, <span class="number">256.</span>))</span><br><span class="line">  entropy</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Normalized entropy using a rolling window</span></span><br><span class="line"><span class="keyword">let</span> NormalizedEntropyWindowShow (windowSize: int) (threshold: float) (data: byte[]) =</span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> frequency = Array.create <span class="number">256</span> <span class="number">0</span></span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> lastPrintedPosition = <span class="number">-1</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> position <span class="keyword">in</span> <span class="number">0</span> .. (data.Length - windowSize - <span class="number">1</span>) <span class="keyword">do</span></span><br><span class="line">    <span class="comment">// Add new byte to window</span></span><br><span class="line">    <span class="keyword">let</span> newByte = int data.[position + windowSize]</span><br><span class="line">    frequency.[newByte] &lt;- frequency.[newByte] + <span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> position &gt;= windowSize <span class="keyword">then</span> </span><br><span class="line">      <span class="comment">// Roll off old byte from window </span></span><br><span class="line">      <span class="keyword">let</span> currentByte = int data.[position]</span><br><span class="line">      frequency.[currentByte] &lt;- frequency.[currentByte] - <span class="number">1</span></span><br><span class="line"></span><br><span class="line">      <span class="comment">// Calculate entropy </span></span><br><span class="line">      <span class="keyword">let</span> entropy = windowNormalizedEntropy windowSize frequency</span><br><span class="line"></span><br><span class="line">      <span class="comment">// Show high entropy block (if I haven't shown part already)</span></span><br><span class="line">      <span class="keyword">if</span> entropy &gt;= threshold &amp;&amp; (position &gt; lastPrintedPosition) <span class="keyword">then</span></span><br><span class="line">        lastPrintedPosition &lt;- position + windowSize - <span class="number">1</span></span><br><span class="line">        <span class="keyword">let</span> nonPrintable = RegularExpressions.Regex(<span class="string">"[^ -~]"</span>)</span><br><span class="line">        <span class="keyword">let</span> slice = data.[position..(position + windowSize - <span class="number">1</span>)]</span><br><span class="line">        <span class="keyword">let</span> s = nonPrintable.Replace(Encoding.ASCII.GetString (slice), <span class="string">"?"</span>)</span><br><span class="line">        printfn <span class="string">"%6d %6.5f %s"</span> position entropy s</span><br></pre></td></tr></table></figure>
+<p>The file can then be evaluated by providing a window size and threshold.  A window size of 50 bytes and threshold of 0.58 are mostly arbitrary, but some experimentation show these seem to get a reasonable result.  I can now run the analysis against a code file with secrets and the pem file.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[ <span class="string">"Program-Secret.fs"</span> </span><br><span class="line">  <span class="string">"fake.pem"</span> ]</span><br><span class="line">|&gt; List.iter (<span class="keyword">fun</span> filename -&gt;</span><br><span class="line">  printfn <span class="string">"File: %s"</span> filename</span><br><span class="line">  <span class="keyword">let</span> bytes = File.ReadAllBytes(filename)</span><br><span class="line">  NormalizedEntropyWindowShow <span class="number">50</span> <span class="number">0.58</span> bytes)</span><br></pre></td></tr></table></figure>
+<p>The results provide a bit more insight than before.  The entire pem file is captured (as expected).  For the code file, not all things caught are secrets.  Natural codeblocks get caught up in the process, and that’s fine.  This is about finding possibly areas of concern, and that goal is accomplished.  Two places for improvement are finding a window size and threshold that maximize finding secrets while minimizing false positives.  Taking it further, different languages have their own characteristics, impacting the best parameters.  Beyond static parameters, statistical methods can be used to determine anomalies and parameters for a file, providing a more dynamic approach.  What this helps expose is this is good and useful approach, but not perfect.  There are gaps that can be closed to make it a more robust solution.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">File: Program-Secret.fs</span><br><span class="line">   151 0.58482 &quot;?  |&gt; printfn &quot;%s&quot;??// let keyToFind = &quot;ABCKEDIEM</span><br><span class="line">   201 0.63482 WPFHEIK1238UIMQ890PoqEgfh&quot;??/// Normalized entropy</span><br><span class="line">  1070 0.58105 bX * Math.Log(probX, 256.))?  entropy??/// Normali</span><br><span class="line">  1850 0.58105 rintable = Text.RegularExpressions.Regex(&quot;[^ -~]&quot;)</span><br><span class="line">  2830 0.58391 ?[&lt;EntryPoint&gt;]?let main argv =?  // 94kmnhdnbi*IE</span><br><span class="line">  2880 0.66548 JDMSKQL098123456hjqwemn,.&lt;&gt;/;&apos;:&apos;,.mnbvcxzasdfghjkl</span><br><span class="line">  2930 0.70548 ;&apos;][poiuytrewq1234567890-=+_)(*&amp;^%$#@!QWERTYUIOP&#123;&#125;</span><br><span class="line">  2980 0.63635 |&quot;:LKJHGFDSAZXCVBNM&lt;&gt;?*))]?  ?    // (Text.Encodin</span><br><span class="line">File: fake.pem</span><br><span class="line">    50 0.61793 04w4NMK0Ak5XVR1XR/TX/YGcj6z91Zd8j3K+0Q8SZKa9n8?QIu</span><br><span class="line">   100 0.62482 0URxz/CT5I4SeS746vd1bPpcSXy0rHvLMz0UxtIxlEOuCHAoed</span><br><span class="line">   150 0.60982 eDzKv4zr+MJ?/FCrKRazzAFv2/klBi3bRfW4UseYPeVs43ahRF</span><br><span class="line">   200 0.62293 O/gugc11n8drzlQq3BqkwJCTAx?uj+ZqG5QI6C8x8uooOvs0xk</span><br><span class="line">   ...</span><br><span class="line">  1450 0.63048 xjaxX+GIqEK?TM0T8QKBgCN83f96A39Qf5WGlJuY5EAsLWi+eu</span><br><span class="line">  1500 0.63048 0BO/We7heP1Op74XidcWucKaRb?t0+cNjkcnYgziBPj8TxAzMh</span><br><span class="line">  1550 0.63671 ueHJIB+TRAOqxQXPuYj+15O2PudrgMrKkRFC0lG90?3rOiKJCY</span><br><span class="line">  1600 0.63146 4g578SCKRNF0/xiMlXe9+DzfBCStzFirsI2Bq7tcrTmw?-----</span><br></pre></td></tr></table></figure>
+<p>Because there are multiple ways to look at the data, it is time to go a bit more visual.  The below adaptation returns a by-sliding-window entropy array.  This array is then fed into a charting function.  A chart provides a nice visual representation of the entropy over the entire file. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Normalized entropy using a rolling window</span></span><br><span class="line"><span class="keyword">let</span> NormalizedEntropyWindow (windowSize: int) (data: byte[]) =</span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> frequency = Array.create <span class="number">256</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">  [| </span><br><span class="line">    <span class="keyword">for</span> position <span class="keyword">in</span> <span class="number">0</span> .. (data.Length - windowSize - <span class="number">1</span>) <span class="keyword">do</span></span><br><span class="line">      <span class="comment">// Add new byte to window</span></span><br><span class="line">      <span class="keyword">let</span> newByte = int data.[position + windowSize]</span><br><span class="line">      frequency.[newByte] &lt;- frequency.[newByte] + <span class="number">1</span></span><br><span class="line">      </span><br><span class="line">      <span class="keyword">if</span> position &gt;= windowSize <span class="keyword">then</span> </span><br><span class="line">        <span class="comment">// Roll off old byte off window</span></span><br><span class="line">        <span class="keyword">let</span> currentByte = int data.[position]</span><br><span class="line">        frequency.[currentByte] &lt;- frequency.[currentByte] - <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// Calculate entropy </span></span><br><span class="line">        <span class="keyword">yield</span> (windowNormalizedEntropy windowSize frequency)</span><br><span class="line">  |]</span><br></pre></td></tr></table></figure>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[ <span class="string">"Program-Secret.fs"</span> </span><br><span class="line">  <span class="string">"fake.pem"</span> ]</span><br><span class="line">|&gt; List.iter (<span class="keyword">fun</span> filename -&gt;</span><br><span class="line">  printfn <span class="string">"File: %s"</span> filename</span><br><span class="line">  <span class="keyword">let</span> bytes = File.ReadAllBytes(filename)</span><br><span class="line">  </span><br><span class="line">  NormalizedEntropyWindow <span class="number">100</span> bytes</span><br><span class="line">  |&gt; Chart.Line</span><br><span class="line">  |&gt; Chart.Show)</span><br></pre></td></tr></table></figure>
+<p>Now, as a result, I get charts showing entropy over the respective file.  The bumps show where I placed some random string keys in the file.  Just for kicks, I including a block of “AAAA…”, which is also evident when entropy drops to 0.  As a contrast, the pem file has a pretty consistently higher entropy throughout the whole file.  As with so many things, different angles on the problem help to improve intuition.  Plus I’m a sucker for a good picture.</p>
+<p><img src="/images/entropy1/program-secret.png" alt="Program-Secret.fs"></p>
+<p><img src="/images/entropy1/fake.png" alt="fake.pem"></p>
+<p>This has been a brief look into how entropy patterns can be of use when scanning files for interesting information.  Until next time.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1/">Decision Trees with F# and Accord.NET (Part 1)</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/05/20/F-and-EmguCV/">Facial Recognition using F# and EmguCV</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/01/14/F-and-MLNet-Sentiment-Analysis/">F# and ML.NET Sentiment Analysis</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2019/12/21/F-Entropy/" data-id="ck4aoggwd0000lzm07lxf7mg2" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Entropy/">Entropy</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2019/10/24/F-RabbitMQ/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Utilizing RabbitMQ with F#</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 12.22px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Dtw/" style="font-size: 10px;">Dtw</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.22px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 11.11px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/12/21/F-Entropy/">Examing Entropy with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/24/F-RabbitMQ/">Utilizing RabbitMQ with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/13/F-Performance-Profiling/">Performance Profiling F#</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/11/FastDtw/">FastDtw, an F# Implementation</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/14/F-and-MLNet-Regression-V2/">F# and ML.NET Regression</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
