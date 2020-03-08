@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Containerizing F# with Docker | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Containerizing an F# application using Docker is a fairly straight forward process.  Today we’ll take a look at doing just that.">
+<meta name="keywords" content="F#,FSharp,Docker">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Containerizing F# with Docker">
+<meta property="og:url" content="http://codesuji.com/2020/03/08/F-and-Docker/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Containerizing an F# application using Docker is a fairly straight forward process.  Today we’ll take a look at doing just that.">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://codesuji.com/images/docker1/docker1-console.png">
+<meta property="og:image" content="http://codesuji.com/images/docker1/docker1-web.png">
+<meta property="og:updated_time" content="2020-03-08T15:19:11.339Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Containerizing F# with Docker">
+<meta name="twitter:description" content="Containerizing an F# application using Docker is a fairly straight forward process.  Today we’ll take a look at doing just that.">
+<meta name="twitter:image" content="http://codesuji.com/images/docker1/docker1-console.png">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-and-Docker" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2020/03/08/F-and-Docker/" class="article-date">
+  <time datetime="2020-03-08T14:09:22.000Z" itemprop="datePublished">2020-03-08</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Containerizing F# with Docker
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 9 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Containerizing an <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a> application using <a href="https://www.docker.com/" target="_blank" rel="noopener">Docker</a> is a fairly straight forward process.  Today we’ll take a look at doing just that.</p>
+<a id="more"></a>
+<p>This post will cover putting different types of F# applications in Docker containers.  If you want to follow along, you’ll need to get a couple things.  You’ll need to install <a href="https://www.docker.com/" target="_blank" rel="noopener">Docker</a> and <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core</a>.  As of right now, dotnet core is at 3.1, so that will be the target version.</p>
+<p>The process follows a common pattern, although there is some divergence based on the specific use case.  This can eaily be shown using two examples.  The first example is a console app in Docker.  It won’t do much, since I don’t want to distract from the core docker implementation.  The second example is putting a web app in Docker.  This example is more involved for a couple reasons, as you’ll see below.</p>
+<h3 id="Dockerizing-a-console-application"><a href="#Dockerizing-a-console-application" class="headerlink" title="Dockerizing a console application"></a>Dockerizing a console application</h3><p>First, create the application.  This is a standard process for any F# application.  As promised, it will be about as boring an application as possible.  </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dotnet new console -lang F# -n SampleConsole</span><br><span class="line">cd SampleConsole</span><br></pre></td></tr></table></figure>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System</span><br><span class="line"></span><br><span class="line"><span class="meta">[&lt;EntryPoint&gt;]</span></span><br><span class="line"><span class="keyword">let</span> main argv =</span><br><span class="line">  printfn <span class="string">"Hello from F# in Docker."</span></span><br><span class="line">  <span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>Once the application is in place, it’s time to add the docker components.  In the SampleConsole directory I’ll add a <code>Dockerfile</code> for the build and <code>.dockerignore</code> to excluded files.  The <code>.dockerignore</code> isn’t strictly necessary, but it does keep the container cleaner. Using a multi-stage Dockerfile makes the implementation pretty easy.  Since Microsoft provides dotnet core images, I leverage those.  The sdk one for building, and the runtime one for final execution.  To containerize the application, copy the application source into /src.  Then build from /src into /app. Then run out of /app.  The alpine flavor is used to keep the image smaller.  There is a non-alpine version (just remove the “-alpine” from the image names) if that is so desired.  In some ways this process is anti-climatic, there isn’t much here, but that is kind of the point.  Sometimes it is nice when things just work.</p>
+<p>Dockerfile<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build</span><br><span class="line"></span><br><span class="line"># build application </span><br><span class="line">WORKDIR /src</span><br><span class="line">COPY . .</span><br><span class="line">RUN dotnet restore</span><br><span class="line">RUN dotnet publish -c release -o /app --no-self-contained --no-restore</span><br><span class="line"></span><br><span class="line"># final stage/image</span><br><span class="line">FROM mcr.microsoft.com/dotnet/core/runtime:3.1-alpine</span><br><span class="line"></span><br><span class="line">WORKDIR /app</span><br><span class="line">COPY --from=build /app .</span><br><span class="line"></span><br><span class="line">ENTRYPOINT [&quot;./SampleConsole&quot;]</span><br></pre></td></tr></table></figure></p>
+<p>.dockerignore<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bin</span><br><span class="line">obj</span><br><span class="line">Dockerfile</span><br></pre></td></tr></table></figure></p>
+<p>At this point, the only thing left to do is build and run the application.  The output is relatively uninspiring, but at least it is a good first step to doing something slightly more interesting.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker build -t sample-console .</span><br><span class="line">docker run sample-console</span><br></pre></td></tr></table></figure>
+<p><img src="/images/docker1/docker1-console.png" alt="Sample Console Results"></p>
+<h3 id="Dockerizing-a-web-application"><a href="#Dockerizing-a-web-application" class="headerlink" title="Dockerizing a web application"></a>Dockerizing a web application</h3><p>Entering the second part of the post, putting an F# web application in a container.  Much of the above still applies, but considering the way of web apps, it needs to be different.  The first is initializing the app.  There are several good dotnet core templates to choose from, but I’m going to specifically use <a href="https://github.com/giraffe-fsharp/Giraffe" target="_blank" rel="noopener">Giraffe</a>.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dotnet new giraffe -lang F# -n SampleWeb </span><br><span class="line">cd SampleWeb</span><br></pre></td></tr></table></figure>
+<p>This is where a little surgery takes place.  Like the above example, I want to use dotnet core 3.1, but the Giraffe template is for v2.1.  I’ll need to tweak a couple parts to get it to work together.  I’ll break them down by file.  Here are the <strong>SampleWeb.fsproj</strong> modifications.  Half of this is obvious, the slightly less obvious is the certificate.json reference, this will be used for Kestrel configuration later.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">  &lt;PropertyGroup&gt;</span><br><span class="line">    &lt;!-- Change from netcoreapp version from <span class="number">2.1</span> <span class="keyword">to</span> <span class="number">3.1</span> --&gt;</span><br><span class="line">    &lt;TargetFramework&gt;netcoreapp3<span class="number">.1</span>&lt;/TargetFramework&gt;</span><br><span class="line">    ...</span><br><span class="line">  &lt;/PropertyGroup&gt;</span><br><span class="line">  ...</span><br><span class="line">  &lt;ItemGroup&gt;</span><br><span class="line">    &lt;!-- Remove PackageReference Include=<span class="string">"Microsoft.AspNetCore.App"</span> Version=<span class="string">"2.1.*"</span> --&gt;</span><br><span class="line">    ...</span><br><span class="line">  &lt;/ItemGroup&gt;</span><br><span class="line">  ... </span><br><span class="line">  &lt;ItemGroup&gt;</span><br><span class="line">    &lt;!-- Add certificate configuration --&gt;</span><br><span class="line">    &lt;None Include=<span class="string">"certificate.json"</span> CopyToOutputDirectory=<span class="string">"PreserveNewest"</span> /&gt;</span><br><span class="line">    ...</span><br><span class="line">  &lt;/ItemGroup&gt;</span><br><span class="line">&lt;/Project&gt;</span><br></pre></td></tr></table></figure>
+<p>Here are the <strong>web.config</strong> modifications.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=<span class="string">"1.0"</span> encoding=<span class="string">"utf-8"</span>?&gt;</span><br><span class="line">&lt;configuration&gt;</span><br><span class="line">  &lt;system.webServer&gt;</span><br><span class="line">    &lt;handlers&gt;</span><br><span class="line">      &lt;!-- Change AspNetCoreModule <span class="keyword">to</span> AspNetCoreModuleV2 --&gt;</span><br><span class="line">      &lt;add name=<span class="string">"aspNetCore"</span> path=<span class="string">"*"</span> verb=<span class="string">"*"</span> modules=<span class="string">"AspNetCoreModuleV2"</span> resourceType=<span class="string">"Unspecified"</span> /&gt;</span><br><span class="line">    &lt;/handlers&gt;</span><br><span class="line">    &lt;aspNetCore processPath=<span class="string">"dotnet"</span> arguments=<span class="string">"SampleWeb.dll"</span> stdoutLogEnabled=<span class="string">"false"</span> stdoutLogFile=<span class="string">"logs/stdout"</span> /&gt;</span><br><span class="line">  &lt;/system.webServer&gt;</span><br><span class="line">&lt;/configuration&gt;</span><br></pre></td></tr></table></figure>
+<p>Here are the <strong>Program.fs</strong> modifications.  For the most part the web app stays intact, but there are two specific parts to call out.  <code>IHostingEnvironment</code> works, but is deprecated.  As a result I’ll refactor to use <code>IWebHostEnvironment</code>. It removes a warning and future-proofs things a bit.  The big thing is Kestrel configuration.  The slightly short version is that the Kestrel changes are not required if running the application outside of Docker.  But, since the target is Docker, I ran into some complications.  I need to explicitly configure Kestrel so it runs https properly while in the container.  To do this I add a configuration step, using a certificate.json.  I then use that to create a certificate object that can be used in Kestrel configuration.  I’ll run http over 5000 and https over 5001; this will be useful information in a later step.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System.Security.Cryptography.X509Certificates</span><br><span class="line"><span class="keyword">open</span> Microsoft.Extensions.Configuration</span><br><span class="line"><span class="keyword">open</span> Microsoft.Extensions.Hosting</span><br><span class="line"><span class="keyword">open</span> Microsoft.AspNetCore.Server.Kestrel.Core</span><br><span class="line">...</span><br><span class="line"><span class="keyword">let</span> configureApp (app: IApplicationBuilder) =</span><br><span class="line">  <span class="comment">// Former: let env = app.ApplicationServices.GetService&lt;IHostingEnvironment&gt;()</span></span><br><span class="line">  <span class="keyword">let</span> env = app.ApplicationServices.GetService&lt;IWebHostEnvironment&gt;()</span><br><span class="line">...</span><br><span class="line"><span class="keyword">let</span> configureAppConfiguration (config: IConfigurationBuilder) =</span><br><span class="line">  config.AddJsonFile(<span class="string">"/https/certificate.json"</span>) |&gt; ignore</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> configureKestrel (context: WebHostBuilderContext) (options: KestrelServerOptions) =</span><br><span class="line">  <span class="keyword">let</span> certificatePath = context.Configuration.GetSection(<span class="string">"certificate"</span>).GetValue&lt;string&gt;(<span class="string">"Path"</span>)</span><br><span class="line">  <span class="keyword">let</span> certificatePassword = context.Configuration.GetSection(<span class="string">"certificate"</span>).GetValue&lt;string&gt;(<span class="string">"Password"</span>)</span><br><span class="line">  <span class="keyword">let</span> certificate = <span class="keyword">new</span> X509Certificate2(certificatePath, certificatePassword)</span><br><span class="line">  options.ListenAnyIP(<span class="number">5000</span>)</span><br><span class="line">  options.ListenAnyIP(<span class="number">5001</span>, <span class="keyword">fun</span> options -&gt; options.UseHttps certificate |&gt; ignore)</span><br><span class="line">...</span><br><span class="line">WebHostBuilder()</span><br><span class="line">    .ConfigureAppConfiguration(configureAppConfiguration)</span><br><span class="line">    .UseKestrel(Action&lt;WebHostBuilderContext,KestrelServerOptions&gt; configureKestrel)</span><br><span class="line">...</span><br><span class="line">    .Build()</span><br><span class="line">    .Run()</span><br></pre></td></tr></table></figure>
+<p>Now to add the supporting <strong>certificate.json</strong> file.  Here I show a good and a bad practice.  First the good, by creating the configuration file and certificate outside of the project, I won’t include secrets in the image itself.  Second the bad, “password” is not a good certificate password.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;Certificate&quot;: &#123;</span><br><span class="line">    &quot;Path&quot;: &quot;/https/SampleWeb.pfx&quot;,</span><br><span class="line">    &quot;Password&quot;: &quot;password&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>One last piece is needed for ssl support.  Normally production would have a proper cert, but since this just dev I’ll export my dotnet dev cert and use that for my Docker instance.  Below is how to export the cert.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dotnet dev-certs https -ep ~/.aspnet/https/SampleWeb.pfx -p password</span><br></pre></td></tr></table></figure>
+<p>Now that the necessary changes are in place, it’s time to do the containerization part.  In the SampleWeb directory I’ll add <code>Dockerfile</code> and <code>.dockerignore</code> files.  As before, the <code>Dockerfile</code> implements the application build as well as final packaging of the application using alpine.  You may note that the final stage here uses <code>aspnet-3.1-alpine</code>, where the previous version was <code>runtime-3.1-alpine</code>.</p>
+<p>Dockerfile<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build</span><br><span class="line"></span><br><span class="line">WORKDIR /src</span><br><span class="line">COPY src/SampleWeb/. .</span><br><span class="line">RUN dotnet restore</span><br><span class="line">RUN dotnet publish -c release -o /app --no-self-contained --no-restore</span><br><span class="line"></span><br><span class="line"># create final image</span><br><span class="line">FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine</span><br><span class="line"></span><br><span class="line">WORKDIR /app</span><br><span class="line">COPY --from=build /app ./</span><br><span class="line"></span><br><span class="line">ENTRYPOINT [&quot;./SampleWeb&quot;]</span><br></pre></td></tr></table></figure></p>
+<p>.dockerignore</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bin</span><br><span class="line">obj</span><br><span class="line">Dockerfile</span><br></pre></td></tr></table></figure>
+<p>At this point, the only thing left to do is build and run the application.  Since this is a web server, I’ll need to map the necessary ports.  I also map the directory containing certificate.json and SampleWeb.pfx into the container.  I will note a specific omission for a real-world implementation.  Kestrel can now be used as an edge server, although my preference is to put it behind a reverse proxy like <a href="https://www.nginx.com/" target="_blank" rel="noopener">nginx</a>.  That topic is beyond the scope of this post.  At least in the current configuration http and https can be tested locally.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker build -t sample-web .</span><br><span class="line">docker run -p 5000:5000 -p 5001:5001 -v $&#123;HOME&#125;/.aspnet/https:/https/ sample-web</span><br></pre></td></tr></table></figure>
+<p><img src="/images/docker1/docker1-web.png" alt="Sample Web Results"></p>
+<p>This has been a brief look into how Docker can be leveraged with F#.  This is only the begining of what can be done, so hopefully you can use this as a jumping point for your projects. Until next time.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/26/Simple-Analysis-with-F/">Simple Analysis with F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/12/26/The-Power-of-the-Forward-Pipe/">The Power of the Forward Pipe</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/05/20/F-and-EmguCV/">Facial Recognition using F# and EmguCV</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2020/03/08/F-and-Docker/" data-id="ck7fi150p000039m0iy982cq1" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2019/12/21/F-Entropy/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Examing Entropy with F#</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 12.22px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dtw/" style="font-size: 10px;">Dtw</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.22px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 11.11px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/03/08/F-and-Docker/">Containerizing F# with Docker</a>
+          </li>
+        
+          <li>
+            <a href="/2019/12/21/F-Entropy/">Examing Entropy with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/24/F-RabbitMQ/">Utilizing RabbitMQ with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/13/F-Performance-Profiling/">Performance Profiling F#</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/11/FastDtw/">FastDtw, an F# Implementation</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
