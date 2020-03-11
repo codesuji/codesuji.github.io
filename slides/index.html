@@ -1,0 +1,954 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>F#</title>
+    <meta name="description" content="Introduction to F#">
+    <meta name="author" content="Jeff Beitzel">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="//code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="//code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/moon.css" id="theme">
+    <link type="text/css" rel="stylesheet" href="fsharp.formatting/styles/style.css" />
+    <link type="text/css" rel="stylesheet" href="fsharp.formatting/styles/deedle.css" />
+    <link type="text/css" rel="stylesheet" href="css/custom.css" />
+    <script src="fsharp.formatting/styles/tips.js" type="text/javascript"></script>
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+    <link rel="stylesheet" href="css/fsreveal.css">
+    <!-- If the query includes 'print-pdf', include the PDF print sheet -->
+    <script>
+			if( window.location.search.match( /print-pdf/gi ) ) {
+				var link = document.createElement( 'link' );
+				link.rel = 'stylesheet';
+				link.type = 'text/css';
+				link.href = 'css/print/pdf.css';
+				document.getElementsByTagName( 'head' )[0].appendChild( link );
+			}
+    </script>
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+    <script language="javascript" type="text/javascript">
+        function init()
+        {
+            websocket = new WebSocket("ws://"+window.location.host+"/websocket");
+            websocket.onmessage = function(evt) { location.reload(); };
+        }
+        window.addEventListener("load", init, false);
+    </script>
+</head>
+<body>
+    <div class="reveal">
+        
+        <!-- Any section element inside of this container is displayed as a slide -->
+        <div class="slides">
+            <section >
+<h3>Introduction to F#</h3>
+</section>
+<section >
+<h3>Agenda</h3>
+<ul>
+<li>What is F#</li>
+<li>Code Examples</li>
+<li>Ecosystem</li>
+</ul>
+</section>
+<section >
+<h3>What is F#</h3>
+<ul>
+<li>ML family</li>
+<li>.NET Ecosystem</li>
+<li>Microsoft Research</li>
+<li>General purpose language</li>
+<li>Multi-paradigm, but Functional-first</li>
+<li>Immutability</li>
+<li>Functions are first class</li>
+<li>Leverages type inference</li>
+</ul>
+</section>
+<section >
+<h3>Why you should care</h3>
+<ul>
+<li>Language assists the developer</li>
+<li>Lessens mental load</li>
+<li>Removes whole classes of errors</li>
+<li>Pragmatic</li>
+<li>Encourages domain modeling</li>
+<li>Simplifies refactoring</li>
+</ul>
+</section>
+<section >
+<h3>Example F# Program</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+<span class="l">18: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">open</span> System
+
+<span class="k">let</span> ten = <span class="n">10</span>
+
+<span class="k">let</span> adder x y =
+  x + y
+
+<span class="k">let</span> lineCount file =
+  IO.File.ReadAllLines(file)
+  <span class="o">|</span>&gt; Array.filter (<span class="k">fun</span> x <span class="o">-&gt;</span> x &lt;&gt; <span class="s">""</span>)
+  <span class="o">|</span>&gt; Array.length
+
+<span class="o">[</span>&lt;EntryPoint&gt;<span class="o">]</span>
+<span class="k">let</span> main argv =
+  <span class="k">let</span> lines = lineCount argv.[<span class="n">0</span>]
+  <span class="k">let</span> linesPlus = adder lines ten
+  printfn <span class="s">"There are %d non-empty lines (+10 = %d)"</span> lines linesPlus
+  <span class="n">0</span>
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Variables</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+<span class="l">9: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> ten = <span class="n">10</span>
+
+<span class="k">let</span> rand = Random()
+
+<span class="k">let</span> loveCoffee = (<span class="s">"Coffee"</span>, <span class="k">true</span>)
+
+<span class="c">// Mutable</span>
+<span class="k">let</span> <span class="k">mutable</span> mystery = rand.NextDouble()
+mystery <span class="o">&lt;-</span> mystery + <span class="n">30</span>.
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Option</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> fiftyFifty = 
+  <span class="k">if</span> rand.NextDouble() &gt; <span class="n">0.5</span> <span class="k">then</span> Some <span class="n">100</span>. <span class="k">else</span> None
+
+<span class="k">let</span> populated = fiftyFifty.IsSome
+
+<span class="k">match</span> fiftyFifty <span class="k">with</span>
+<span class="o">|</span> Some(x) <span class="o">-&gt;</span> printfn <span class="s">"value: %f"</span> x
+<span class="o">|</span> None <span class="o">-&gt;</span> printfn <span class="s">"no value"</span>
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Functions</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> conditionalMultiplier (x: int) (y: int) (z: bool) :int =
+  <span class="k">if</span> z <span class="k">then</span> x * y <span class="k">else</span> x
+  <span class="c">// if z then x * y // Error (needs a consistent return value)</span>
+
+<span class="k">let</span> doubler x = x + x
+
+<span class="k">let</span> adder x y = 
+  x + y
+
+<span class="k">let</span> foo = <span class="n">10</span>
+<span class="k">let</span> biggerFoo = doubler foo 
+<span class="k">let</span> perhapsBiggerFoo = foo <span class="n">10</span> <span class="k">true</span>
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Functions - Partial Application</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> adder x y = x + y
+<span class="k">let</span> addTen = adder <span class="n">10</span>
+
+<span class="k">let</span> forty = addTen <span class="n">30</span>
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Functions - Functions</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> makeAdder x = (<span class="k">fun</span> y <span class="o">-&gt;</span> x + y)
+
+<span class="k">let</span> addTwenty = makeAdder <span class="n">20</span>
+
+<span class="k">let</span> fifty = addTwenty <span class="n">30</span>
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Lists, Arrays, and Sequences</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> tripledList =
+  [<span class="n">0</span>..<span class="n">10</span>]
+  <span class="o">|</span>&gt; List.map (<span class="k">fun</span> x <span class="o">-&gt;</span> x * <span class="n">3</span>)
+
+<span class="k">let</span> tripledArray =
+  <span class="o">[|</span> <span class="n">0</span>..<span class="n">2</span>..<span class="n">10</span> <span class="o">|</span><span class="o">]</span>
+  <span class="o">|</span>&gt; Array.map (<span class="k">fun</span> x <span class="o">-&gt;</span> sprintf <span class="s">"%d"</span> (x * <span class="n">3</span>))
+
+<span class="k">let</span> tripledTripledSeq =
+  seq { 
+    <span class="k">for</span> i <span class="k">in</span> [<span class="n">0</span>..<span class="n">10</span>] <span class="k">do</span>
+      <span class="k">yield</span> (i * <span class="n">3</span>)
+  }
+  <span class="o">|</span>&gt; Seq.map (<span class="k">fun</span> x <span class="o">-&gt;</span> x * <span class="n">3</span>)
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Pipelines</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs">[<span class="n">0</span>..<span class="n">10</span>]
+<span class="o">|</span>&gt; List.filter (<span class="k">fun</span> x <span class="o">-&gt;</span> x % <span class="n">2</span> = <span class="n">0</span>)
+<span class="o">|</span>&gt; List.map doubler
+<span class="o">|</span>&gt; List.groupBy (<span class="k">fun</span> x <span class="o">-&gt;</span> x % <span class="n">3</span>)
+<span class="o">|</span>&gt; List.iter (<span class="k">fun</span> x <span class="o">-&gt;</span> printfn <span class="s">"%d has %A"</span> (fst x) (snd x))
+
+<span class="c">// Results: </span>
+<span class="n">0</span> has [<span class="n">0</span>; <span class="n">12</span>]
+<span class="n">1</span> has [<span class="n">4</span>; <span class="n">16</span>]
+<span class="n">2</span> has [<span class="n">8</span>; <span class="n">20</span>]
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Sharp Roasters</h3>
+</section>
+<section >
+<h3>Types</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">type</span> CoffeeId = int
+
+<span class="k">type</span> Country = <span class="o">|</span> Columbia <span class="o">|</span> Ethiopia <span class="o">|</span> Kenya
+
+<span class="k">type</span> ProcessMethod = 
+<span class="o">|</span> Dry
+<span class="o">|</span> Wet
+<span class="o">|</span> Custom <span class="k">of</span> string
+
+<span class="k">type</span> SearchCriteria = 
+<span class="o">|</span> Rating <span class="k">of</span> int
+<span class="o">|</span> Description <span class="k">of</span> string
+<span class="o">|</span> Method <span class="k">of</span> ProcessMethod
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Records</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">type</span> Profile = { Complexity: float; Body: float; Fragrance: float }
+
+<span class="k">type</span> Coffee = { 
+  Id: CoffeeId; 
+  Country: Country; 
+  Farm: string option; 
+  ProcessMethod: ProcessMethod; 
+  Profile: Profile; 
+  Description: string option;
+  Cost: decimal } 
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Records</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+<span class="l">18: </span>
+<span class="l">19: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> coffee<span class="n">1</span> = {
+  Id = <span class="n">1</span>; 
+  Country = Ethiopia; 
+  Farm = Some <span class="s">"Cooperative 123"</span>; 
+  ProcessMethod = Wet; 
+  Profile = { Complexity = <span class="n">9</span>.; Body = <span class="n">8</span>.; Fragrance = <span class="n">8.8</span> }; 
+  Description = Some <span class="s">"Recommended city to city+ roast"</span>; 
+  Cost = <span class="n">6.78</span>m }
+
+<span class="k">let</span> coffee<span class="n">2</span> = {
+  Id = <span class="n">2</span>
+  Country = Columbia;
+  Farm = None;
+  ProcessMethod = Custom(<span class="s">"Washed then fermented"</span>);
+  Profile = { Complexity = <span class="n">5</span>.; Body = <span class="n">5</span>.; Fragrance = <span class="n">5</span>. };
+  Description = None;
+  Cost = <span class="n">5.67</span>m }
+
+<span class="k">let</span> coffee<span class="n">2</span>' = { coffee<span class="n">2</span> <span class="k">with</span> Cost = <span class="n">6.01</span>m }
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Anonymous Records</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> store = {<span class="o">|</span> 
+  Name = <span class="s">"Rise and Grind Coffee"</span>; 
+  Rating = <span class="n">4.7</span> <span class="o">|</span>}
+
+printfn <span class="s">"%s is rated %2.1f"</span> store.Name store.Rating
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Classes</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">type</span> BehmorRoaster (deviceId: int, description: string) =
+  <span class="k">let</span> <span class="k">mutable</span> running = <span class="k">true</span>
+  
+  <span class="k">member</span> __.DeviceId = deviceId 
+  <span class="k">member</span> __.Description = description
+
+  <span class="k">member</span> __.StartRoast (coffee: Coffee, profile: RoastProfile) =
+    running <span class="o">&lt;-</span> <span class="k">true</span>
+    <span class="k">true</span>
+  
+  <span class="k">member</span> __.StopRoast () =
+    running <span class="o">&lt;-</span> <span class="k">false</span> 
+    <span class="k">true</span>
+
+  <span class="k">member</span> __.Status () = sprintf <span class="s">"Status: %b"</span> running
+  
+  <span class="k">override</span> __.ToString () = sprintf <span class="s">"Behmor (%s)"</span> __.Description
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Classes</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> roaster = BehmorRoaster (<span class="n">9600</span>, <span class="s">"1600AB"</span>)
+printfn <span class="s">"roaster: %A"</span> (roaster.StartRoast coffee<span class="n">1</span> profile<span class="n">10</span>)
+printfn <span class="s">"roaster: %A"</span> (roaster.Status())
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Match</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> friendlyProcessMethod (method: ProcessMethod) = 
+  <span class="k">match</span> method <span class="k">with</span>
+  <span class="o">|</span> Wet <span class="o">-&gt;</span> <span class="s">"Wet processed"</span>
+  <span class="o">|</span> Dry <span class="o">-&gt;</span> <span class="s">"Dry processed"</span>
+  <span class="o">|</span> Custom(s) <span class="o">-&gt;</span> sprintf <span class="s">"It was custom processed. Details: %s"</span> s 
+  <span class="c">// | _ -&gt; sprintf "Catch-all" // Unnecessary</span>
+
+<span class="k">let</span> friendlySource (country: Country) (farm: string option) =
+  <span class="k">match</span> (country, farm) <span class="k">with</span>
+  <span class="o">|</span> Ethiopia, Some(farm') <span class="o">-&gt;</span> sprintf <span class="s">"Ethopian - %s"</span> farm' 
+  <span class="o">|</span> country', Some(farm') <span class="o">-&gt;</span> sprintf <span class="s">"%A (%s)"</span> country' farm' 
+  <span class="o">|</span> country', None        <span class="o">-&gt;</span> sprintf <span class="s">"%A"</span> country'
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Units of Measure</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+<span class="l">9: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="o">[</span>&lt;Measure&gt;<span class="o">]</span> <span class="k">type</span> Pound
+<span class="o">[</span>&lt;Measure&gt;<span class="o">]</span> <span class="k">type</span> Kilogram
+
+<span class="k">let</span> batch<span class="n">1</span>Size = <span class="n">10</span>&lt;Pound&gt;
+<span class="k">let</span> batch<span class="n">2</span>Size = <span class="n">10</span>&lt;Kilogram&gt;
+<span class="c">//let allBatches = batch1Size + batch2Size // Error</span>
+
+<span class="k">let</span> kilogramPerPound = <span class="n">0.4535924</span>&lt;Kilogram/Pound&gt;
+<span class="k">let</span> batch<span class="n">3</span>Size = <span class="n">10</span>.&lt;Pound&gt; * kilogramPerPound
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>MailBox Processor</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> batchProcessor = MailboxProcessor&lt;Coffee * RoastProfile&gt;.Start (<span class="k">fun</span> inbox <span class="o">-&gt;</span>
+  <span class="k">let</span> <span class="k">rec</span> messageLoop (batchCount: int) = async {
+    <span class="k">let!</span> (coffee, profile) = inbox.Receive()
+    printfn <span class="s">"Handling batch %d (%A, %A)"</span> batchCount coffee profile
+    roaster.StartRoast coffee profile <span class="o">|</span>&gt; ignore
+    <span class="k">return!</span> messageLoop(batchCount + <span class="n">1</span>)
+  }
+  messageLoop <span class="n">0</span>)
+
+batchProcessor.Post (coffee<span class="n">1</span>, profile<span class="n">10</span>)
+batchProcessor.Post (coffee<span class="n">1</span>, profile<span class="n">30</span>)
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Async</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> queryMaker roaster query = async {
+  <span class="c">// Long-running query</span>
+  <span class="k">let</span> results = RoasterLib.query roaster query
+  <span class="k">return</span> results 
+}
+
+<span class="k">let</span> queuedBatches = queryMaker behmor <span class="s">"count queued"</span>
+<span class="k">let</span> completeBatches = queryMaker behmor <span class="s">"count complete"</span>
+
+<span class="k">let</span> queued = queuedBatches <span class="o">|</span>&gt; Async.RunSynchronously
+printfn <span class="s">"Queued batches: %d"</span> queued
+
+<span class="k">let</span> allBatches = 
+  [queuedBatches; completeBatches]
+  <span class="o">|</span>&gt; Async.Parallel
+  <span class="o">|</span>&gt; Async.RunSynchronously
+printfn <span class="s">"All batches: %A"</span> allBatches
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Type providers</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="c">(* batch_template.csv</span>
+<span class="c">BatchId,Date,CoffeeId,RoastProfileId,Pounds</span>
+<span class="c">100,2020-01-02,1,20,1</span>
+<span class="c">101,2020-01-03,1,30,0.9</span>
+<span class="c">*)</span>
+
+<span class="k">open</span> FSharp.Data
+<span class="k">type</span> CsvBatch = CsvProvider&lt;<span class="s">"batch_template.csv"</span>&gt;
+  
+<span class="k">let</span> batches = CsvBatch.Load(dataFile)
+<span class="k">for</span> row <span class="k">in</span> batches.Rows <span class="k">do</span>
+  printfn <span class="s">"row: %d %A %d %d"</span> row.BatchId row.Date row.CoffeeId row.Pounds
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Computation expressions</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> run state x = <span class="k">let</span> f = x <span class="k">in</span> f state
+<span class="k">let</span> initState = run <span class="o">[</span><span class="o">]</span>
+<span class="k">let</span> processBatch x = <span class="k">fun</span> (s: int list) <span class="o">-&gt;</span> (x, x::s)
+
+<span class="k">type</span> BatchTrackingBuilder() =
+  <span class="k">member</span> __.Bind (x, f) =
+    (<span class="k">fun</span> state <span class="o">-&gt;</span>
+      <span class="k">let</span> (result: int), state = run state x
+      run state (f result))
+  <span class="k">member</span> __.Return x = <span class="k">fun</span> s <span class="o">-&gt;</span> (x, s)
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Computation expressions</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> batch = BatchTrackingBuilder()
+
+<span class="k">let</span> batchResults = 
+  batch {
+      <span class="k">let!</span> batch<span class="n">1</span> = processBatch <span class="n">100</span>
+      <span class="k">let!</span> batch<span class="n">2</span> = processBatch <span class="n">200</span>
+      <span class="k">let!</span> batch<span class="n">3</span> = processBatch <span class="n">300</span>
+      <span class="k">return</span> batch<span class="n">1</span> + batch<span class="n">2</span> + batch<span class="n">3</span>
+  } <span class="o">|</span>&gt; initState
+
+printfn <span class="s">"Batch Results: %A"</span> batchResults 
+
+<span class="c">// Results:</span>
+Batch Results: (<span class="n">600</span>, [<span class="n">300</span>; <span class="n">200</span>; <span class="n">100</span>])
+</code></pre></td></tr></table>
+</section>
+<section >
+<section >
+<h3>Additional Syntax</h3>
+</section>
+<section >
+<h3>Functions - Recursion</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> <span class="k">rec</span> printEven (x: int list) =
+  <span class="k">match</span> x <span class="k">with</span>
+  <span class="o">|</span> h::t <span class="o">-&gt;</span> <span class="k">if</span> h % <span class="n">2</span> = <span class="n">0</span> <span class="k">then</span> printfn <span class="s">"%d"</span> h
+            printEven t
+  <span class="o">|</span> <span class="o">[</span><span class="o">]</span> <span class="o">-&gt;</span> ()
+
+printfn <span class="s">"Evens: "</span>
+printEven [<span class="n">0</span>..<span class="n">10</span>]
+
+<span class="k">let</span> factorial x = 
+  <span class="k">let</span> <span class="k">rec</span> factorial' a x = 
+    <span class="k">if</span> x = <span class="n">0</span> <span class="o">|</span><span class="o">|</span> x = <span class="n">1</span>
+    <span class="k">then</span> a 
+    <span class="k">else</span> factorial' (a * x) (x - <span class="n">1</span>)
+  factorial' <span class="n">1</span> x
+
+printfn <span class="s">"factorial: %d"</span> (factorial <span class="n">10</span>)
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>try..with</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">try</span>
+  <span class="k">let</span> foo =  <span class="n">1</span> / <span class="n">0</span>
+  printfn <span class="s">"foo = %d"</span> foo
+<span class="k">with</span>
+  <span class="o">|</span> :? DivideByZeroException <span class="o">-&gt;</span> printfn <span class="s">"Error"</span>
+  <span class="o">|</span> ex <span class="o">-&gt;</span> printfn <span class="s">"%s"</span> (ex.Message);
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Classes - Part 2 - Interfaces</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">type</span> IRoaster =
+  <span class="k">abstract</span> <span class="k">member</span> StartRoast: Coffee * RoastProfile <span class="o">-&gt;</span> bool
+  <span class="k">abstract</span> <span class="k">member</span> StopRoast: unit <span class="o">-&gt;</span> bool
+  <span class="k">abstract</span> <span class="k">member</span> Status: unit <span class="o">-&gt;</span>  string
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Classes - Part 2 - Class</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+<span class="l">18: </span>
+<span class="l">19: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">type</span> BehmorRoaster (deviceId: int, description: string) =
+  <span class="k">let</span> <span class="k">mutable</span> running = <span class="k">true</span>
+  
+  <span class="k">member</span> __.DeviceId = deviceId 
+  <span class="k">member</span> __.Description = description 
+  <span class="k">member</span> __.Ping () = sprintf <span class="s">"Pong"</span> 
+  <span class="k">override</span> __.ToString () = sprintf <span class="s">"Behmor (%s)"</span> __.Description
+
+  <span class="k">interface</span> IRoaster <span class="k">with</span>
+    <span class="k">member</span> __.StartRoast (coffee: Coffee, profile: RoastProfile) =
+      running <span class="o">&lt;-</span> <span class="k">true</span>
+      <span class="k">true</span>
+    
+    <span class="k">member</span> __.StopRoast () =
+      running <span class="o">&lt;-</span> <span class="k">false</span> 
+      <span class="k">true</span>
+
+    <span class="k">member</span> __.Status () =
+      sprintf <span class="s">"Status: %b"</span> running
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Classes - Part 2 - Usage</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> behmor = BehmorRoaster (<span class="n">9600</span>, <span class="s">"1600AB"</span>)
+printfn <span class="s">"Ping .. %s"</span> (behmor.Ping())
+
+<span class="k">let</span> roaster = behmor :&gt; IRoaster
+printfn <span class="s">"roaster: %A"</span> (roaster.StartRoast coffee<span class="n">1</span> profile<span class="n">1</span>)
+printfn <span class="s">"roaster: %A"</span> (roaster.Status())
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Match - Active patterns</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> (|Wet|<span class="o">_</span>|) (processMethodPattern: string) =
+  <span class="k">if</span> processMethodPattern.ToLower().Contains <span class="s">"water"</span> <span class="k">then</span> Some Wet <span class="k">else</span> None
+
+<span class="k">let</span> (|Dry|<span class="o">_</span>|) (processMethodPattern: string) =
+  <span class="k">if</span> processMethodPattern.ToLower().Contains <span class="s">"dried"</span> <span class="k">then</span> Some Dry <span class="k">else</span> None
+
+<span class="k">match</span> <span class="s">"Water was used"</span> <span class="k">with</span>
+<span class="o">|</span> Wet <span class="o">-&gt;</span> printfn <span class="s">"Is wet processed"</span> 
+<span class="o">|</span> Dry <span class="o">-&gt;</span> printfn <span class="s">"Is dry processed"</span>
+<span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span> printfn <span class="s">"Undetermined process method"</span> 
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Modules</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">module</span> RoasterLib = 
+  <span class="k">type</span> RoastProfileId = int
+  <span class="k">type</span> RoastProfileStep = { Temp: float; FanLevel: float; Duration: int }
+  <span class="k">type</span> RoastProfile = { Id: RoastProfileId; Steps: RoastProfileStep <span class="o">[</span><span class="o">]</span> }
+  <span class="k">type</span> BatchId = int
+  <span class="k">type</span> Batch = { Id: BatchId; Coffee: Coffee; Pounds:float;  Time: float }
+
+  <span class="k">let</span> startRoast (roaster: IRoaster) (batch: Batch) =
+    <span class="k">let</span> success = roaster.StartRoast batch.Coffee batch.RoastProfile
+    printfn <span class="s">"Starting roast #%d for coffee: %A (%b)"</span> batch.Id batch.Coffee success
+</code></pre></td></tr></table>
+</section>
+</section>
+<section >
+<h3>Scripting</h3>
+<p>File: archive.fsx</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+<span class="l">9: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs">#load <span class="s">"codesuji.os.fsx"</span>
+
+<span class="k">open</span> System
+<span class="k">open</span> System.IO
+<span class="k">open</span> Codesuji.Os
+
+<span class="o">[</span> <span class="s">"docs"</span>; <span class="s">"photos"</span> <span class="o">]</span>
+<span class="o">|</span>&gt; List.map (<span class="k">fun</span> dir <span class="o">-&gt;</span> exec <span class="s">"/home/jeff/data"</span> (sprintf <span class="s">"tar -cf %s.tar %s"</span> dir dir))
+<span class="o">|</span>&gt; printfn <span class="s">"%A"</span>
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Ecosystem</h3>
+<ul>
+<li>Windows, Mac, Linux</li>
+<li>DotNetCore, .NET Framework, Mono</li>
+<li>Package Managers: nuget, paket</li>
+<li>Editors: VSCode + Ionide, Jetbrains Rider, Vim, VS</li>
+<li>Testing: Expecto, FSCheck</li>
+<li>F# Make: Fake</li>
+</ul>
+</section>
+<section >
+<h3>Notable endeavors</h3>
+<p><em>(Not a complete list)</em></p>
+<ul>
+<li>Web: Fable, Elmish</li>
+<li>Webserver: Giraffe, Saturn, Suave</li>
+<li>SAFE stack</li>
+<li>Mobile: React Native, Xamarin</li>
+<li>F# compiler services</li>
+<li>FsAutoComplete (FSAC)</li>
+<li>FSharpPlus</li>
+<li>FParsec</li>
+<li>FsReveal</li>
+</ul>
+</section>
+<section >
+<h3>Learn more</h3>
+<ul>
+<li><a href="https://fsharp.org">fsharp.org</a></li>
+<li><a href="https://forums.fsharp.org">forums.fsharp.org</a></li>
+<li>F# slack</li>
+<li><a href="https://github.com/fsprojects/awesome-fsharp">github.com/fsprojects/awesome-fsharp</a></li>
+<li><a href="https://sergeytihon.com/category/f-weekly/">F# Weekly</a></li>
+<li><a href="https://fsharpforfunandprofit.com">F# for fun and profit</a></li>
+<li><a href="http://fssnip.net/">fssnip</a></li>
+<li><a href="http://www.codesuji.com">codesuji.com</a></li>
+</ul>
+</section>
+<section >
+<h3>Get Started</h3>
+<p>Download <a href="https://dot.net">dot.net</a></p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">dotnet</span> <span class="k">new</span> <span class="i">console</span> <span class="o">-</span><span class="i">lang</span> <span class="i">f#</span> <span class="o">-</span><span class="i">n</span> <span class="i">Foo</span>
+</code></pre></td>
+</tr>
+</table>
+</section>
+
+
+        </div>
+    </div>
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+    <script>
+        // Add the nohighlight class and data-noescape attribute to code elements that have already been formatted by FSharp.Formatting
+        $('pre.highlighted code').addClass('nohighlight').attr('data-noescape', '');
+
+        // Full list of configuration options available here:
+        // https://github.com/hakimel/reveal.js#configuration
+        Reveal.initialize({
+            controls: true,
+            progress: true,
+            history: true,
+            center: true,
+
+            transition: 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+            // Parallax scrolling
+            // parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+            // parallaxBackgroundSize: '2100px 900px',
+
+            // Optional libraries used to extend on reveal.js
+            dependencies: [
+                { src: 'lib/js/classList.js', condition: function () { return !document.body.classList; } },
+                { src: 'plugin/markdown/marked.js', condition: function () { return !!document.querySelector('[data-markdown]'); } },
+                { src: 'plugin/markdown/markdown.js', condition: function () { return !!document.querySelector('[data-markdown]'); } },
+                { src: 'plugin/highlight/highlight.js', async: true, callback: function () { hljs.initHighlightingOnLoad(); } },
+                { src: 'plugin/zoom-js/zoom.js', async: true, condition: function () { return !!document.body.classList; } },
+                { src: 'plugin/notes/notes.js', async: true, condition: function () { return !!document.body.classList; } }
+            ]
+        });
+
+    </script>
+</body>
+</html>
+
