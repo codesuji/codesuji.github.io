@@ -103,14 +103,11 @@
 <span class="l">15: </span>
 <span class="l">16: </span>
 <span class="l">17: </span>
-<span class="l">18: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">open</span> System
 
-<span class="k">let</span> ten = <span class="n">10</span>
-
-<span class="k">let</span> adder x y =
-  x + y
+<span class="k">let</span> isEven x =
+  x % <span class="n">2</span> = <span class="n">0</span>
 
 <span class="k">let</span> lineCount file =
   IO.File.ReadAllLines(file)
@@ -120,8 +117,9 @@
 <span class="o">[</span>&lt;EntryPoint&gt;<span class="o">]</span>
 <span class="k">let</span> main argv =
   <span class="k">let</span> lines = lineCount argv.[<span class="n">0</span>]
-  <span class="k">let</span> linesPlus = adder lines ten
-  printfn <span class="s">"There are %d non-empty lines (+10 = %d)"</span> lines linesPlus
+  <span class="k">let</span> linesEven = isEven lines 
+  printfn <span class="s">"There are %d non-empty lines (Even=%b)"</span> lines linesEven
+
   <span class="n">0</span>
 </code></pre></td></tr></table>
 </section>
@@ -182,11 +180,9 @@ mystery <span class="o">&lt;-</span> mystery + <span class="n">30</span>.
 <span class="l"> 9: </span>
 <span class="l">10: </span>
 <span class="l">11: </span>
-<span class="l">12: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> conditionalMultiplier (x: int) (y: int) (z: bool) :int =
   <span class="k">if</span> z <span class="k">then</span> x * y <span class="k">else</span> x
-  <span class="c">// if z then x * y // Error (needs a consistent return value)</span>
 
 <span class="k">let</span> doubler x = x + x
 
@@ -196,19 +192,6 @@ mystery <span class="o">&lt;-</span> mystery + <span class="n">30</span>.
 <span class="k">let</span> foo = <span class="n">10</span>
 <span class="k">let</span> biggerFoo = doubler foo 
 <span class="k">let</span> perhapsBiggerFoo = foo <span class="n">10</span> <span class="k">true</span>
-</code></pre></td></tr></table>
-</section>
-<section >
-<h3>Functions - Partial Application</h3>
-<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
-<span class="l">2: </span>
-<span class="l">3: </span>
-<span class="l">4: </span>
-</pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> adder x y = x + y
-<span class="k">let</span> addTen = adder <span class="n">10</span>
-
-<span class="k">let</span> forty = addTen <span class="n">30</span>
 </code></pre></td></tr></table>
 </section>
 <section >
@@ -481,29 +464,6 @@ printfn <span class="s">"roaster: %A"</span> (roaster.Status())
 </code></pre></td></tr></table>
 </section>
 <section >
-<h3>Units of Measure</h3>
-<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
-<span class="l">2: </span>
-<span class="l">3: </span>
-<span class="l">4: </span>
-<span class="l">5: </span>
-<span class="l">6: </span>
-<span class="l">7: </span>
-<span class="l">8: </span>
-<span class="l">9: </span>
-</pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="o">[</span>&lt;Measure&gt;<span class="o">]</span> <span class="k">type</span> Pound
-<span class="o">[</span>&lt;Measure&gt;<span class="o">]</span> <span class="k">type</span> Kilogram
-
-<span class="k">let</span> batch<span class="n">1</span>Size = <span class="n">10</span>&lt;Pound&gt;
-<span class="k">let</span> batch<span class="n">2</span>Size = <span class="n">10</span>&lt;Kilogram&gt;
-<span class="c">//let allBatches = batch1Size + batch2Size // Error</span>
-
-<span class="k">let</span> kilogramPerPound = <span class="n">0.4535924</span>&lt;Kilogram/Pound&gt;
-<span class="k">let</span> batch<span class="n">3</span>Size = <span class="n">10</span>.&lt;Pound&gt; * kilogramPerPound
-</code></pre></td></tr></table>
-</section>
-<section >
 <h3>MailBox Processor</h3>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
@@ -567,6 +527,29 @@ printfn <span class="s">"Queued batches: %d"</span> queued
   <span class="o">|</span>&gt; Async.Parallel
   <span class="o">|</span>&gt; Async.RunSynchronously
 printfn <span class="s">"All batches: %A"</span> allBatches
+</code></pre></td></tr></table>
+</section>
+<section >
+<h3>Units of Measure</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+<span class="l">9: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="o">[</span>&lt;Measure&gt;<span class="o">]</span> <span class="k">type</span> Pound
+<span class="o">[</span>&lt;Measure&gt;<span class="o">]</span> <span class="k">type</span> Kilogram
+
+<span class="k">let</span> batch<span class="n">1</span>Size = <span class="n">10</span>&lt;Pound&gt;
+<span class="k">let</span> batch<span class="n">2</span>Size = <span class="n">10</span>&lt;Kilogram&gt;
+<span class="c">//let allBatches = batch1Size + batch2Size // Error</span>
+
+<span class="k">let</span> kilogramPerPound = <span class="n">0.4535924</span>&lt;Kilogram/Pound&gt;
+<span class="k">let</span> batch<span class="n">3</span>Size = <span class="n">10</span>.&lt;Pound&gt; * kilogramPerPound
 </code></pre></td></tr></table>
 </section>
 <section >
@@ -659,6 +642,19 @@ Batch Results: (<span class="n">600</span>, [<span class="n">300</span>; <span c
 <section >
 <section >
 <h3>Additional Syntax</h3>
+</section>
+<section >
+<h3>Functions - Partial Application</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> adder x y = x + y
+<span class="k">let</span> addTen = adder <span class="n">10</span>
+
+<span class="k">let</span> forty = addTen <span class="n">30</span>
+</code></pre></td></tr></table>
 </section>
 <section >
 <h3>Functions - Recursion</h3>
@@ -851,12 +847,10 @@ printfn <span class="s">"roaster: %A"</span> (roaster.Status())
 <span class="l">6: </span>
 <span class="l">7: </span>
 <span class="l">8: </span>
-<span class="l">9: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fs">#load <span class="s">"codesuji.os.fsx"</span>
 
 <span class="k">open</span> System
-<span class="k">open</span> System.IO
 <span class="k">open</span> Codesuji.Os
 
 <span class="o">[</span> <span class="s">"docs"</span>; <span class="s">"photos"</span> <span class="o">]</span>
