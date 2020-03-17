@@ -70,6 +70,7 @@
 <li>Multi-paradigm, but Functional-first</li>
 <li>Immutability</li>
 <li>Functions are first class</li>
+<li>Rich type system</li>
 <li>Leverages type inference</li>
 </ul>
 </section>
@@ -180,32 +181,19 @@ mystery <span class="o">&lt;-</span> mystery + <span class="n">30</span>.
 <span class="l"> 9: </span>
 <span class="l">10: </span>
 <span class="l">11: </span>
+<span class="l">12: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> conditionalMultiplier (x: int) (y: int) (z: bool) :int =
   <span class="k">if</span> z <span class="k">then</span> x * y <span class="k">else</span> x
 
 <span class="k">let</span> doubler x = x + x
 
-<span class="k">let</span> adder x y = 
-  x + y
-
-<span class="k">let</span> foo = <span class="n">10</span>
-<span class="k">let</span> biggerFoo = doubler foo 
-<span class="k">let</span> perhapsBiggerFoo = foo <span class="n">10</span> <span class="k">true</span>
-</code></pre></td></tr></table>
-</section>
-<section >
-<h3>Functions - Functions</h3>
-<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
-<span class="l">2: </span>
-<span class="l">3: </span>
-<span class="l">4: </span>
-<span class="l">5: </span>
-</pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> makeAdder x = (<span class="k">fun</span> y <span class="o">-&gt;</span> x + y)
+<span class="k">let</span> makeAdder x = (<span class="k">fun</span> y <span class="o">-&gt;</span> x + y)
 
 <span class="k">let</span> addTwenty = makeAdder <span class="n">20</span>
 
+<span class="k">let</span> biggerFoo = doubler foo 
+<span class="k">let</span> perhapsBiggerFoo = foo <span class="n">200</span> <span class="k">true</span>
 <span class="k">let</span> fifty = addTwenty <span class="n">30</span>
 </code></pre></td></tr></table>
 </section>
@@ -225,21 +213,23 @@ mystery <span class="o">&lt;-</span> mystery + <span class="n">30</span>.
 <span class="l">12: </span>
 <span class="l">13: </span>
 <span class="l">14: </span>
+<span class="l">15: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> tripledList =
   [<span class="n">0</span>..<span class="n">10</span>]
   <span class="o">|</span>&gt; List.map (<span class="k">fun</span> x <span class="o">-&gt;</span> x * <span class="n">3</span>)
+<span class="c">// tripledList : int list = [0; 3; 6; 9; 12; 15; 18; 21; 24; 27; 30]</span>
 
 <span class="k">let</span> tripledArray =
   <span class="o">[|</span> <span class="n">0</span>..<span class="n">2</span>..<span class="n">10</span> <span class="o">|</span><span class="o">]</span>
   <span class="o">|</span>&gt; Array.map (<span class="k">fun</span> x <span class="o">-&gt;</span> sprintf <span class="s">"%d"</span> (x * <span class="n">3</span>))
+<span class="c">// tripledArray : string [] = [|"0"; "6"; "12"; "18"; "24"; "30"|]</span>
 
-<span class="k">let</span> tripledTripledSeq =
-  seq { 
-    <span class="k">for</span> i <span class="k">in</span> [<span class="n">0</span>..<span class="n">10</span>] <span class="k">do</span>
-      <span class="k">yield</span> (i * <span class="n">3</span>)
-  }
+<span class="k">let</span> tripledTripledSeq = seq { 
+  <span class="k">for</span> i <span class="k">in</span> [<span class="n">0</span>..<span class="n">10</span>] <span class="k">do</span>
+    <span class="k">yield</span> (i * <span class="n">3</span>) }
   <span class="o">|</span>&gt; Seq.map (<span class="k">fun</span> x <span class="o">-&gt;</span> x * <span class="n">3</span>)
+<span class="c">// tripledTripledSeq : seq&lt;int&gt; = seq [0; 9; 18; 27; ...]</span>
 </code></pre></td></tr></table>
 </section>
 <section >
@@ -509,6 +499,8 @@ batchProcessor.Post (coffee<span class="n">1</span>, profile<span class="n">30</
 <span class="l">15: </span>
 <span class="l">16: </span>
 <span class="l">17: </span>
+<span class="l">18: </span>
+<span class="l">19: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fs"><span class="k">let</span> queryMaker roaster query = async {
   <span class="c">// Long-running query</span>
@@ -518,6 +510,8 @@ batchProcessor.Post (coffee<span class="n">1</span>, profile<span class="n">30</
 
 <span class="k">let</span> queuedBatches = queryMaker behmor <span class="s">"count queued"</span>
 <span class="k">let</span> completeBatches = queryMaker behmor <span class="s">"count complete"</span>
+
+<span class="c">// ---</span>
 
 <span class="k">let</span> queued = queuedBatches <span class="o">|</span>&gt; Async.RunSynchronously
 printfn <span class="s">"Queued batches: %d"</span> queued
@@ -839,22 +833,28 @@ printfn <span class="s">"roaster: %A"</span> (roaster.Status())
 <section >
 <h3>Scripting</h3>
 <p>File: archive.fsx</p>
-<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
-<span class="l">2: </span>
-<span class="l">3: </span>
-<span class="l">4: </span>
-<span class="l">5: </span>
-<span class="l">6: </span>
-<span class="l">7: </span>
-<span class="l">8: </span>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fs">#load <span class="s">"codesuji.os.fsx"</span>
 
 <span class="k">open</span> System
 <span class="k">open</span> Codesuji.Os
 
+<span class="k">let</span> tarString dir =
+  sprintf <span class="s">"tar -cvf %s.tar %s"</span> dir dir
+
 <span class="o">[</span> <span class="s">"docs"</span>; <span class="s">"photos"</span> <span class="o">]</span>
-<span class="o">|</span>&gt; List.map (<span class="k">fun</span> dir <span class="o">-&gt;</span> exec <span class="s">"/home/jeff/data"</span> (sprintf <span class="s">"tar -cf %s.tar %s"</span> dir dir))
+<span class="o">|</span>&gt; List.map (<span class="k">fun</span> dir <span class="o">-&gt;</span> exec <span class="s">"/home/jeff/data"</span> (tarString dir))
 <span class="o">|</span>&gt; printfn <span class="s">"%A"</span>
 </code></pre></td></tr></table>
 </section>
