@@ -14,7 +14,7 @@
 <meta property="og:description" content="This is the third installment in creating a brainfuck (BF) compiler using F# and FParsec.  Previous posts discussed the parsing and the IL generation.  Now it it time to pull it all together into some">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="http://codesuji.com/images/bf1/helloworld_execute.png">
-<meta property="og:updated_time" content="2017-12-23T19:03:14.112Z">
+<meta property="og:updated_time" content="2020-05-11T00:35:47.482Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="BF Compiler Part 3 - Compiler">
 <meta name="twitter:description" content="This is the third installment in creating a brainfuck (BF) compiler using F# and FParsec.  Previous posts discussed the parsing and the IL generation.  Now it it time to pull it all together into some">
@@ -105,7 +105,7 @@ ga('send', 'pageview');
       
         <p>This is the third installment in creating a brainfuck (BF) compiler using <a href="http://fsharp.org/" target="_blank" rel="noopener">F#</a> and <a href="http://www.quanttec.com/fparsec/" target="_blank" rel="noopener">FParsec</a>.  Previous posts discussed the parsing and the IL generation.  Now it it time to pull it all together into something useful.  </p>
 <a id="more"></a>
-<p><strong>Series:</strong><br><a href="/2017/02/19/bf-compiler-part1-parsing">Part 1 (Parsing)</a><br><a href="/2017/02/26/bf-compiler-part2-msil">Part 2 (IL Generation)</a><br>Part 3 (Compiler)<br><a href="/2017/03/11/bf-compiler-part4-optimization">Part 4 (Optimization)</a></p>
+<p><strong>Series:</strong><br><a href="/2017/02/19/bf-compiler-part1-parsing">Part 1 (Parsing)</a><br><a href="/2017/02/26/bf-compiler-part2-msil">Part 2 (IL Generation)</a><br>Part 3 (Compiler)<br><a href="/2017/03/13/bf-compiler-part4-optimization">Part 4 (Optimization)</a></p>
 <p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="noopener">Paket</a>, here is a sample paket.dependencies file.</p>
 <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source https:<span class="comment">//nuget.org/api/v2</span></span><br><span class="line"></span><br><span class="line">nuget FParsec </span><br></pre></td></tr></table></figure>
 <p>Here is the standard boilerplate for loading assemblies and generally getting ready to go.</p>

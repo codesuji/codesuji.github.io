@@ -17,7 +17,7 @@
 <meta property="og:image" content="http://codesuji.com/images/bf1/decompile_foo.png">
 <meta property="og:image" content="http://codesuji.com/images/bf1/foo2_execute.png">
 <meta property="og:image" content="http://codesuji.com/images/bf1/decompile_foo2.png">
-<meta property="og:updated_time" content="2017-12-23T19:03:14.112Z">
+<meta property="og:updated_time" content="2020-05-11T00:35:20.474Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="BF Compiler Part 2 - MSIL">
 <meta name="twitter:description" content="Continuing with the BF compiler, it’s time to look at how to create code targeting the CLR.  As before, I will be using F# to generate the target MSIL.">
@@ -108,7 +108,7 @@ ga('send', 'pageview');
       
         <p>Continuing with the BF compiler, it’s time to look at how to create code targeting the CLR.  As before, I will be using <a href="http://www.fsharp.org" target="_blank" rel="noopener">F#</a> to generate the target MSIL.</p>
 <a id="more"></a>
-<p><strong>Series:</strong><br><a href="/2017/02/19/bf-compiler-part1-parsing">Part 1 (Parsing)</a><br>Part 2 (IL Generation)<br><a href="/2017/03/04/bf-compiler-part3-compiler">Part 3 (Compiler)</a><br><a href="/2017/03/11/bf-compiler-part4-optimization">Part 4 (Optimization)</a></p>
+<p><strong>Series:</strong><br><a href="/2017/02/19/bf-compiler-part1-parsing">Part 1 (Parsing)</a><br>Part 2 (IL Generation)<br><a href="/2017/03/04/bf-compiler-part3-compiler">Part 3 (Compiler)</a><br><a href="/2017/03/13/bf-compiler-part4-optimization">Part 4 (Optimization)</a></p>
 <p>There are a couple aspects regarding IL generation.  First, the how. <code>System.Reflection</code> and <code>System.Reflection.Emit</code> are the namespaces that contain the functionality of interest.  Second, the what. A basic application shell is a good place to start.  Once that’s in place, I’ll discuss the third part, the what inside the what.  F# can be used to to emit IL into the sample application for expanded functionality.</p>
 <p>The ultimate goal is it compile BF into MSIL.  Before doing the fun stuff, it’s a good idea to step back and see what is involved in creating a basic application.  Without any of the fancy things, what is the bare minimum I need to get something that runs.  To do that my short-term target is to get a basic application that executes.  Once this is in place I can start looking at custom IL code.  The base application that I generate has the general structure:</p>
 <ul>
