@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Nix for Development | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="For awhile I’ve admired Nix from afar, but I’ve recently taken the opportunity to dive in and get a feel for it myself.  This is mostly an aggregation of initial impressions and ideas of how I can lev">
+<meta name="keywords" content="Nix">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nix for Development">
+<meta property="og:url" content="http://codesuji.com/2020/10/25/Nix-For-Development/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="For awhile I’ve admired Nix from afar, but I’ve recently taken the opportunity to dive in and get a feel for it myself.  This is mostly an aggregation of initial impressions and ideas of how I can lev">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2020-10-26T11:26:01.818Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Nix for Development">
+<meta name="twitter:description" content="For awhile I’ve admired Nix from afar, but I’ve recently taken the opportunity to dive in and get a feel for it myself.  This is mostly an aggregation of initial impressions and ideas of how I can lev">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Nix-For-Development" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2020/10/25/Nix-For-Development/" class="article-date">
+  <time datetime="2020-10-25T13:18:33.000Z" itemprop="datePublished">2020-10-25</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Nix for Development
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 9 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>For awhile I’ve admired <a href="https://nixos.org" target="_blank" rel="noopener">Nix</a> from afar, but I’ve recently taken the opportunity to dive in and get a feel for it myself.  This is mostly an aggregation of initial impressions and ideas of how I can leverage Nix in my development workflow.</p>
+<a id="more"></a>
+<p>To start off, this is a view into the Nix package manager, not NixOS.  The distro is on my list to evaluate, but that is a task for another day.  Additionally, this isn’t meant to be a Nix tutorial, the <a href="https://nixos.org" target="_blank" rel="noopener">Nix</a> project has some good starting information.  My goal here is just focusing on the development experience.  For those not familiar with Nix, it is a package manager focused on reproducibility.  For me, that is the appeal.  I’m always looking for ways to make my process at home and work better; providing a more consistent environment is part of that.  In addition, Nix should open opportunities for additional flexibility and safety while dealing with different tooling versions.</p>
+<p>To that point, tooling versions can be particular pain point when dealing with different projects and teams in an organization.  Inevitably, there are projects needing that particular version of Node or Python (to just pick on two language runtimes).  Their respective communities have come up with solutions to this problem, tools like nvm, nodeenv, virtualenv, and pyenv, to just name a few.  Nix, among other things, solves this problem using a overarching singular solution.  It is a consistent answer across different types of languages and projects.  Honestly, it is not that hard to manage different languages with their own set of tools.  But the ability to manage tooling dependencies the exact same way at a higher level is very appealing.</p>
+<p>Since Nix is a package manager, not just a language runtime manager, that means I can control more than Python or Node versions.  I can use it add sorts of application dependencies for a project.  These may be required or recommended developer tooling for the project.  As example, lsof or netcat installation can be part of the project development package.  Outside of project-specific usage, you can use Nix as your general system package manager (technically that’s the underlying intent anyway).  But for those who want to just dip their toes, you don’t need to go all-in for OS package management.  It’s just an option to consider.  I will say, if you’re not going to go all-in with Nix, just make sure you clearly delineate your boundaries.  The last thing you want to do is add the mental load of “hrm, how did I install that app?”.</p>
+<p>It is time to dig a bit deeper, and that starts at understanding the different aspects of the Nix.</p>
+<ul>
+<li>Nix, the package manager</li>
+<li>Nix, the shell</li>
+<li>The Nix configuration files</li>
+</ul>
+<p>An example can do wonders for understanding how everything pieces together.  For this example project I’m going to be use .Net Core (v3) and NodeJs (v14).  First make sure Nix is installed; which adds the package manager, nix shell, plus several other tools.  Once complete, it is time to setup the project-specific tooling configuration.  This is handled by the <code>shell.nix</code> file (or <code>default.nix</code>).  In the project directory, I’ll create the file <code>shell.nix</code>.  Once created, I add the development dependencies.  This includes the .NET Core sdk as well as the NodeJs runtime; available options <a href="https://search.nixos.org/packages?channel=unstable" target="_blank" rel="noopener">here</a>.  It doesn’t have to end there, I can also run commands and/or set environment variables for the project’s Nix shell.</p>
+<p><code>shell.nix</code>:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#123; pkgs ? import &lt;nixpkgs&gt; &#123;&#125; &#125;:</span><br><span class="line"></span><br><span class="line">pkgs.mkShell &#123;</span><br><span class="line">  buildInputs = [</span><br><span class="line">    pkgs.dotnet-sdk_3</span><br><span class="line">    pkgs.nodejs-14_x</span><br><span class="line">  ];</span><br><span class="line"></span><br><span class="line">  shellHook = &apos;&apos;</span><br><span class="line">    echo starting...</span><br><span class="line">  &apos;&apos;;</span><br><span class="line"></span><br><span class="line">  MY_VAR = &quot;foobar&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Now my project directory looks like this:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">~/projects/myproject(dev)$ tree -L 1</span><br><span class="line">.</span><br><span class="line">├── main.fsx</span><br><span class="line">├── main.js</span><br><span class="line">├── node_modules</span><br><span class="line">├── package.json</span><br><span class="line">├── package-lock.json</span><br><span class="line">└── shell.nix</span><br></pre></td></tr></table></figure>
+<p>Once this is created, just run <code>nix-shell</code>.  This handles project setup as well as development dependencies.  The below example shows the manifestation of the defined development dependencies.  Currently I have dotnet installed globally, and node not installed at all.  So inside my nix-shell my dotnet version changes, while node and my environment variable are made available.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">~/projects$ cd myproject</span><br><span class="line">~/projects/myproject(dev)$ echo $MY_VAR</span><br><span class="line"></span><br><span class="line">~/projects/myproject(dev)$ dotnet --version</span><br><span class="line">3.1.403</span><br><span class="line">~/projects/myproject(dev)$ node --version</span><br><span class="line">bash: node: command not found</span><br><span class="line">~/projects/myproject(dev)$ nix-shell</span><br><span class="line">starting...</span><br><span class="line"></span><br><span class="line">[nix-shell:~/projects/myproject]$ echo $MY_VAR</span><br><span class="line">foobar</span><br><span class="line"></span><br><span class="line">[nix-shell:~/projects/myproject]$ dotnet --version</span><br><span class="line">3.1.402</span><br><span class="line"></span><br><span class="line">[nix-shell:~/projects/myproject]$ node --version</span><br><span class="line">v14.9.0</span><br><span class="line"></span><br><span class="line">[nix-shell:~/projects/myproject]$ which dotnet</span><br><span class="line">/nix/store/wdy002bjakj6x2a6mdqajg11j23b3v2v-dotnet-sdk-3.1.402/bin/dotnet</span><br><span class="line"></span><br><span class="line">[nix-shell:~/projects/myproject]$ which node</span><br><span class="line">/nix/store/0f4ar6v0qvsb6cnyz1k2avhg9frsjr8s-nodejs-14.9.0/bin/node</span><br><span class="line"></span><br><span class="line">[nix-shell:~/projects/myproject]$ dotnet fsi main.fsx </span><br><span class="line">Hello, MY_VAR = foobar</span><br><span class="line"></span><br><span class="line">[nix-shell:~/projects/myproject]$ node main.js </span><br><span class="line">Hello, MY_VAR = foobar</span><br><span class="line"></span><br><span class="line">[nix-shell:~/projects/myproject]$ exit</span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
+<p>Great! I now have development dependencies set for my project.  Add the newly created <code>nix.shell</code> to source control, and teammates can now develop in a similar environment (assuming they also have Nix of course).  So, this is a bit of a lie.  Others can get close, but the question is, how do I ensure actual reproducibility so we all can truly see the same version of the tools?  To understand the situation better, I need to mention channels.  Channels are a Nix construct that defines a consistent sets of packages that can be installed.  As an example unstable, 20.09, 20.03, 19.09 are some of the channels available at the time of this writing.  Everyone could have their default channel set to a different channel.  Each channel having it’s own version of applications, for example <code>dotnet-sdk_3</code> is version 3.1.101 in the channel 20.03 and 3.1.102 in 20.09.  So a user’s system can be consistent within itself, but how do you get consistency across a team?  You pin a shell.nix to a specific git commit.  This guarantees everyone works off the same set of packages.  For reference you can find the proper commit for a channel on the <a href="https://status.nixos.org/" target="_blank" rel="noopener">status</a> page.  To do this, I modify the first line of my shell.nix to pin it to a specific commit of the unstable channel.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123; pkgs ? import (fetchTarball &quot;https://github.com/NixOS/nixpkgs/archive/cfed29bfcb28259376713005d176a6f82951014a.tar.gz&quot;) &#123;&#125; &#125;:</span><br></pre></td></tr></table></figure>
+<p>Now we have everyone on the same page.  I believe this setup can go a long way to making a better development experience.  But there is more.  This works, but some may find entering the nix-specific shell every time a hassle.  This is where <a href="https://direnv.net" target="_blank" rel="noopener">direnv</a> enters the picture.  Once this is installed, I can automatically enter a nix shell when I cd into the project directory.  <i>Aside: There are other solutions for this, direnv is just what I settled on</i>.  It works as a nice addition to make the whole experience seamless.  Once direnv is installed and configured, there is a little project-specific setup.  First, in the project directory create a <code>.envrc</code> file.  Second, authorize direnv to activate on the project directory.  This second step is important.  Since direnv won’t just run code because an .envrc file is there, you have to tell it which dirs it is supposed to run against.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">cd myproject</span><br><span class="line"></span><br><span class="line"># Create an environment file</span><br><span class="line">echo &quot;use nix&quot; &gt; .envrc</span><br><span class="line"></span><br><span class="line"># Enable direnv for this dir</span><br><span class="line">direnv allow</span><br></pre></td></tr></table></figure>
+<p>With that in place, now when I enter the directory, Nix auto configures and I’m good to go.  Fwiw, direnv can be used for more than just instantiating Nix.  In fact, there is some overlap in nix-shell and direnv functionality.  Things like environment variables can be configured in either shell.nix or .envrc.  It’s worth figuring out where the right balance is for you.  I prefer to keep static and development-specific configuration across environments in the shell.nix.  For things that can, or should, vary across environments I prefer an environment-specific file, like .envrc.  All these pieces put together make for a nice development experience.  My initial experience has been good and I look forward to putting this setup through it’s paces.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<p class="related-posts-none">No related post.</p>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2020/10/25/Nix-For-Development/" data-id="ckgqhw6w5004yl1mwj6cd2yer" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Nix/">Nix</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2020/10/19/Microbit-Introduction/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Playing with the micro:bit</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 13.33px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.22px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13.33px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/STEM/" style="font-size: 11.11px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/10/25/Nix-For-Development/">Nix for Development</a>
+          </li>
+        
+          <li>
+            <a href="/2020/10/19/Microbit-Introduction/">Playing with the micro:bit</a>
+          </li>
+        
+          <li>
+            <a href="/2020/05/10/Propagator-Networks-in-F/">Propagator Networks in F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/25/Web-Scraping-with-F/">Web Scraping with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/17/Introduction-to-F-Talk/">Introduction to F# Talk</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
