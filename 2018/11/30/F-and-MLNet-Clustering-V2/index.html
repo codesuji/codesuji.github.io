@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>F# and ML.NET Clustering (V2) | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="With the release of v0.7.0, it is time to revisit K-means clustering using F# and Microsoft’s new ML.NET framework.  The api has changed enough to warrant a minor rework.  This post is a re-examinatio">
+<meta name="keywords" content="F#,FSharp,Machine Learning,MLNet,.NET Core">
+<meta property="og:type" content="article">
+<meta property="og:title" content="F# and ML.NET Clustering (V2)">
+<meta property="og:url" content="http://codesuji.com/2018/11/30/F-and-MLNet-Clustering-V2/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="With the release of v0.7.0, it is time to revisit K-means clustering using F# and Microsoft’s new ML.NET framework.  The api has changed enough to warrant a minor rework.  This post is a re-examinatio">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://codesuji.com/images/mlnet3/320px-Abnormal_mammogram.jpg">
+<meta property="og:updated_time" content="2019-09-16T23:48:52.511Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="F# and ML.NET Clustering (V2)">
+<meta name="twitter:description" content="With the release of v0.7.0, it is time to revisit K-means clustering using F# and Microsoft’s new ML.NET framework.  The api has changed enough to warrant a minor rework.  This post is a re-examinatio">
+<meta name="twitter:image" content="http://codesuji.com/images/mlnet3/320px-Abnormal_mammogram.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-and-MLNet-Clustering-V2" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/11/30/F-and-MLNet-Clustering-V2/" class="article-date">
+  <time datetime="2018-12-01T03:17:49.000Z" itemprop="datePublished">2018-11-30</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      F# and ML.NET Clustering (V2)
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 14 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>With the release of v0.7.0, it is time to revisit K-means clustering using <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a> and Microsoft’s new <a href="https://www.microsoft.com/net/learn/apps/machine-learning-and-ai/ml-dotnet" target="_blank" rel="noopener">ML.NET</a> framework.  The api has changed enough to warrant a minor rework.  This post is a re-examination of a previous post <a href="/2018/07/07/F-and-MLNet-Clustering/">F# and ML.NET Clustering</a>.  The use case will be to use examination attributes to classify mammogram results.</p>
+<a id="more"></a>
+<p><i>Note: ML.NET is still evolving, this post was written using Microsoft.ML v0.7.0.</i></p>
+<p>Make sure you have <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core version 2.1</a> installed.  If you don’t, head out to the <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core Downloads</a> page.  Select <strong>SDK</strong> for your platform.  Tangential, but you can also get here by going to <a href="https://dot.net" target="_blank" rel="noopener">dot.net</a>, then navigating to <code>Downloads</code> and <code>.NET Core</code>.</p>
+<p>First, create a console F# project, then add the ML.NET package.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dotnet new console --language F# --name MLNet-Mammogram</span><br><span class="line">cd MLNet-Mammogram</span><br><span class="line">dotnet add package Microsoft.ML --version 0.7.0</span><br></pre></td></tr></table></figure>
+<p>Next, it is time to get the data.  The source I used for this post is from <a href="https://archive.ics.uci.edu/ml/datasets/Mammographic+Mass" target="_blank" rel="noopener">UCI</a>.  The datafile can be found [here] (<a href="https://archive.ics.uci.edu/ml/machine-learning-databases/mammographic-masses/mammographic_masses.data" target="_blank" rel="noopener">https://archive.ics.uci.edu/ml/machine-learning-databases/mammographic-masses/mammographic_masses.data</a>)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir data &amp;&amp; cd data</span><br><span class="line">curl -O https://archive.ics.uci.edu/ml/machine-learning-databases/mammographic-masses/mammographic_masses.data</span><br></pre></td></tr></table></figure>
+<p>Here is a sample of what the data looks like.  There is no header row.  The columns represent 5 features and 1 classification column:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">- BI-RADS assessment (1-5)</span><br><span class="line">- Age (Patient&apos;s age)</span><br><span class="line">- Shape (mass shape: round=1 oval=2 lobular=3 irregular=4 (nominal))</span><br><span class="line">- Margin (mass margin: circumscribed=1 microlobulated=2 obscured=3 ill-defined=4 spiculated=5 (nominal))</span><br><span class="line">- Density: (mass density high=1 iso=2 low=3 fat-containing=4 (ordinal))</span><br><span class="line">- Severity: (benign=0 or malignant=1)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># Data Rows</span><br><span class="line">5,67,3,5,3,1</span><br><span class="line">4,43,1,1,?,1</span><br><span class="line">5,58,4,5,3,1</span><br><span class="line">4,28,1,1,3,0</span><br><span class="line">5,57,1,5,3,1</span><br></pre></td></tr></table></figure>
+<p>Now that the project is setup and data is local, we can get to the code.  Time to open up the already created <code>Program.fs</code>.  First, add the necessary namespaces.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System</span><br><span class="line"><span class="keyword">open</span> System.IO</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML.Runtime.Api</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML.Runtime.Data</span><br></pre></td></tr></table></figure>
+<p>The ML.NET pipeline expects the data in a specific format.  In the C# world, this is a class, for F# we can use a type.  Below are the required types; <code>MammogramData</code> is the input data, <code>MammogramPrediction</code> is the output prediction.  For <code>MammogramData</code>, this is basically a a map of columns to member variables.  There are a couple notable points to ensure the pipeline can properly consume the data.  Each attribute must be <code>mutable public</code>, it also requires the <code>[&lt;Column(&quot;#&quot;)&gt;]</code> to specify it’s column position, and <code>[&lt;DefaultValue&gt;]</code> attributes.  For <code>MammogramPrediction</code>, <code>PredictionLabel</code> for the cluster id, and <code>Score</code> for calculated distances from all clusters is required.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">MammogramPrediction</span></span>() =</span><br><span class="line">    <span class="meta">[&lt;Column("0")&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> BiRads:float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;Column("1")&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Age:float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;Column("2")&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Shape:float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;Column("3")&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Margin:float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;Column("4")&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Density:float32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;Column("5")&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Label :float32</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">MammogramPrediction</span></span>() =</span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;ColumnName("PredictedLabel")&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> SelectedClusterId:uint32</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;ColumnName("Score")&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Distance: float32[]</span><br></pre></td></tr></table></figure>
+<p>Here is one of the big changes from early versions.  Where the pipeline object is gone, it has been replaced with an <code>MLContext</code>.  Although different, it still maintains intuitiveness, and gains additional functionality.  First, create an MLContext, if desired a <code>seed</code> can be defined to ensure the same results between executions.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> mlContext = MLContext()</span><br><span class="line"><span class="comment">// let mlContext = MLContext(seed = Nullable 1)</span></span><br></pre></td></tr></table></figure>
+<p>Time to load the data. This is another method that has updated since earlier versions.  First create a <code>TextReader</code> with a file format definition.  Then use that object to read the data from the data file.  The entire file can be used for training.  Alternatively, <code>TrainTestSplit</code> (another new function) can be used to easily divide a single dataset into train and test sets.  This is especially handy during the development process.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> dataPath = <span class="string">"./data/mammographic_masses.data"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">////////////</span></span><br><span class="line"><span class="comment">// Load data</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> dataLoader = </span><br><span class="line">  mlContext.Data.TextReader(</span><br><span class="line">    TextLoader.Arguments(</span><br><span class="line">      Separator = <span class="string">","</span>,</span><br><span class="line">      HasHeader = <span class="keyword">true</span>,</span><br><span class="line">      Column = </span><br><span class="line">        [|</span><br><span class="line">            TextLoader.Column(<span class="string">"BiRads"</span>, Nullable DataKind.R4, <span class="number">0</span>)</span><br><span class="line">            TextLoader.Column(<span class="string">"Age"</span>, Nullable DataKind.R4, <span class="number">1</span>)</span><br><span class="line">            TextLoader.Column(<span class="string">"Shape"</span>, Nullable DataKind.R4, <span class="number">2</span>)</span><br><span class="line">            TextLoader.Column(<span class="string">"Margin"</span>, Nullable DataKind.R4, <span class="number">3</span>)</span><br><span class="line">            TextLoader.Column(<span class="string">"Density"</span>, Nullable DataKind.R4, <span class="number">4</span>)</span><br><span class="line">        |]</span><br><span class="line">    )</span><br><span class="line">  )</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> allData = dataLoader.Read dataPath</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">struct</span> (trainingData, testingData) = mlContext.Clustering.TrainTestSplit(allData, testFraction = <span class="number">0.3</span>)</span><br></pre></td></tr></table></figure>
+<p>After the data is loaded, feature columns need to be added to the transforms.  I’m going to use all feature columns from the file, and exclude severity.  The clustering model requires features to be numeric, which if fine here.  As the other posts show, you can convert text to numeric mappings if necessary.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> dataProcessPipeline = mlContext.Transforms.Concatenate(<span class="string">"Features"</span>, <span class="string">"BiRads"</span>, <span class="string">"Age"</span>, <span class="string">"Shape"</span>, <span class="string">"Margin"</span>, <span class="string">"Density"</span>)</span><br></pre></td></tr></table></figure>
+<p>Now that the features are defined, it is time to create a model.  This will be <code>KMeans</code>.  Similar to the other trainers, custom parameters can be defined, I have decided to use <code>K = 4</code>.  It also has other options as as <code>MaxIterations</code>, <code>OptTol</code> (convergence tolerance), and <code>NormalizeFeatures</code>.  The KMeans trainer/estimator must be combined with the training data to create a model.  The last part, create a prediction function from the model.  Note the <code>MammogramData</code> and <code>MammogramPrediction</code> types as part of the call.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> trainer = mlContext.Clustering.Trainers.KMeans(features = <span class="string">"Features"</span>, clustersCount = <span class="number">4</span>)</span><br><span class="line"><span class="keyword">let</span> estimator = dataProcessPipeline.Append trainer</span><br><span class="line"><span class="keyword">let</span> trainedModel = estimator.Fit trainingData</span><br><span class="line"><span class="keyword">let</span> model = trainedModel.MakePredictionFunction&lt;MammogramData, MammogramPrediction&gt;(mlContext) </span><br></pre></td></tr></table></figure>
+<p>Validation of any model is important.  With the data split into train and test sets, it is easy to get metrics against the training data and then validate against the previously unseen test data.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Evaluate results (train)</span></span><br><span class="line"><span class="keyword">let</span> metricsTrain = </span><br><span class="line">  <span class="keyword">let</span> predictions = trainedModel.Transform trainingData</span><br><span class="line">  mlContext.Clustering.Evaluate(predictions, score = <span class="string">"Score"</span>, features = <span class="string">"Features"</span>)</span><br><span class="line"></span><br><span class="line">printfn <span class="string">""</span></span><br><span class="line">printfn <span class="string">"Train Data:"</span></span><br><span class="line">printfn <span class="string">"Avg Min Score: %f"</span> &lt;| metricsTrain.AvgMinScore</span><br><span class="line"><span class="comment">// Davies-Bouldin Index</span></span><br><span class="line">printfn <span class="string">"DBI          : %A"</span> &lt;| metricsTrain.Dbi</span><br><span class="line">printfn <span class="string">""</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Evaluate results (test)</span></span><br><span class="line"><span class="keyword">let</span> metricsTest = </span><br><span class="line">  <span class="keyword">let</span> predictions = trainedModel.Transform testingData</span><br><span class="line">  mlContext.Clustering.Evaluate(predictions, score = <span class="string">"Score"</span>, features = <span class="string">"Features"</span>)</span><br><span class="line"></span><br><span class="line">printfn <span class="string">""</span></span><br><span class="line">printfn <span class="string">"Test Data:"</span></span><br><span class="line">printfn <span class="string">"Avg Min Score: %f"</span> &lt;| metricsTest.AvgMinScore</span><br><span class="line"><span class="comment">// Davies-Bouldin Index</span></span><br><span class="line">printfn <span class="string">"DBI          : %A"</span> &lt;| metricsTest.Dbi</span><br><span class="line">printfn <span class="string">""</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Train Data:</span><br><span class="line">Avg Min Score: <span class="number">31.570207</span></span><br><span class="line">DBI          : <span class="number">0.6515402653</span></span><br><span class="line"></span><br><span class="line">Test Data:</span><br><span class="line">Avg Min Score: <span class="number">27.217818</span></span><br><span class="line">DBI          : <span class="number">0.6298469451</span></span><br></pre></td></tr></table></figure>
+<p>With the initial evaluation out of the way, it is time to move onto individual predictions.  I want to create aggregate classification percentages for each cluster.  To do this I take the predictive model and apply it against the the training file.  Using the predicted cluster and the training label, I create a mapping for detailed predictions.  Each cluster gets its own raw benign/malignant count, which can be converted into percentage likelihood for each classification.  I have the details annotated in comments, to make it easier to follow.  Honestly, this is the most labor-intensive part of the process.  I’d love to be able to pass an cluster-aggregate-score function in as part of the trainer to eliminate this work or reprocessing the data.  Once I have these results as a <code>Map</code>, I can query results easy enough.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Create classifications by cluster </span></span><br><span class="line"><span class="keyword">let</span> clusterClassification = </span><br><span class="line">  <span class="comment">// Read file</span></span><br><span class="line">  System.IO.File.ReadAllLines(dataPath)</span><br><span class="line">  <span class="comment">// Filter incomplete rows</span></span><br><span class="line">  |&gt; Array.filter (<span class="keyword">fun</span> line -&gt; not (line.Contains(<span class="string">"?"</span>)))</span><br><span class="line">  <span class="comment">// Run predictions </span></span><br><span class="line">  |&gt; Array.map (<span class="keyword">fun</span> line -&gt; </span><br><span class="line">    <span class="comment">// Convert line to float array</span></span><br><span class="line">    <span class="keyword">let</span> row = line.Split(',') |&gt; Array.map float32</span><br><span class="line">    <span class="comment">// Predict the clusterId of the row</span></span><br><span class="line">    <span class="keyword">let</span> predictedCluster = </span><br><span class="line">      model.Predict(</span><br><span class="line">        MammogramData(</span><br><span class="line">          BiRads = row.[<span class="number">0</span>],</span><br><span class="line">          Age = row.[<span class="number">1</span>],</span><br><span class="line">          Shape = row.[<span class="number">2</span>],</span><br><span class="line">          Margin = row.[<span class="number">3</span>],</span><br><span class="line">          Density = row.[<span class="number">4</span>])) </span><br><span class="line">    <span class="comment">// Populate benign/maligant counter for cluster (0=benign, 1=malignant)</span></span><br><span class="line">    <span class="keyword">if</span> int row.[<span class="number">5</span>] = <span class="number">0</span> </span><br><span class="line">    <span class="keyword">then</span> (predictedCluster.SelectedClusterId, [| <span class="number">1</span>; <span class="number">0</span> |])</span><br><span class="line">    <span class="keyword">else</span> (predictedCluster.SelectedClusterId, [| <span class="number">0</span>; <span class="number">1</span> |]))</span><br><span class="line">  <span class="comment">// Group by ClusterId</span></span><br><span class="line">  |&gt; Array.groupBy (<span class="keyword">fun</span> (clusterId, _) -&gt; clusterId)</span><br><span class="line">  <span class="comment">// Sum each cluster's classification counts</span></span><br><span class="line">  |&gt; Array.map (<span class="keyword">fun</span> (clusterId, data) -&gt; </span><br><span class="line">    <span class="keyword">let</span> countSums = </span><br><span class="line">      data</span><br><span class="line">      |&gt; Array.map (<span class="keyword">fun</span> (_, z) -&gt; z)</span><br><span class="line">      |&gt; Array.fold (<span class="keyword">fun</span> a (x:int []) -&gt; </span><br><span class="line">          [| a.[<span class="number">0</span>] + x.[<span class="number">0</span>]; a.[<span class="number">1</span>] + x.[<span class="number">1</span>] |]) [| <span class="number">0</span>; <span class="number">0</span> |] </span><br><span class="line"></span><br><span class="line">    (clusterId, countSums))</span><br><span class="line">  |&gt; Map.ofArray</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Provide a prediction based on cluster id</span></span><br><span class="line"><span class="keyword">let</span> clusterIdToPrediction (clusterClassification:Map&lt;uint32, int[]&gt;) (clusterId:uint32) =</span><br><span class="line">  <span class="keyword">let</span> classifications = clusterClassification.Item clusterId</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> total = classifications |&gt; Array.sum |&gt; float</span><br><span class="line">  <span class="keyword">let</span> benignPct = float classifications.[<span class="number">0</span>] / total</span><br><span class="line">  <span class="keyword">let</span> malignantPct = float classifications.[<span class="number">1</span>] / total</span><br><span class="line"></span><br><span class="line">  sprintf <span class="string">"Benign: %0.2f Malignant: %0.2f (%d, %d)"</span> </span><br><span class="line">    benignPct </span><br><span class="line">    malignantPct </span><br><span class="line">    classifications.[<span class="number">0</span>] </span><br><span class="line">    classifications.[<span class="number">1</span>]</span><br></pre></td></tr></table></figure>
+<p>Now that the <code>clusterIdToPrediction</code> is defined, I can pair the ML.NET cluster prediction with the aggregated cluster classification percentages.  First, create a <code>MammogramData</code> object and provide it to the <code>Predict</code> method.  Second, use the predicted clusterId with the aggregated cluster classification percentages to get a classification result.  For this example, I pull one of those rows from the training data.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Prediction</span></span><br><span class="line"><span class="keyword">let</span> test1 = MammogramData()</span><br><span class="line">test1.BiRads &lt;- <span class="number">5.</span>f</span><br><span class="line">test1.Age &lt;- <span class="number">67.</span>f</span><br><span class="line">test1.Shape &lt;- <span class="number">3.</span>f</span><br><span class="line">test1.Margin &lt;- <span class="number">5.</span>f</span><br><span class="line">test1.Density &lt;- <span class="number">3.</span>f</span><br><span class="line"><span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> predictionTest1 = model.Predict(test1)</span><br><span class="line">printfn <span class="string">"Predicted ClusterId: %d"</span> predictionTest1.SelectedClusterId</span><br><span class="line">printfn <span class="string">"Predicted Distances: %A"</span> predictionTest1.Distance</span><br><span class="line">printfn <span class="string">"Predicted Result: %s"</span> (clusterIdToPrediction clusterClassification predictionTest1.SelectedClusterId)</span><br><span class="line">printfn <span class="string">"Actual Result   : 1 (Malignant)"</span></span><br><span class="line">printfn <span class="string">""</span></span><br></pre></td></tr></table></figure>
+<p>The results show the prediction falls into cluster 1, which has a 80% likelihood it is malignant, which matches the actual value.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># Prediction Result:</span><br><span class="line">Predicted ClusterId: 1</span><br><span class="line">Predicted Distances: [|51.855957f; 1333.52344f; 63.1328125f; 449.377441f|]</span><br><span class="line">Predicted Result: Benign: 0.20 Malignant: 0.80 (40, 163)</span><br><span class="line">Actual Result   : 1 (Malignant)</span><br></pre></td></tr></table></figure>
+<p>Once a model has been created, it is often useful to save for later use.  The save method has changed from previous versions.  Once saved, this model can then be loaded for future use.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Save model to file</span></span><br><span class="line"><span class="keyword">let</span> saveModel (mlContext:MLContext) trainedMode = </span><br><span class="line">  <span class="keyword">use</span> fsWrite = <span class="keyword">new</span> FileStream(<span class="string">"test-model.zip"</span>, FileMode.Create, FileAccess.Write, FileShare.Write)</span><br><span class="line">  mlContext.Model.Save(trainedModel, fsWrite);</span><br><span class="line"></span><br><span class="line">saveModel mlContext trainedModel</span><br><span class="line"></span><br><span class="line"><span class="comment">// Load model from file and run a prediction</span></span><br><span class="line"><span class="keyword">use</span> fsRead = <span class="keyword">new</span> FileStream(<span class="string">"test-model.zip"</span>, FileMode.Open, FileAccess.Read, FileShare.Read)</span><br><span class="line"><span class="keyword">let</span> mlContextReloaded = MLContext()</span><br><span class="line"><span class="keyword">let</span> trainedModelReloaded = TransformerChain.LoadFrom(mlContextReloaded, fsRead)</span><br><span class="line"><span class="keyword">let</span> modelReloaded = trainedModel.MakePredictionFunction&lt;MammogramData, MammogramPrediction&gt;(mlContextReloaded);</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> predictionReloaded = modelReloaded.Predict(test1)</span><br><span class="line">printfn <span class="string">"Predicted ClusterId RL: %d"</span> predictionReloaded.SelectedClusterId</span><br><span class="line">printfn <span class="string">"Predicted Distances RL: %A"</span> predictionReloaded.Distance</span><br><span class="line">printfn <span class="string">"Predicted Result RL: %s"</span> (clusterIdToPrediction clusterClassification predictionReloaded.SelectedClusterId)</span><br><span class="line">printfn <span class="string">"Actual Result RL   : 1 (Malignant)"</span></span><br><span class="line">printfn <span class="string">""</span></span><br></pre></td></tr></table></figure>
+<p>As expected, the prediction results are the same with the reloaded model.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># Prediction Result: (model reloaded):</span><br><span class="line">Predicted ClusterId: 1</span><br><span class="line">Predicted Distances: [|51.855957f; 1333.52344f; 63.1328125f; 449.377441f|]</span><br><span class="line">Predicted Result: Benign: 0.20 Malignant: 0.80 (40, 163)</span><br><span class="line">Actual Result   : 1 (Malignant)</span><br></pre></td></tr></table></figure>
+<p>Throughout the post, portions of the output have been provided out of band.  Here is how the whole thing looks when run with <code>dotnet run</code>.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Train Data:</span><br><span class="line">Avg Min Score: 31.872808</span><br><span class="line">DBI          : 0.6556137903</span><br><span class="line"></span><br><span class="line">Test Data:</span><br><span class="line">Avg Min Score: 27.691496</span><br><span class="line">DBI          : 0.6635021486</span><br><span class="line"></span><br><span class="line">ClusterId 1u =&gt; Benign: 0.20 Malignant: 0.80 (40, 163)</span><br><span class="line">ClusterId 2u =&gt; Benign: 0.90 Malignant: 0.10 (95, 11)</span><br><span class="line">ClusterId 3u =&gt; Benign: 0.49 Malignant: 0.51 (151, 156)</span><br><span class="line">ClusterId 4u =&gt; Benign: 0.66 Malignant: 0.34 (141, 73)</span><br><span class="line"></span><br><span class="line">Predicted ClusterId: 1</span><br><span class="line">Predicted Distances: [|51.855957f; 1333.52344f; 63.1328125f; 449.377441f|]</span><br><span class="line">Predicted Result: Benign: 0.20 Malignant: 0.80 (40, 163)</span><br><span class="line">Actual Result   : 1 (Malignant)</span><br><span class="line"></span><br><span class="line">Predicted ClusterId RL: 1</span><br><span class="line">Predicted Distances RL: [|51.855957f; 1333.52344f; 63.1328125f; 449.377441f|]</span><br><span class="line">Predicted Result RL: Benign: 0.20 Malignant: 0.80 (40, 163)</span><br><span class="line">Actual Result RL   : 1 (Malignant)</span><br></pre></td></tr></table></figure>
+<p>This has been a brief look into training and using an ML.NET k-means cluster model.  As seen with the other models, ML.NET is providing a nice consistent interface and has some good components.  It is a framework that continues to grow in a positive direction.  Kudos and thanks to all the people making this a reality.  That’s all for now.  Until next time.</p>
+<p><img src="/images/mlnet3/320px-Abnormal_mammogram.jpg" alt=""></p>
+<!-- Mammogram image is in the public domain: https://commons.wikimedia.org/wiki/File:Abnormal_mammogram.jpg -->
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2019/09/14/F-and-MLNet-Regression-V2/">F# and ML.NET Regression</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/01/14/F-and-MLNet-Sentiment-Analysis/">F# and ML.NET Sentiment Analysis</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/06/23/F-and-MLNet-Classification/">F# and ML.NET Classification</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2018/11/30/F-and-MLNet-Clustering-V2/" data-id="cjp4wqwto0000kgm0ubvmd8ex" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NET-Core/">.NET Core</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MLNet/">MLNet</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Machine-Learning/">Machine Learning</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/12/18/F-Benchmarking/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          F# Benchmarking
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/10/10/F-and-Elasticsearch/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">F# and Elasticsearch</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 12.22px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dtw/" style="font-size: 10px;">Dtw</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.22px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13.33px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/05/10/Propagator-Networks-in-F/">Propagator Networks in F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/25/Web-Scraping-with-F/">Web Scraping with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/17/Introduction-to-F-Talk/">Introduction to F# Talk</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/08/F-and-Docker/">Containerizing F# with Docker</a>
+          </li>
+        
+          <li>
+            <a href="/2020/01/25/Preonic-V3/">Preonic V3 Build</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

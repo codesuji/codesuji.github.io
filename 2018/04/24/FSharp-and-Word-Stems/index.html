@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>F# and Word Stems | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Today’s post discusses performing word stemming with F#.  This will be an expansion on a previous post, Comparing Quora question intent.  As a result, it will also address some feature engineering.">
+<meta name="keywords" content="F#,FSharp,Machine Learning,Kaggle,Text,Analytics">
+<meta property="og:type" content="article">
+<meta property="og:title" content="F# and Word Stems">
+<meta property="og:url" content="http://codesuji.com/2018/04/24/FSharp-and-Word-Stems/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Today’s post discusses performing word stemming with F#.  This will be an expansion on a previous post, Comparing Quora question intent.  As a result, it will also address some feature engineering.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-04-26T01:08:36.534Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="F# and Word Stems">
+<meta name="twitter:description" content="Today’s post discusses performing word stemming with F#.  This will be an expansion on a previous post, Comparing Quora question intent.  As a result, it will also address some feature engineering.">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-FSharp-and-Word-Stems" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/04/24/FSharp-and-Word-Stems/" class="article-date">
+  <time datetime="2018-04-25T03:01:12.000Z" itemprop="datePublished">2018-04-24</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      F# and Word Stems
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 6 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Today’s post discusses performing word stemming with <a href="http://fsharp.org" target="_blank" rel="noopener">F#</a>.  This will be an expansion on a <a href="/2018/01/06/Tackling-Kaggle-FSharp-XGBoost/">previous post</a>, <a href="https://www.kaggle.com/c/quora-question-pairs" target="_blank" rel="noopener">Comparing Quora question intent</a>.  As a result, it will also address some feature engineering.  </p>
+<a id="more"></a>
+<p>For those not familar with word stems, in this context it basically refers to word bases, excluding suffixes.  Stems are helpful when doing text compares, especially when dealing with data of a content-based nature.  This aligns well with the Quora question comparisons.  The <code>Annytab.Stemmer</code> library meets the needs well.</p>
+<p>Before getting started, everything here will be an enhancement of existing code from the Kaggle Quora duplicate questions post.</p>
+<p>First, add the <code>Annytab.Stemmer</code> package to the project by adding  it to <code>paket.dependencies</code>.  Then open the namespaces and create a stemmer object.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nuget Annytab.Stemmer</span><br></pre></td></tr></table></figure>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#r <span class="string">"../packages/Annytab.Stemmer/lib/netstandard1.4/Annytab.Stemmer.dll"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">open</span> Annytab</span><br><span class="line"><span class="keyword">open</span> Annytab.Stemmer</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> stemmer = EnglishStemmer()</span><br></pre></td></tr></table></figure>
+<p>Now that the basic components are in place, I can provide a simple stem example.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> sentence1 = <span class="string">"When birds fly, they are soaring above the trees while people are watching and talking"</span></span><br><span class="line"><span class="keyword">let</span> sentence2 = <span class="string">"When birds are flying, they soar above the trees while people watch and talk"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> sentenceToWords (s:string) = s.Split([|' '|]) </span><br><span class="line"><span class="keyword">let</span> sentence1Words = sentenceToWords sentence1</span><br><span class="line"><span class="keyword">let</span> sentence2Words = sentenceToWords sentence2</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> matches = Set.intersect (set sentence1Words) (set sentence2Words)</span><br><span class="line">printfn <span class="string">"Matches: %A"</span> (Set.count matches)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> sentenceToStemWords (s:string) = </span><br><span class="line">  sentenceToWords s</span><br><span class="line">  |&gt; stemmer.GetSteamWords</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> sentence1StemWords = sentenceToStemWords sentence1</span><br><span class="line"><span class="keyword">let</span> sentence2StemWords = sentenceToStemWords sentence2</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> stemMatches = Set.intersect (set sentence1StemWords) (set sentence2StemWords)</span><br><span class="line">printfn <span class="string">"Stem Matches: %A"</span> (Set.count stemMatches)</span><br><span class="line"></span><br><span class="line">printfn <span class="string">"sentence1: %A"</span> sentence1StemWords</span><br><span class="line">printfn <span class="string">"sentence2: %A"</span> sentence2StemWords</span><br><span class="line">printfn <span class="string">"Matches     : %d\nStem Matches: %d"</span> (Set.count matches) (Set.count stemMatches)</span><br></pre></td></tr></table></figure>
+<p>Here are the results.  Notice in the stemmed word list only the bases are listed <code>birds</code> -&gt; <code>bird</code> and <code>watching</code> to <code>watch</code>, etc.  This allows for concepts to be matched better.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Stem words:</span></span><br><span class="line">sentence1: [|<span class="string">"when"</span>; <span class="string">"bird"</span>; <span class="string">"fly,"</span>; <span class="string">"they"</span>; <span class="string">"are"</span>; <span class="string">"soar"</span>; <span class="string">"abov"</span>; <span class="string">"the"</span>; <span class="string">"tree"</span>; <span class="string">"while"</span>;</span><br><span class="line">  <span class="string">"peopl"</span>; <span class="string">"are"</span>; <span class="string">"watch"</span>; <span class="string">"and"</span>; <span class="string">"talk"</span>|]</span><br><span class="line">sentence2: [|<span class="string">"when"</span>; <span class="string">"bird"</span>; <span class="string">"are"</span>; <span class="string">"flying,"</span>; <span class="string">"they"</span>; <span class="string">"soar"</span>; <span class="string">"abov"</span>; <span class="string">"the"</span>; <span class="string">"tree"</span>;</span><br><span class="line">  <span class="string">"while"</span>; <span class="string">"peopl"</span>; <span class="string">"watch"</span>; <span class="string">"and"</span>; <span class="string">"talk"</span>|]</span><br><span class="line"></span><br><span class="line">&gt; printfn <span class="string">"Matches     : %d\nStem Matches: %d"</span> (Set.count matches) (Set.count stemMatches)</span><br><span class="line">Matches     : <span class="number">10</span></span><br><span class="line">Stem Matches: <span class="number">13</span></span><br></pre></td></tr></table></figure>
+<p>Time to update the feature generation.  A valuable reminder is that feature generation is part art, part science.  Often it is an iterative, and experimental, process.  Don’t worry, intuition of what a good feature might be grows with time and experience.  Using the now defined <code>sentenceToStemWords</code> to extract words from the questions, a comparison can be doing using a <code>Set.intersect</code>.  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> rowFeatures (metadata:Metadata) (input:CsvProvider&lt;TrainFilename&gt;.Row) =</span><br><span class="line">  <span class="keyword">let</span> question1Words = sentenceToStemWords input.Question1</span><br><span class="line">  <span class="keyword">let</span> question2Words = sentenceToStemWords input.Question2</span><br><span class="line">  <span class="keyword">let</span> wordShareCount = </span><br><span class="line">    Set.intersect (set question1Words) (set question2Words) </span><br><span class="line">    |&gt; Set.count</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> wordShareFeature = ((float32 wordShareCount) * <span class="number">2.</span>f) / (float32 question1Words.Length + float32 question2Words.Length)</span><br><span class="line"></span><br><span class="line">  [|</span><br><span class="line">    float32 input.Question1.Length;</span><br><span class="line">    float32 input.Question2.Length;</span><br><span class="line">    (wordCount &gt;&gt; float32) input.Question1;</span><br><span class="line">    (wordCount &gt;&gt; float32) input.Question2;</span><br><span class="line">    (abs &gt;&gt; float32) (wordCount input.Question1 - wordCount input.Question2);</span><br><span class="line">    wordShareFeature</span><br><span class="line">  |]</span><br></pre></td></tr></table></figure>
+<p>Add matching word stems between questions as a feature has improved the accuracy by about 8%.  That is a decent ROI for adding a feature.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&gt; evaluatePredictionResults finalModel trainInput trainOutput</span><br><span class="line">Accuracy: <span class="number">0.755652</span></span><br><span class="line">T\P       T      F</span><br><span class="line">T     <span class="number">84299</span>  <span class="number">43153</span></span><br><span class="line">F     <span class="number">35877</span> <span class="number">160103</span></span><br><span class="line"></span><br><span class="line">&gt; evaluatePredictionResults finalModel validationInput validationOutput</span><br><span class="line">Accuracy: <span class="number">0.704828</span></span><br><span class="line">T\P       T      F</span><br><span class="line">T     <span class="number">18281</span>  <span class="number">13061</span></span><br><span class="line">F     <span class="number">10806</span>  <span class="number">38710</span></span><br></pre></td></tr></table></figure>
+<p>There is one downside to this approach, common words like “a”, “and”, “the” are included in the matching word feature.  This can result in a deceptively high percentage word match.  To get a more representative match, these “stop words” can be excluded.  Time to make another feature change.  I built a stopwords list, here is a sample.  The full file is <a href="/data/stopwords.txt">here</a>. </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">i</span><br><span class="line">a</span><br><span class="line">about</span><br><span class="line">after</span><br><span class="line">all</span><br><span class="line">also</span><br><span class="line">an</span><br></pre></td></tr></table></figure>
+<p>Then alter <code>sentenceToFilteredStemWords</code> to be <code>sentenceToFilteredStemWords</code> that excludes stop words.  This will get me to where I want to be. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">[&lt;Literal&gt;]</span></span><br><span class="line"><span class="keyword">let</span> StopWordsFilename = <span class="string">"../data/stopwords.txt"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> stopWords = </span><br><span class="line">  File.ReadAllLines StopWordsFilename</span><br><span class="line">  |&gt; Array.map (<span class="keyword">fun</span> x -&gt; (x, <span class="number">1</span>))</span><br><span class="line">  |&gt; Map.ofArray</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> sentenceToFilteredStemWords s =</span><br><span class="line">  sentenceToStemWords s</span><br><span class="line">  |&gt; Array.filter (<span class="keyword">fun</span> w -&gt; not (Map.containsKey w stopWords))</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> rowFeatures (metadata:Metadata) (input:CsvProvider&lt;TrainFilename&gt;.Row) =</span><br><span class="line">  <span class="keyword">let</span> question1Words = sentenceToFilteredStemWords input.Question1</span><br><span class="line">  <span class="keyword">let</span> question2Words = sentenceToFilteredStemWords input.Question2</span><br><span class="line">  <span class="keyword">let</span> wordShareCount = </span><br><span class="line">    Set.intersect (set question1Words) (set question2Words) </span><br><span class="line">    |&gt; Set.count</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> wordShareFeature =</span><br><span class="line">    <span class="keyword">if</span> question1Words.Length + question2Words.Length = <span class="number">0</span></span><br><span class="line">    <span class="keyword">then</span> <span class="number">0.</span>f</span><br><span class="line">    <span class="keyword">else</span> ((float32 wordShareCount) * <span class="number">2.</span>f) / (float32 question1Words.Length + float32 question2Words.Length)</span><br><span class="line"></span><br><span class="line">  [|</span><br><span class="line">    float32 input.Question1.Length;</span><br><span class="line">    float32 input.Question2.Length;</span><br><span class="line">    (wordCount &gt;&gt; float32) input.Question1;</span><br><span class="line">    (wordCount &gt;&gt; float32) input.Question2;</span><br><span class="line">    (abs &gt;&gt; float32) (wordCount input.Question1 - wordCount input.Question2);</span><br><span class="line">    wordShareFeature;</span><br><span class="line">  |]</span><br></pre></td></tr></table></figure>
+<p>Filtering out stop words gained another 3%.  Admittedly I expected a bit more, but still upwards.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&gt; evaluatePredictionResults finalModel trainInput trainOutput</span><br><span class="line">Accuracy: <span class="number">0.777598</span></span><br><span class="line">T\P       T      F</span><br><span class="line">T     <span class="number">88157</span>  <span class="number">39913</span></span><br><span class="line">F     <span class="number">32019</span> <span class="number">163343</span></span><br><span class="line"></span><br><span class="line">&gt; evaluatePredictionResults finalModel validationInput validationOutput</span><br><span class="line">Accuracy: <span class="number">0.730577</span></span><br><span class="line">T\P       T      F</span><br><span class="line">T     <span class="number">19373</span>  <span class="number">12071</span></span><br><span class="line">F      <span class="number">9714</span>  <span class="number">39700</span></span><br></pre></td></tr></table></figure>
+<p>As you can see, using word stems and stop words to extend the features can be a useful tactic.  This also serves as a good reminder that F# has the tools for interesting analysis.  I hope you found this post useful.  Until next time.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2018/01/06/Tackling-Kaggle-FSharp-XGBoost/">Tackling Kaggle with F# and XGBoost</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/20/F-and-Text-Analytics/">F# and Text Analytics</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/08/27/K-Means-Clustering-with-F/">K-Means Clustering with F#</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2018/04/24/FSharp-and-Word-Stems/" data-id="cjo9c912a001bb9m03z3h1l03" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Analytics/">Analytics</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Kaggle/">Kaggle</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Machine-Learning/">Machine Learning</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Text/">Text</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/06/09/F-and-MLNet-Regression/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          F# and ML.NET Regression
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/02/28/F-and-DotEnv/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">F# and DotEnv</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 12.22px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dtw/" style="font-size: 10px;">Dtw</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.22px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13.33px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/05/10/Propagator-Networks-in-F/">Propagator Networks in F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/25/Web-Scraping-with-F/">Web Scraping with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/17/Introduction-to-F-Talk/">Introduction to F# Talk</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/08/F-and-Docker/">Containerizing F# with Docker</a>
+          </li>
+        
+          <li>
+            <a href="/2020/01/25/Preonic-V3/">Preonic V3 Build</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

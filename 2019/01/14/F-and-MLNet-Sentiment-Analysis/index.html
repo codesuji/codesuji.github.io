@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>F# and ML.NET Sentiment Analysis | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Today we’ll look at performing sentiment analysis using F# and ML.NET.  A new version (v0.9.0) has recently been released, so we use this as an opportunity to play with some new functionality.  The go">
+<meta name="keywords" content="F#,FSharp,Machine Learning,Text,MLNet,.NET Core">
+<meta property="og:type" content="article">
+<meta property="og:title" content="F# and ML.NET Sentiment Analysis">
+<meta property="og:url" content="http://codesuji.com/2019/01/14/F-and-MLNet-Sentiment-Analysis/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Today we’ll look at performing sentiment analysis using F# and ML.NET.  A new version (v0.9.0) has recently been released, so we use this as an opportunity to play with some new functionality.  The go">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2019-01-15T00:04:44.561Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="F# and ML.NET Sentiment Analysis">
+<meta name="twitter:description" content="Today we’ll look at performing sentiment analysis using F# and ML.NET.  A new version (v0.9.0) has recently been released, so we use this as an opportunity to play with some new functionality.  The go">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-and-MLNet-Sentiment-Analysis" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/01/14/F-and-MLNet-Sentiment-Analysis/" class="article-date">
+  <time datetime="2019-01-15T00:01:26.000Z" itemprop="datePublished">2019-01-14</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      F# and ML.NET Sentiment Analysis
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 13 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Today we’ll look at performing sentiment analysis using <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a> and <a href="https://dot.net/ml" target="_blank" rel="noopener">ML.NET</a>.  A new version (v0.9.0) has recently been released, so we use this as an opportunity to play with some new functionality.  The goal of today’s post will be to perform sentiment analysis on movie reviews from <a href="https://www.imdb.com" target="_blank" rel="noopener">IMDB</a>.</p>
+<a id="more"></a>
+<p><i>Note: ML.NET is still evolving, this post was written using Microsoft.ML v0.9.0.</i></p>
+<p>We’ll use <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core version 2.2</a>.  If you don’t have it installed, head out to the <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core Downloads</a> page.  Select <strong>SDK</strong> for your platform.  Tangential, but you can also get here by going to <a href="https://dot.net" target="_blank" rel="noopener">dot.net</a>, then navigating to <code>Downloads</code> and <code>.NET Core</code>.</p>
+<p>With that out of the way, create a console F# project, then add the ML.NET package.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dotnet new console --language F# --name MLNet-SentimentAnalysis</span><br><span class="line">cd MLNet-SentimentAnalysis</span><br><span class="line">dotnet add package Microsoft.ML --version 0.9.0</span><br></pre></td></tr></table></figure>
+<p>Next, it is time to get the data.  The source we will use for this post is from <a href="https://archive.ics.uci.edu/ml/datasets/Sentiment+Labelled+Sentences" target="_blank" rel="noopener">UCI</a>.  The datafile can be found <a href="https://archive.ics.uci.edu/ml/machine-learning-databases/00331/" target="_blank" rel="noopener">here</a>.  The zip file contains examples for IMDB, Yelp, and Amazon, but we’ll stick with IMDB for this post.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir data &amp;&amp; cd data</span><br><span class="line">curl -O https://archive.ics.uci.edu/ml/machine-learning-databases/00331/sentiment%20labelled%20sentences.zip</span><br></pre></td></tr></table></figure>
+<p>Here is a sample of what the data looks like.  There is no header row.  The tab separated columns represent 1) the review’s text 2) the sentiment where 1 = positive and 0 = negative.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Long, whiny and pointless.  	0</span><br><span class="line">But I recommend waiting for their future efforts, let this one go.  	0</span><br><span class="line">Excellent cast, story line, performances.  	1</span><br><span class="line">Totally believable.  	1</span><br></pre></td></tr></table></figure>
+<p>Now that we have the data, time to get to the code.  First there is some namespace setup.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System.IO</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML</span><br><span class="line"><span class="keyword">open</span> Microsoft.ML.Data</span><br></pre></td></tr></table></figure>
+<p>Here are the data types to be used.  <code>SentimentData</code> is for loading data, <code>SentimentPrediction</code> is for performing predictions.  Here we also get our first taste of 0.9.0.  As we’ll see later we can use the <code>SentimentData</code> type for loading.  To enable this we will add <code>[&lt;LoadColumn(column position)&gt;]</code> to the members.  I have also included <code>Probability</code>.  This is not a real column, nor is it needed for training.  I have included it because it is a required field when extracting performance metrics.  I feel like I shouldn’t need to include it here, but for now it’s the only way I got it to work.  The <code>CreateTextReader</code> now accepts a datatype for driving the loading process.  Once the data reader is setup, we also perform a train/test split of 70/30, respectively.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">SentimentData</span> </span>() =</span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;LoadColumn(0)&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> SentimentText :string</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;LoadColumn(1)&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Label :bool</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// <span class="doctag">NOTE:</span> Need to add this column to extract metrics</span></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="meta">[&lt;LoadColumn(2)&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Probability :float32</span><br><span class="line">   </span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">SentimentPrediction</span> </span>() =</span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> SentimentData :string</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> PredictedLabel :bool</span><br><span class="line"></span><br><span class="line">    <span class="meta">[&lt;DefaultValue&gt;]</span></span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">mutable</span> <span class="keyword">public</span> Score :float32 </span><br><span class="line"></span><br><span class="line"><span class="meta">[&lt;EntryPoint&gt;]</span></span><br><span class="line"><span class="keyword">let</span> main argv =</span><br><span class="line">  <span class="keyword">let</span> ml = <span class="keyword">new</span> MLContext()</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> reader = ml.Data.CreateTextReader&lt;SentimentData&gt;(separatorChar = '\t', hasHeader = <span class="keyword">true</span>)</span><br><span class="line">           </span><br><span class="line">  <span class="keyword">let</span> dataFile = <span class="string">"./data/imdb_labelled.txt"</span></span><br><span class="line">  <span class="keyword">let</span> allData = reader.Read(dataFile);</span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">struct</span> (trainData, testData) = ml.Clustering.TrainTestSplit(allData, testFraction = <span class="number">0.3</span>)</span><br></pre></td></tr></table></figure>
+<p>The old way (see below) can still be used, but I find the above newness a nice, more concise, method to load data.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Pre v0.9.0 way</span></span><br><span class="line"><span class="keyword">let</span> reader = </span><br><span class="line">  ml.Data.CreateTextReader(</span><br><span class="line">    separatorChar = '\t',</span><br><span class="line">    hasHeader = <span class="keyword">true</span>,</span><br><span class="line">    columns = </span><br><span class="line">      [|</span><br><span class="line">          Data.TextLoader.Column(<span class="string">"SentimentText"</span>, Nullable Data.DataKind.Text, <span class="number">0</span>);</span><br><span class="line">          Data.TextLoader.Column(<span class="string">"Label"</span>, Nullable Data.DataKind.Bool, <span class="number">1</span>);</span><br><span class="line">          <span class="comment">// <span class="doctag">NOTE:</span> Need to add this column to extract metrics</span></span><br><span class="line">          Data.TextLoader.Column(<span class="string">"Probability"</span>, Nullable Data.DataKind.R4, <span class="number">2</span>)</span><br><span class="line">      |])</span><br></pre></td></tr></table></figure>
+<p>ML.NET also provides methods to perform inspection into the dataset.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">printfn <span class="string">"### Schema"</span></span><br><span class="line">allData.Schema</span><br><span class="line">|&gt; Seq.iter(<span class="keyword">fun</span> x-&gt; printfn <span class="string">"%A"</span> x)</span><br><span class="line">printfn <span class="string">""</span></span><br></pre></td></tr></table></figure>
+<p>Here is what a simple schema view looks like.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">### Schema</span><br><span class="line">SentimentText: Text</span><br><span class="line">Label: Bool</span><br><span class="line">Probability: R4</span><br></pre></td></tr></table></figure>
+<p>Next we setup the training pipeline.  There are other options, like <code>FastTree</code>, but we’ll use <code>FastForest</code> for today’s post.  We’ll also take the defaults, but as with previous trainers we’ve looked at, we can provide custom hyperparameters.  Once the pipeline is setup, we run <code>Fit</code> to build the model.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> pipeline = </span><br><span class="line">  ml</span><br><span class="line">    .Transforms.Text.FeaturizeText(<span class="string">"SentimentText"</span>, <span class="string">"Features"</span>)</span><br><span class="line">    .Append(ml.BinaryClassification.Trainers.FastForest())</span><br><span class="line">    <span class="comment">// Example of custom hyperparameters</span></span><br><span class="line">    <span class="comment">// .Append(mlContext.BinaryClassification.Trainers.FastForest(numTrees = 500, numLeaves = 100, learningRate = 0.0001))</span></span><br><span class="line"><span class="keyword">let</span> model = pipeline.Fit(trainData)</span><br></pre></td></tr></table></figure>
+<p>Any good machine learning process requires performance evaluation.  For that we’ll look at two aspects.  First, ML.NET provides evaluators for the trainers.  I’ve cherry-picked a couple of the available <code>BinaryClassificationEvaluator</code> metrics.  Second, we can perform a preview of the predictions, which allows us to see the sentiment value along with the actual and predicted labels, as well as the score.  There are other items in the view as well that I left in to show the extent of the reporting.  Then we can run evaluation’s against the train and test sets.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> displayEvaluation description data = </span><br><span class="line">  <span class="keyword">let</span> predictions = model.Transform data</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> metrics = ml.BinaryClassification.Evaluate(predictions)</span><br><span class="line"></span><br><span class="line">  printfn <span class="string">""</span></span><br><span class="line">  printfn <span class="string">"### %s"</span> description</span><br><span class="line">  printfn <span class="string">"Accuracy          : %0.4f"</span> (metrics.Accuracy)</span><br><span class="line">  printfn <span class="string">"F1                : %0.4f"</span> (metrics.F1Score)</span><br><span class="line">  printfn <span class="string">"Positive Precision: %0.4f"</span> (metrics.PositivePrecision)</span><br><span class="line">  printfn <span class="string">"Positive Recall   : %0.4f"</span> (metrics.PositiveRecall)</span><br><span class="line">  printfn <span class="string">"Negative Precision: %0.4f"</span> (metrics.NegativePrecision)</span><br><span class="line">  printfn <span class="string">"Negative Recall   : %0.4f"</span> (metrics.NegativeRecall)</span><br><span class="line">  printfn <span class="string">""</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> preview = predictions.Preview()</span><br><span class="line">  preview.RowView</span><br><span class="line">  |&gt; Seq.take <span class="number">5</span></span><br><span class="line">  |&gt; Seq.iter(<span class="keyword">fun</span> row -&gt;</span><br><span class="line">     row.Values</span><br><span class="line">     |&gt; Array.iter (<span class="keyword">fun</span> kv -&gt; printfn <span class="string">"%s: %A"</span> kv.Key kv.Value)</span><br><span class="line">     printfn <span class="string">""</span>)</span><br><span class="line">  printfn <span class="string">""</span></span><br><span class="line"></span><br><span class="line">displayEvaluation <span class="string">"Train"</span> trainData</span><br><span class="line">displayEvaluation <span class="string">"Test"</span> testData</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>As imagined, the metrics are better when run against the training data.  The much better view of prediction quality is when run against the testing data.  As expected, the model doesn’t perform as well against the test set, there is probably some more work that needs done here.  The <code>Preview</code> is also useful when diagnosing more detailed problems, since it shows scores and label predictions.  Not related to the results, but the stratification value is used for the train/test split.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">### Train</span><br><span class="line">Accuracy          : 0.9120</span><br><span class="line">F1                : 0.9145</span><br><span class="line">Positive Precision: 0.8987</span><br><span class="line">Positive Recall   : 0.9309</span><br><span class="line">Negative Precision: 0.9267</span><br><span class="line">Negative Recall   : 0.8927</span><br><span class="line"></span><br><span class="line">SentimentText: Not sure who was more lost - the flat characters or the audience, nearly half of whom walked out.  </span><br><span class="line">Label: false</span><br><span class="line">StratificationColumn: 0.595641375f</span><br><span class="line">Features: Sparse vector of size 7818, 110 explicit values</span><br><span class="line">PredictedLabel: false</span><br><span class="line">Score: -54.9804649f</span><br><span class="line"></span><br><span class="line">SentimentText: Attempting artiness with black &amp; white and clever camera angles, the movie disappointed - became even more ridiculous - as the acting was poor and the plot and lines almost non-existent.  </span><br><span class="line">Label: false</span><br><span class="line">StratificationColumn: 0.58837676f</span><br><span class="line">Features: Sparse vector of size 7818, 188 explicit values</span><br><span class="line">PredictedLabel: false</span><br><span class="line">Score: -13.02876f</span><br><span class="line"></span><br><span class="line">SentimentText: Very little music or anything to speak of.  </span><br><span class="line">Label: false</span><br><span class="line">StratificationColumn: 0.753678203f</span><br><span class="line">Features: Sparse vector of size 7818, 52 explicit values</span><br><span class="line">PredictedLabel: false</span><br><span class="line">Score: -5.37574673f</span><br><span class="line"></span><br><span class="line">SentimentText: The best scene in the movie was when Gerardo is trying to find a song that keeps running through his head.  </span><br><span class="line">Label: true</span><br><span class="line">StratificationColumn: 0.967485666f</span><br><span class="line">Features: Sparse vector of size 7818, 118 explicit values</span><br><span class="line">PredictedLabel: true</span><br><span class="line">Score: 41.7043114f</span><br><span class="line"></span><br><span class="line">SentimentText: The rest of the movie lacks art, charm, meaning... If it&apos;s about emptiness, it works I guess because it&apos;s empty.  </span><br><span class="line">Label: false</span><br><span class="line">StratificationColumn: 0.929597497f</span><br><span class="line">Features: Sparse vector of size 7818, 119 explicit values</span><br><span class="line">PredictedLabel: false</span><br><span class="line">Score: -15.2312632f</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">### Test</span><br><span class="line">Accuracy          : 0.6890</span><br><span class="line">F1                : 0.6923</span><br><span class="line">Positive Precision: 0.6471</span><br><span class="line">Positive Recall   : 0.7444</span><br><span class="line">Negative Precision: 0.7385</span><br><span class="line">Negative Recall   : 0.6400</span><br><span class="line"></span><br><span class="line">SentimentText: Wasted two hours.  </span><br><span class="line">Label: false</span><br><span class="line">StratificationColumn: 0.171681881f</span><br><span class="line">Features: Sparse vector of size 7818, 21 explicit values</span><br><span class="line">PredictedLabel: true</span><br><span class="line">Score: 4.22176647f</span><br><span class="line"></span><br><span class="line">SentimentText: Saw the movie today and thought it was a good effort, good messages for kids.  </span><br><span class="line">Label: true</span><br><span class="line">StratificationColumn: 0.185497403f</span><br><span class="line">Features: Sparse vector of size 7818, 83 explicit values</span><br><span class="line">PredictedLabel: true</span><br><span class="line">Score: 25.0270023f</span><br><span class="line"></span><br><span class="line">SentimentText: The movie showed a lot of Florida at it&apos;s best, made it look very appealing.  </span><br><span class="line">Label: true</span><br><span class="line">StratificationColumn: 0.250951052f</span><br><span class="line">Features: Sparse vector of size 7818, 86 explicit values</span><br><span class="line">PredictedLabel: true</span><br><span class="line">Score: 18.1396465f</span><br><span class="line"></span><br><span class="line">SentimentText: </span><br><span class="line">Label: false</span><br><span class="line">StratificationColumn: 0.128096819f</span><br><span class="line">Features: Sparse vector of size 7818, 0 explicit values</span><br><span class="line">PredictedLabel: true</span><br><span class="line">Score: 9.73927498f</span><br><span class="line"></span><br><span class="line">SentimentText: In other words, the content level of this film is enough to easily fill a dozen other films.  </span><br><span class="line">Label: true</span><br><span class="line">StratificationColumn: 0.229808331f</span><br><span class="line">Features: Sparse vector of size 7818, 90 explicit values</span><br><span class="line">PredictedLabel: true</span><br><span class="line">Score: 20.8655605f</span><br></pre></td></tr></table></figure>
+<p>Now that model fitting and some evaluation has been performed, we need to make a prediction function.  As with so many things so far, this is simple to do.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> predictor = model.CreatePredictionEngine&lt;SentimentData, SentimentPrediction&gt;(ml)</span><br></pre></td></tr></table></figure>
+<p>Once the prediction function is in place, we can run predictions and see their underlying scores.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> tests = </span><br><span class="line">  [</span><br><span class="line">    <span class="string">"It was cool, cute, and funny."</span>; </span><br><span class="line">    <span class="string">"It was slow and boring."</span>; </span><br><span class="line">    <span class="string">"It was the greatest thing I've seen."</span> </span><br><span class="line">  ]</span><br><span class="line"></span><br><span class="line">tests </span><br><span class="line">|&gt; List.iter (<span class="keyword">fun</span> x -&gt;</span><br><span class="line">  <span class="keyword">let</span> input = SentimentData()</span><br><span class="line">  input.SentimentText &lt;- x</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> prediction = predictor.Predict(input)</span><br><span class="line">  printfn <span class="string">""</span></span><br><span class="line">  printfn <span class="string">"Text       : %s"</span> x</span><br><span class="line">  printfn <span class="string">"Prediction : %b"</span> (prediction.PredictedLabel)</span><br><span class="line">  printfn <span class="string">"Score      : %0.4f"</span> (prediction.Score)</span><br><span class="line">  )</span><br></pre></td></tr></table></figure>
+<p>And here we can see the predictions.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Text       : It was cool, cute, and funny.</span><br><span class="line">Prediction : true</span><br><span class="line">Score      : 12.2628</span><br><span class="line"></span><br><span class="line">Text       : It was slow and boring.</span><br><span class="line">Prediction : false</span><br><span class="line">Score      : -10.0353</span><br><span class="line"></span><br><span class="line">Text       : It was the greatest thing I&apos;ve seen.</span><br><span class="line">Prediction : true</span><br><span class="line">Score      : 68.4614</span><br></pre></td></tr></table></figure>
+<p>This is all well and good, but to be useful we need to be able to save a model to a file for later use.  Here we have the ability to save and reload a model file.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Save model to file</span></span><br><span class="line"><span class="keyword">let</span> saveModel (ml:MLContext) trainedMode = </span><br><span class="line">  <span class="keyword">use</span> fsWrite = <span class="keyword">new</span> FileStream(<span class="string">"test-model.zip"</span>, FileMode.Create, FileAccess.Write, FileShare.Write)</span><br><span class="line">  ml.Model.Save(model, fsWrite)</span><br><span class="line"></span><br><span class="line">saveModel ml model</span><br><span class="line"></span><br><span class="line"><span class="comment">// Load model from file</span></span><br><span class="line"><span class="keyword">use</span> fsRead = <span class="keyword">new</span> FileStream(<span class="string">"test-model.zip"</span>, FileMode.Open, FileAccess.Read, FileShare.Read)</span><br><span class="line"><span class="keyword">let</span> mlReloaded = MLContext()</span><br><span class="line"><span class="keyword">let</span> modelReloaded = TransformerChain.LoadFrom(mlReloaded, fsRead)</span><br><span class="line"><span class="keyword">let</span> predictorReloaded = modelReloaded.CreatePredictionEngine&lt;SentimentData, SentimentPrediction&gt;(mlReloaded)</span><br></pre></td></tr></table></figure>
+<p>Once the model file has been reloaded, we can run a sample prediction.  We just need to create the prediction function against and away we go.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> test1 = SentimentData()</span><br><span class="line">test1.SentimentText &lt;- tests.[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> predictionReloaded = predictorReloaded.Predict(test1)</span><br><span class="line">printfn <span class="string">""</span></span><br><span class="line">printfn <span class="string">"Text                  : %s"</span> tests.[<span class="number">0</span>]</span><br><span class="line">printfn <span class="string">"Prediction (Reloaded) : %b"</span> (predictionReloaded.PredictedLabel)</span><br><span class="line">printfn <span class="string">"Score (Reloaded)      : %0.4f"</span> (predictionReloaded.Score)</span><br></pre></td></tr></table></figure>
+<p>Here are the prediction results from a saved model.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Text                  : It was cool, cute, and funny.</span><br><span class="line">Prediction (Reloaded) : true</span><br><span class="line">Score (Reloaded)      : 12.2628</span><br></pre></td></tr></table></figure>
+<p>This has been a brief look into sentiment analysis using F# and ML.NET.  It has been a pleasure to see the framework progress.  It is even more enjoyable performing these types of workloads using F#.  Until next time.  Thanks.  </p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2019/05/24/F-and-MLNet-Anomaly/">Taking Stock of Anomalies with F# and ML.NET</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/11/30/F-and-MLNet-Clustering-V2/">F# and ML.NET Clustering (V2)</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/06/09/F-and-MLNet-Regression/">F# and ML.NET Regression</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2019/01/14/F-and-MLNet-Sentiment-Analysis/" data-id="cjqvoeqd00000xlm0tf5jzq09" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NET-Core/">.NET Core</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MLNet/">MLNet</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Machine-Learning/">Machine Learning</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Text/">Text</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/02/19/Building-Game-with-SignalR-and-F/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Building a Game with SignalR and F#
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/01/07/Chiron-Introduction/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">An Introduction to Chiron</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 12.22px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dtw/" style="font-size: 10px;">Dtw</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.22px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13.33px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/05/10/Propagator-Networks-in-F/">Propagator Networks in F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/25/Web-Scraping-with-F/">Web Scraping with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/17/Introduction-to-F-Talk/">Introduction to F# Talk</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/08/F-and-Docker/">Containerizing F# with Docker</a>
+          </li>
+        
+          <li>
+            <a href="/2020/01/25/Preonic-V3/">Preonic V3 Build</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Building a Game with SignalR and F# | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Today’s post is a brief example of how to implement a game using F# and SignalR.  Creating a game for bots to play doesn’t have to be overly difficult.  Since interesting emergent qualities can arise">
+<meta name="keywords" content="F#,FSharp,SignalR">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Building a Game with SignalR and F#">
+<meta property="og:url" content="http://codesuji.com/2019/02/19/Building-Game-with-SignalR-and-F/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Today’s post is a brief example of how to implement a game using F# and SignalR.  Creating a game for bots to play doesn’t have to be overly difficult.  Since interesting emergent qualities can arise">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://codesuji.com/images/sr1/sr1.gif">
+<meta property="og:updated_time" content="2019-02-20T12:15:17.379Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Building a Game with SignalR and F#">
+<meta name="twitter:description" content="Today’s post is a brief example of how to implement a game using F# and SignalR.  Creating a game for bots to play doesn’t have to be overly difficult.  Since interesting emergent qualities can arise">
+<meta name="twitter:image" content="http://codesuji.com/images/sr1/sr1.gif">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Building-Game-with-SignalR-and-F" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/02/19/Building-Game-with-SignalR-and-F/" class="article-date">
+  <time datetime="2019-02-20T02:17:32.000Z" itemprop="datePublished">2019-02-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Building a Game with SignalR and F#
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 13 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Today’s post is a brief example of how to implement a game using <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a> and <a href="https://dotnet.microsoft.com/apps/aspnet/real-time" target="_blank" rel="noopener">SignalR</a>.  Creating a game for bots to play doesn’t have to be overly difficult.  Since interesting emergent qualities can arise from simple rules, it makes for a fun way to show off SignalR, beyond the standard chat application.  As this post will show, F# and SignalR work well together to create a nice communication framework without requiring a complex setup.</p>
+<a id="more"></a>
+<p>What is the game?  It is a bot-played game of multi-player snakes.  The rules are simple: eat food to grow, and run into opponents to slice off their tails.  To give players a goal, they accrue points based on their length over time.  It is a limited enough concept that a game engine and client can be built without overshadowing the SignalR aspects.  A picture, or movie, is worth a thousand words. So below is a sample of the game player viewer.  What is SignalR?  If you’re not familiar, it is a library that provides real-time capabilities to web applications.  Think websockets and other related technologies.  In this particular case there is a web viewer and a console app leveraging the capability.</p>
+<p><img src="/images/sr1/sr1.gif" alt="GamePlay"></p>
+<p>With definitions out of the way, time for the technical components.  We’ll use <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core version 2.2</a>.  If you don’t have it installed, head out to the <a href="https://www.microsoft.com/net/download/core" target="_blank" rel="noopener">.NET Core Downloads</a> page.  Select <strong>SDK</strong> for your platform.  Tangential, but you can also get here by going to <a href="https://dot.net" target="_blank" rel="noopener">dot.net</a>, then navigating to <code>Downloads</code> and <code>.NET Core</code>.</p>
+<p>The post will be broken up into 3 primary parts: SignalR server, SignalR client, SignalR webviewer.  Discussing the specific game code will be out of scope, since it is the interactions that we really care about.</p>
+<h1 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h1><p>For the server, <a href="https://github.com/giraffe-fsharp/Giraffe" target="_blank" rel="noopener">Giraffe</a> will be the base.  It will host the SignalR services as well as the weS viewer.  Creation is similiar to a typical dotnet app, but it’ll use the Giraffe template.  If you need the templates you can get them by doing <code>dotnet new -i &quot;giraffe-template::*&quot;</code>.  The Giraffe template includes a reference to the <code>Microsoft.AspNetCore.App</code> package, which includes SignalR, so no additional packages are necessary.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dotnet new giraffe -lang F# -n GameServer -o GameServer </span><br></pre></td></tr></table></figure>
+<p>The Giraffe templates thankfully generate all the necessary boilerplate code for a webapp on top of Kestrel.  To simplify, we’ll focus on the components that need to be added to the server code.  Add the necessary namespaces, this is not only for SignalR, but to support the background game engine service.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System.Threading;</span><br><span class="line"><span class="keyword">open</span> System.Threading.Tasks;</span><br><span class="line"><span class="keyword">open</span> Microsoft.AspNetCore.SignalR</span><br></pre></td></tr></table></figure>
+<p>The SignalR components must be added to the pipeline.  This is done in two places.  Modify <code>configureApp</code> to include <code>.UseSignalR(...)</code>.  Modify <code>configureServices</code> to include <code>services.AddSignalR()</code>.  In addition, the game runs as a hosted service.  To support this, modify <code>configureServices</code> to also includ <code>services.AddHostedService&lt;GameService&gt;()</code>.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> configureApp (app : IApplicationBuilder) =</span><br><span class="line">  <span class="keyword">let</span> env = app.ApplicationServices.GetService&lt;IHostingEnvironment&gt;()</span><br><span class="line">  (<span class="keyword">match</span> env.IsDevelopment() <span class="keyword">with</span></span><br><span class="line">  | <span class="keyword">true</span>  -&gt; app.UseDeveloperExceptionPage()</span><br><span class="line">  | <span class="keyword">false</span> -&gt; app</span><br><span class="line">              .UseGiraffeErrorHandler errorHandler)</span><br><span class="line">              .UseCors(configureCors)</span><br><span class="line">              .UseStaticFiles()</span><br><span class="line">              .UseSignalR(<span class="keyword">fun</span> routes -&gt; routes.MapHub&lt;GameHub&gt;(PathString <span class="string">"/gameHub"</span>)) <span class="comment">// SignalR</span></span><br><span class="line">              .UseGiraffe(webApp)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> configureServices (services : IServiceCollection) =</span><br><span class="line">  services.AddCors()    |&gt; ignore</span><br><span class="line">  services.AddSignalR() |&gt; ignore                    <span class="comment">// SignalR</span></span><br><span class="line">  services.AddGiraffe() |&gt; ignore</span><br><span class="line">  services.AddHostedService&lt;GameService&gt;() |&gt; ignore <span class="comment">// GameService</span></span><br></pre></td></tr></table></figure>
+<p>Now that the components have been injected into the pipeline, they need to be created.  For this we’ll need to create a SignalR hub as well as a GameService.  Starting with the SignalR hub.  We can send messages to the SignalR clients by supplying a function name and payload: <code>this.Clients.All.SendAsync(&quot;Message&quot;, &quot;foo&quot;)</code>.  But, we can do better by defining the interface and making the calls type-safe, so let’s do that.  Below is defined the client api interface.  This ensures that calls from server to client match the required types.  For simplicity, the server only has 3 messages it can send to clients.</p>
+<ul>
+<li><p><code>LoginResponse</code> Reports success or failure, and their PlayerId if login was successful.</p>
+</li>
+<li><p><code>Message</code> Sends general notifications to clients.</p>
+</li>
+<li><p><code>GameState</code> Provides a serialized gamestate that clients act on.</p>
+</li>
+</ul>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">IClientApi</span> </span>= </span><br><span class="line">  <span class="keyword">abstract</span> <span class="keyword">member</span> LoginResponse :bool * string -&gt; System.Threading.Tasks.Task</span><br><span class="line">  <span class="keyword">abstract</span> <span class="keyword">member</span> Message :string -&gt; System.Threading.Tasks.Task</span><br><span class="line">  <span class="keyword">abstract</span> <span class="keyword">member</span> GameState :string -&gt; System.Threading.Tasks.Task</span><br></pre></td></tr></table></figure>
+<p>Now, to define the SignalR hub. This effectively is the listener that all clients connect to.  It leverages the <code>IClientApi</code> that was just created.  Here we need to write the handlers for messages accepted from clients.  Players have four different actions they can signal to the server.</p>
+<ul>
+<li><p><code>Login</code> For brevity, there is no authentication; provide a PlayerName and they get a PlayerId.  It also adds a player to the game.  The below code demonstrates how the server can send messages to all connected clients or just specific ones.</p>
+</li>
+<li><p><code>Logout</code> Removes a player from the game.</p>
+</li>
+<li><p><code>Turn</code> Players have one action they can perform, turn.  They move in a specified direction until they turn, then they proceed in that direction.</p>
+</li>
+<li><p><code>Send</code> Players can blast messages to all clients. Perhaps when the bots become self-aware they can taunt each other.</p>
+</li>
+</ul>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">GameHub</span> </span>() =</span><br><span class="line">  <span class="keyword">inherit</span> Hub&lt;IClientApi&gt; ()</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Accept client logins</span></span><br><span class="line">  <span class="keyword">member</span> this.Login (name :string) =</span><br><span class="line">    <span class="keyword">let</span> connectionId = this.Context.ConnectionId</span><br><span class="line">    <span class="keyword">let</span> success, playerId = addPlayer name</span><br><span class="line">    <span class="keyword">if</span> success <span class="keyword">then</span></span><br><span class="line">      <span class="comment">// Tell client login success and their playerId</span></span><br><span class="line">      this.Clients.Client(connectionId).LoginResponse(<span class="keyword">true</span>, playerId)</span><br><span class="line">      <span class="comment">// Tell clients of new player </span></span><br><span class="line">      this.Clients.All.Message(sprintf <span class="string">"New Player: %s (%s)"</span> name playerId)</span><br><span class="line">    <span class="keyword">else</span> </span><br><span class="line">      <span class="comment">// Tell client login failed</span></span><br><span class="line">      this.Clients.Client(connectionId).LoginResponse(<span class="keyword">false</span>, <span class="string">""</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Handle client logout</span></span><br><span class="line">  <span class="keyword">member</span> this.Logout (playerId :string) =</span><br><span class="line">    removePlayer playerId</span><br><span class="line">    <span class="comment">// Tell clients of player logout</span></span><br><span class="line">    this.Clients.All.Message(sprintf <span class="string">"Player left: %s"</span> playerId)</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Handle player changing direction</span></span><br><span class="line">  <span class="keyword">member</span> this.Turn (playerId :string, direction :string) = </span><br><span class="line">    updatePlayerDirection playerId direction</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Pass along message from one client to all clients</span></span><br><span class="line">  <span class="keyword">member</span> this.Send (message: string) = </span><br><span class="line">    this.Clients.All.Message(message)</span><br></pre></td></tr></table></figure>
+<p>Now that the SignalR hub is done, it’s time to make the GameService that performs the server-side game logic as well as sending updated gamestate to players.  For this a background service is used.  At a set interval it processes current game state <code>updateState</code> and sends it out to all clients.  One note here: because I’ve choosen to use a client interface, the hub context is defined as <code>IHubContext&lt;GameHub, IClientApi&gt;)</code>.  If this wasn’t the case, it would be defined as <code>IHubContext&lt;GameHub&gt;</code> and messages would be sent using <code>this.HubContext.Clients.All.SendAsync(&quot;GameState&quot;, stateSerialized)</code>.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">GameService</span> </span>(hubContext :IHubContext&lt;GameHub, IClientApi&gt;) =</span><br><span class="line">  <span class="keyword">inherit</span> BackgroundService ()</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">member</span> this.HubContext :IHubContext&lt;GameHub, IClientApi&gt; = hubContext</span><br><span class="line"></span><br><span class="line">  <span class="keyword">override</span> this.ExecuteAsync (stoppingToken :CancellationToken) =</span><br><span class="line">    <span class="keyword">let</span> pingTimer = <span class="keyword">new</span> System.Timers.Timer(TurnFrequency)</span><br><span class="line">    pingTimer.Elapsed.Add(<span class="keyword">fun</span> _ -&gt; </span><br><span class="line">      updateState ()</span><br><span class="line">      <span class="keyword">let</span> stateSerialized = serializeGameState gState</span><br><span class="line">      this.HubContext.Clients.All.GameState(stateSerialized) |&gt; ignore)</span><br><span class="line"></span><br><span class="line">    pingTimer.Start()</span><br><span class="line">    Task.CompletedTask</span><br></pre></td></tr></table></figure>
+<p>Beyond the specific game logic implementation, that’s all there is to the SignalR server.  It now will send out gamestate updates as well as handle client messages.</p>
+<h1 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h1><p>The next step is building the client.  To do this, a dotnet console app will be created, and then the SignalR package is added.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dotnet new console -lang f# -n ClientFs</span><br><span class="line">cd ClientFs</span><br><span class="line">dotnet add package Microsoft.AspNetCore.SignalR.Client</span><br></pre></td></tr></table></figure>
+<p>Once that is done, it needs the SignalR namespace. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> Microsoft.AspNetCore.SignalR.Client</span><br></pre></td></tr></table></figure>
+<p>The client needs to make a connection to the SignalR hub.  Similar to the server, the client needs some event handlers for server generated messages. </p>
+<ul>
+<li><p><code>LoginResponse</code> A successful login gives the client a playerId.</p>
+</li>
+<li><p><code>Message</code> - Handle general message notifications.</p>
+</li>
+<li><p><code>GameState</code> - When the server sends the current gamestate, the client evaluates and then sends an action message back.</p>
+</li>
+<li><p><code>Closed</code> - When the connection closes, what does the client do? In this case attempts to reconnect.</p>
+</li>
+</ul>
+<p>Once the event handlers are setup, the client connects and performs a login.  The handlers take care of the rest.  As can be seen below, the client uses <code>InvokeAsync</code> to send messages to the server (as seen in the login).  </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">[&lt;EntryPoint&gt;]</span></span><br><span class="line"><span class="keyword">let</span> main argv = </span><br><span class="line">  <span class="comment">// Create connection to game server</span></span><br><span class="line">  <span class="keyword">let</span> connection = </span><br><span class="line">    (HubConnectionBuilder())</span><br><span class="line">      .WithUrl(<span class="string">"http://localhost:5000/gameHub"</span>)</span><br><span class="line">      .Build()</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Event handlers</span></span><br><span class="line">  connection.On&lt;bool, string&gt;(<span class="string">"LoginResponse"</span>, <span class="keyword">fun</span> success id -&gt; loginResponseHandler connection success id) |&gt; ignore</span><br><span class="line">  connection.On&lt;string&gt;(<span class="string">"Message"</span>, <span class="keyword">fun</span> message -&gt; messageHandler message) |&gt; ignore</span><br><span class="line">  connection.On&lt;string&gt;(<span class="string">"GameState"</span>, <span class="keyword">fun</span> gameState -&gt; gameStateHandler connection gameState) |&gt; ignore</span><br><span class="line">  connection.add_Closed(<span class="keyword">fun</span> error -&gt; reconnect connection error)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Start connection and login</span></span><br><span class="line">  <span class="keyword">try</span></span><br><span class="line">    connection.StartAsync().Wait()</span><br><span class="line">    connection.InvokeAsync(<span class="string">"login"</span>, myName).Wait()</span><br><span class="line">  <span class="keyword">with</span></span><br><span class="line">  | ex -&gt; printfn <span class="string">"Connection error %s"</span> (ex.ToString())</span><br><span class="line">          Environment.Exit(<span class="number">1</span>)</span><br><span class="line"> </span><br><span class="line">  <span class="comment">// Listen for 'q' to quit</span></span><br><span class="line">  getCommand connection</span><br><span class="line"></span><br><span class="line">  <span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>The handler logic is uninteresting, but it is useful to see the definitions that match with the handlers.  In addition, I’ve included the client’s response back to the server in the gameState handler.  Again, it uses InvokeAsync when contacting the server.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> loginResponseHandler (connection :HubConnection) (success :bool) (id :string) =</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> messageHandler (message :string) =</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> gameStateHandler (connection :HubConnection) (gameState :string) =</span><br><span class="line">  ...</span><br><span class="line">  connection.InvokeAsync(<span class="string">"Turn"</span>, playerId, move.ToString()) |&gt; ignore</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">rec</span> reconnect (connection :HubConnection) (error :<span class="symbol">'a</span>) = </span><br><span class="line">  ...</span><br></pre></td></tr></table></figure>
+<h1 id="Game-Viewer"><a href="#Game-Viewer" class="headerlink" title="Game Viewer"></a>Game Viewer</h1><p>The final piece to address is the game viewer.  This comes in two parts: the layout and the code.  For the layout, we leverage Giraffe’s view engine.  It’s a simple view that contains an html canvas map, player list, messages display, and a state print (for debugging purposes).  This is also where supporting js libraries: signalr, <a href="https://jquery.com/" target="_blank" rel="noopener">jquery</a>, as well as the viewer game-server.js are included.  For this project, the files reside in the <code>WebRoot</code> directory.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> Views =</span><br><span class="line">    <span class="keyword">open</span> GiraffeViewEngine</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> layout (content: XmlNode list) =</span><br><span class="line">        html [] [</span><br><span class="line">            head [] [</span><br><span class="line">                title []  [ encodedText <span class="string">"SnakeWorld"</span> ]</span><br><span class="line">                link [ _rel  <span class="string">"stylesheet"</span></span><br><span class="line">                       _type <span class="string">"text/css"</span></span><br><span class="line">                       _href <span class="string">"/main.css"</span> ]</span><br><span class="line">            ]</span><br><span class="line">            body [] content</span><br><span class="line">        ]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> index (model : Message) =</span><br><span class="line">      [</span><br><span class="line">        div [ _class <span class="string">"container"</span>] [ </span><br><span class="line">          div [ _class <span class="string">"row"</span> ] [</span><br><span class="line">            div [ _id <span class="string">"mapWrapper"</span>; _class <span class="string">"col-6"</span> ] [</span><br><span class="line">              canvas [ _id <span class="string">"worldMap"</span>; _class <span class="string">"world-map"</span>; _width <span class="string">"200"</span>; _height <span class="string">"200"</span> ] [];</span><br><span class="line">              div [ _id <span class="string">"playerList"</span>; _class <span class="string">"player-list"</span> ] []</span><br><span class="line">            ]</span><br><span class="line">          ]</span><br><span class="line">          div [ _class <span class="string">"row"</span> ] [</span><br><span class="line">            div [ _id <span class="string">"message"</span>; _class <span class="string">"col-6"</span> ] []</span><br><span class="line">          ]</span><br><span class="line">          div [ _class <span class="string">"row"</span> ] [</span><br><span class="line">            div [ _id <span class="string">"currentState"</span>; _class <span class="string">"col-6"</span> ] []</span><br><span class="line">          ]</span><br><span class="line">        ]</span><br><span class="line">        script [ _src <span class="string">"signalr.js"</span> ] []</span><br><span class="line">        script [ _src <span class="string">"jquery-3.3.1.min.js"</span> ] []</span><br><span class="line">        script [ _src <span class="string">"game-viewer.js"</span> ] []</span><br><span class="line">      ] |&gt; layout</span><br></pre></td></tr></table></figure>
+<p>This may bring up a question, where did <code>signalr.js</code> come from?  Well, there is one more thing we need to add to the project.  In a real project I’d package this differently, but a quick and dirty way will do for now.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm install @aspnet/signalr</span><br><span class="line">cp ./node_modules/@aspnet/signalr/dist/browser/signalr.js ./WebRoot</span><br></pre></td></tr></table></figure>
+<p>The code part of the game viewer is in javascript.  A similar process is required as was performed with the F# client.  A connection is created to the SignalR hub.  Then event handlers are wired up.  The viewer is read-only, to show messages and draw the map and player score list.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// SignalR connection</span></span><br><span class="line">const connection = <span class="keyword">new</span> signalR.HubConnectionBuilder().withUrl(<span class="string">"/gameHub"</span>).build();</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Handle Connection start</span></span><br><span class="line">connection.start().catch(<span class="keyword">function</span> (err) &#123;</span><br><span class="line">  <span class="keyword">return</span> console.error(err.toString());</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Handle incoming message</span></span><br><span class="line">connection.on(<span class="string">"Message"</span>, <span class="keyword">function</span> (message) &#123;</span><br><span class="line">  $(<span class="string">"#message"</span>).text(message);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Handle game state updates (draw map, update player list)</span></span><br><span class="line">connection.on(<span class="string">"GameState"</span>, <span class="keyword">function</span> (gameState) &#123;</span><br><span class="line">  handleGameState(JSON.parse(gameState))</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>At this point, we have all the necessary parts to support a SignalR F# server, F# client, and javascript client.  That closes the loop on the communication framework.  From here the game logic can be added to the server and client, and drawing can be added to the viewer.  Those components are outside of the scope for this post.  I hope you’ve found this to be a useful guide to leveraging a SignalR implementation with F#.  Until next time…</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1/">Decision Trees with F# and Accord.NET (Part 1)</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/01/07/Chiron-Introduction/">An Introduction to Chiron</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/07/29/F-and-Dapper/">F# and Dapper</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2019/02/19/Building-Game-with-SignalR-and-F/" data-id="cjs8xu3zr0004jfm0auum627a" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/SignalR/">SignalR</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/05/12/Iris-Keyboard/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Iris Keyboard Build
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/01/14/F-and-MLNet-Sentiment-Analysis/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">F# and ML.NET Sentiment Analysis</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 12.22px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dtw/" style="font-size: 10px;">Dtw</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.22px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13.33px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/05/10/Propagator-Networks-in-F/">Propagator Networks in F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/25/Web-Scraping-with-F/">Web Scraping with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/17/Introduction-to-F-Talk/">Introduction to F# Talk</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/08/F-and-Docker/">Containerizing F# with Docker</a>
+          </li>
+        
+          <li>
+            <a href="/2020/01/25/Preonic-V3/">Preonic V3 Build</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

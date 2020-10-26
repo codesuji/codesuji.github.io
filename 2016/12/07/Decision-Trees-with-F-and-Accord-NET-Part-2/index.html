@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Decision Trees with F# and Accord.NET (Part 2) | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="This is part 2 of my attempt to use an Accord.NET Decision Tree to classify Lego set themes using F#.  Just as a reminder, the original data source is Rebrickable.  You can find Part 1 here.">
+<meta name="keywords" content="Data,F#,FSharp,Accord.NET,Decision Trees,Machine Learning,Legos,Classification,Statistics">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Decision Trees with F# and Accord.NET (Part 2)">
+<meta property="og:url" content="http://codesuji.com/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="This is part 2 of my attempt to use an Accord.NET Decision Tree to classify Lego set themes using F#.  Just as a reminder, the original data source is Rebrickable.  You can find Part 1 here.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2017-12-23T19:03:14.112Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Decision Trees with F# and Accord.NET (Part 2)">
+<meta name="twitter:description" content="This is part 2 of my attempt to use an Accord.NET Decision Tree to classify Lego set themes using F#.  Just as a reminder, the original data source is Rebrickable.  You can find Part 1 here.">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Decision-Trees-with-F-and-Accord-NET-Part-2" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2/" class="article-date">
+  <time datetime="2016-12-08T03:12:19.000Z" itemprop="datePublished">2016-12-07</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Decision Trees with F# and Accord.NET (Part 2)
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 10 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>This is part 2 of my attempt to use an <a href="http://accord-framework.net/" target="_blank" rel="noopener">Accord.NET</a> Decision Tree to classify Lego set themes using <a href="http://fsharp.org/" target="_blank" rel="noopener">F#</a>.  Just as a reminder, the original data source is <a href="http://rebrickable.com/downloads" target="_blank" rel="noopener">Rebrickable</a>.  You can find <a href="/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1">Part 1</a> here.</p>
+<a id="more"></a>
+<p>Using <a href="https://github.com/fsprojects/Paket" target="_blank" rel="noopener">Paket</a>, here is a sample paket.dependencies file.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">source https:<span class="comment">//nuget.org/api/v2</span></span><br><span class="line">nuget Accord</span><br><span class="line">nuget Accord.Math</span><br><span class="line">nuget Accord.Statistics</span><br><span class="line">nuget Accord.MachineLearning</span><br><span class="line">nuget FSharp.Data</span><br></pre></td></tr></table></figure>
+<p>This is the boring setup stuff.  It also includes some utility functions.  Not specific just to the utility functions, but one of my goals for these functions is flexibility.  I can add and remove features from the extract script without impacting code here.  This dynamic aspect of function building makes testing changes easier.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">#i <span class="string">"../packages"</span></span><br><span class="line">#r <span class="string">"../packages/Accord/lib/net45/accord.dll"</span></span><br><span class="line">#r <span class="string">"../packages/Accord.MachineLearning/lib/net45/accord.machinelearning.dll"</span></span><br><span class="line">#r <span class="string">"../packages/Accord.Math/lib/net45/Accord.Math.dll"</span></span><br><span class="line">#r <span class="string">"../packages/Accord.Math/lib/net45/Accord.Math.Core.dll"</span></span><br><span class="line">#r <span class="string">"../packages/Accord.Statistics/lib/net45/Accord.Statistics.dll"</span></span><br><span class="line">#r <span class="string">"../packages/FSharp.Data/lib/net40/FSharp.Data.dll"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">open</span> System</span><br><span class="line"><span class="keyword">open</span> System.IO</span><br><span class="line"><span class="keyword">open</span> Accord</span><br><span class="line"><span class="keyword">open</span> Accord.MachineLearning</span><br><span class="line"><span class="keyword">open</span> Accord.MachineLearning.DecisionTrees</span><br><span class="line"><span class="keyword">open</span> Accord.MachineLearning.DecisionTrees.Learning</span><br><span class="line"><span class="keyword">open</span> Accord.Math</span><br><span class="line"><span class="keyword">open</span> Accord.Statistics.Analysis</span><br><span class="line"><span class="keyword">open</span> FSharp.Data</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> rand = <span class="keyword">new</span> Random()</span><br><span class="line"></span><br><span class="line"><span class="comment">// Shuffle an array (in-place)</span></span><br><span class="line"><span class="keyword">let</span> shuffle (a:<span class="symbol">'a</span>[]) =</span><br><span class="line">    <span class="keyword">let</span> swapByIndex i j =</span><br><span class="line">        <span class="keyword">let</span> tmp = a.[i]</span><br><span class="line">        a.[i] &lt;- a.[j]</span><br><span class="line">        a.[j] &lt;- tmp</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> maxIndex = Array.length a - <span class="number">1</span></span><br><span class="line">    [|<span class="number">0.</span>.maxIndex|] </span><br><span class="line">    |&gt; Array.iter (<span class="keyword">fun</span> i -&gt; swapByIndex i (rand.Next maxIndex))</span><br><span class="line">    a</span><br><span class="line"></span><br><span class="line"><span class="comment">// Send a tree + input + output and generate a tuple with results for comparison</span></span><br><span class="line"><span class="keyword">let</span> getResults (tree:DecisionTree) (inputs:float[][]) (outputs:int[]) =</span><br><span class="line">    Array.zip inputs outputs</span><br><span class="line">    |&gt; Array.map (<span class="keyword">fun</span> (i,o) -&gt; (i, o, tree.Decide(i)))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// Calculate number of correct predictions</span></span><br><span class="line"><span class="keyword">let</span> resultsTotalCorrect results = </span><br><span class="line">    results</span><br><span class="line">    |&gt; Array.map (<span class="keyword">fun</span> (_, actual:int, predicted:int) -&gt; </span><br><span class="line">        <span class="keyword">if</span> actual = predicted <span class="keyword">then</span> <span class="number">1</span> <span class="keyword">else</span> <span class="number">0</span>)</span><br><span class="line">    |&gt; Array.fold (+) <span class="number">0</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// Use the input and output datasets to get correct prediction stats</span></span><br><span class="line"><span class="keyword">let</span> processResults tree inputs outputs = </span><br><span class="line">    <span class="keyword">let</span> results = getResults tree inputs outputs</span><br><span class="line">    (</span><br><span class="line">        results, </span><br><span class="line">        resultsTotalCorrect results</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line"><span class="comment">// Display results</span></span><br><span class="line"><span class="keyword">let</span> showResults description correct total =</span><br><span class="line">    printfn <span class="string">"%s - Direct row match  : Correct %d/%d (%.3f)"</span> description correct total (float(correct) / (float(total)))</span><br></pre></td></tr></table></figure>
+<p>Here are some data transformation functions. <em>buildTrainTestIndexes</em> generates a list of indexes for the training and test sets.  The data is randomized and all records are in one and only one set (no overlap between train and test).  <em>splitDataset</em> does the actual split into train and test sets.  <em>splitDataIntoInputAndOutput</em> breaks a dataset into inputs and outputs for decision tree consumption.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Build a list of indexes for the train and test sets</span></span><br><span class="line"><span class="comment">// Current implementation assigns a random 'trainpercent' of the indexes</span></span><br><span class="line"><span class="comment">// to the trainingset, and the remainder to the test set</span></span><br><span class="line"><span class="keyword">let</span> buildTrainTestIndexes (length:int) (trainPercent:float) :(int[] * int[]) = </span><br><span class="line">    <span class="keyword">let</span> splitIndex = int(Math.Floor(trainPercent * float(length<span class="number">-1</span>)))</span><br><span class="line">    <span class="keyword">let</span> indexes = [|<span class="number">0.</span>.length - <span class="number">1</span>|]</span><br><span class="line">    shuffle indexes |&gt; ignore</span><br><span class="line">    (indexes.[<span class="number">0.</span>.splitIndex],  <span class="comment">// training indexes</span></span><br><span class="line">     indexes.[splitIndex+<span class="number">1.</span>.])  <span class="comment">// testing indexes</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// Split a dataset into a trainingset and a testing set (with no overlap)</span></span><br><span class="line"><span class="keyword">let</span> splitDataset (d:list&lt;<span class="symbol">'a</span>&gt;) (trainPercent:float) =</span><br><span class="line">    <span class="keyword">let</span> (trainIndexes, testIndexes) = buildTrainTestIndexes (List.length d) trainPercent</span><br><span class="line">    (trainIndexes |&gt; Array.map (<span class="keyword">fun</span> i -&gt; List.item i d),  <span class="comment">// training set</span></span><br><span class="line">     testIndexes  |&gt; Array.map (<span class="keyword">fun</span> i -&gt; List.item i d))  <span class="comment">// testing set</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// Splits dataset into its input and output </span></span><br><span class="line"><span class="comment">// Assumption: row's first column is label (output)</span></span><br><span class="line"><span class="keyword">let</span> splitDataIntoInputAndOutput (d:<span class="symbol">'a</span>[][]) = </span><br><span class="line">    (</span><br><span class="line">        d</span><br><span class="line">        |&gt; Array.map (<span class="keyword">fun</span> row -&gt; row.[<span class="number">1.</span>.(Array.length row - <span class="number">1</span>)]),</span><br><span class="line">        d</span><br><span class="line">        |&gt; Array.map (<span class="keyword">fun</span> row -&gt; row.[<span class="number">0</span>])</span><br><span class="line">    )</span><br></pre></td></tr></table></figure>
+<p>Here are decision tree setup specific functions.  The decision tree uses a DecisionVariable collection. Decision Tree ranges come in different flavors, but all my features are double, thus DoubleRange.  The other point of interest is <em>decisionVariablesIList</em>, this is necessarily because the F# list as I was using it didn’t meet the interface needs.  This very well could be something I missed on my part, but this seemed like the only way to resolve the conflict.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> newRangeFromColumn (d:Double[][]) (i:int) = </span><br><span class="line">    <span class="keyword">new</span> DoubleRange(</span><br><span class="line">        d |&gt; Array.map (<span class="keyword">fun</span> r -&gt; r.[i]) |&gt; Array.min,</span><br><span class="line">        d |&gt; Array.map (<span class="keyword">fun</span> r -&gt; r.[i]) |&gt; Array.max)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Create a new decision variable for a column</span></span><br><span class="line"><span class="keyword">let</span> newDecisionVariableFromColumn (d:Double[][]) (i:int) =</span><br><span class="line">    <span class="keyword">new</span> DecisionVariable((sprintf <span class="string">"col%d"</span> i), newRangeFromColumn d i)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Create a list of decision variables for the DecisionTree</span></span><br><span class="line"><span class="keyword">let</span> decisionVariables (inputs:float[][]) = </span><br><span class="line">    [<span class="number">0.</span>.(Array.length inputs.[<span class="number">0</span>])<span class="number">-1</span>] </span><br><span class="line">    |&gt; List.map (newDecisionVariableFromColumn inputs)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Create a list of decision variables for the DecisionTree</span></span><br><span class="line"><span class="keyword">let</span> decisionVariablesIList (inputs:float[][]) = </span><br><span class="line">    <span class="keyword">let</span> variableList = <span class="keyword">new</span> Collections.Generic.List&lt;DecisionVariable&gt;()</span><br><span class="line">    decisionVariables inputs |&gt; List.iter (<span class="keyword">fun</span> x -&gt; variableList.Add(x))</span><br><span class="line">    variableList</span><br><span class="line"></span><br><span class="line"><span class="comment">// Get number of classes </span></span><br><span class="line"><span class="keyword">let</span> numClasses (d:int[]) = Array.max d - Array.min d + <span class="number">1</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>All the prep functions are in place.  First I load the data.  Often I use the CsvProvider, but in this case I want the data directly in an array.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> dataset = </span><br><span class="line">    Path.Combine(__SOURCE_DIRECTORY__, <span class="string">"..\\data\\legos\\aggregatedata.csv"</span>)</span><br><span class="line">    |&gt; File.ReadLines</span><br><span class="line">    |&gt; Seq.skip <span class="number">1</span> <span class="comment">// Skip header row</span></span><br><span class="line">    <span class="comment">//|&gt; Seq.take 10000 // For testing only take a subset of records</span></span><br><span class="line">    |&gt; Seq.map (<span class="keyword">fun</span> x -&gt;x.Split ',')</span><br><span class="line">    |&gt; Seq.map (<span class="keyword">fun</span> x -&gt; Array.map (<span class="keyword">fun</span> y -&gt; float(y)) x)</span><br><span class="line">    |&gt; Seq.toList</span><br></pre></td></tr></table></figure>
+<p>Here I split data into train and test sets, where 70% of the data is train.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Split dataset into train and test sets </span></span><br><span class="line"><span class="keyword">let</span> (trainData, testData) = splitDataset dataset <span class="number">0.7</span></span><br><span class="line">printfn <span class="string">"Dataset Sizes: All: %d Train: %d Test: %d"</span> (List.length dataset) (Array.length trainData) (Array.length testData)</span><br></pre></td></tr></table></figure>
+<p>Now I split the train and test sets into input/output arrays.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Split training sets into seperate components for decision tree</span></span><br><span class="line"><span class="keyword">let</span> (trainInputs, trainOutputs) = splitDataIntoInputAndOutput trainData    </span><br><span class="line"><span class="keyword">let</span> (testInputs, testOutputs) = splitDataIntoInputAndOutput testData    </span><br></pre></td></tr></table></figure>
+<p>Here I create and train the tree.  I use the C4.5 algorithm for the learning method.  Accord also offers ID3 for learning as well.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Build the decision tree from training data</span></span><br><span class="line"><span class="keyword">let</span> tree = <span class="keyword">new</span> DecisionTree(decisionVariablesIList trainInputs, numClasses (Array.map int trainOutputs))</span><br><span class="line"></span><br><span class="line"><span class="comment">// Train the tree</span></span><br><span class="line"><span class="keyword">let</span> c45 = <span class="keyword">new</span> C45Learning(tree)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> error = c45.Learn(trainInputs, (Array.map int trainOutputs))</span><br></pre></td></tr></table></figure>
+<p>Once the tree is trained, I apply the results to the train and test sets and then display the results.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Process train and test results</span></span><br><span class="line"><span class="keyword">let</span> (trainResults, trainTotalCorrect) = processResults tree trainInputs (Array.map int trainOutputs)    </span><br><span class="line"><span class="keyword">let</span> (testResults, testTotalCorrect) = processResults tree testInputs (Array.map int testOutputs)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Final display of results</span></span><br><span class="line">showResults <span class="string">"Train"</span> trainTotalCorrect (Array.length trainInputs)</span><br><span class="line">showResults <span class="string">"Test "</span> testTotalCorrect (Array.length testInputs)</span><br></pre></td></tr></table></figure>
+<p>Below are the results.  They are disappointing, and there is certainly room for improvement.  But its a start. </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Train - Direct row match  : Correct 5624/7584 (0.742)</span><br><span class="line">Test  - Direct row match  : Correct 1342/3250 (0.413)</span><br></pre></td></tr></table></figure>
+<p>On a whim I attempt to use the ID3 learner instead.  This method requires discrete values.  It’s easy enough to convert all the doubles to ints.  Knowing that most of my columns are percentages, I multiple by 100, then convert to an int.  Unfortunantly, my system ran out of memory on this test.  I used fsharpi (Mono) as well as fsi (.NET CLR), but it gave me the same issue.  This deserves some additional follow-up, but I don’t have time for that rabbit-hole right now.  Below is the code I used to try the ID3 learner, if someone sees what is wrong, feel free to drop me a line.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// Below is the hacked up ID3 variant of my test</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> newRangeFromColumnInt (d:int[][]) (i:int) = </span><br><span class="line">    <span class="keyword">new</span> IntRange(</span><br><span class="line">        d |&gt; Array.map (<span class="keyword">fun</span> r -&gt; r.[i]) |&gt; Array.min,</span><br><span class="line">        d |&gt; Array.map (<span class="keyword">fun</span> r -&gt; r.[i]) |&gt; Array.max)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> newDecisionVariableFromColumnInt (d:int[][]) (i:int) =</span><br><span class="line">    <span class="keyword">new</span> DecisionVariable((sprintf <span class="string">"col%d"</span> i), newRangeFromColumnInt d i)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> decisionVariablesInt (inputs:int[][]) = </span><br><span class="line">    [<span class="number">0.</span>.(Array.length inputs.[<span class="number">0</span>])<span class="number">-1</span>] </span><br><span class="line">    |&gt; List.map (newDecisionVariableFromColumnInt inputs)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> decisionVariablesIListInt (inputs:int[][]) = </span><br><span class="line">    <span class="keyword">let</span> variableList = <span class="keyword">new</span> Collections.Generic.List&lt;DecisionVariable&gt;()</span><br><span class="line">    decisionVariablesInt inputs |&gt; List.iter (<span class="keyword">fun</span> x -&gt; variableList.Add(x))</span><br><span class="line">    variableList</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> inputsInt i = </span><br><span class="line">    (Array.map (<span class="keyword">fun</span> x -&gt; Array.map (<span class="keyword">fun</span> y -&gt; int(y * <span class="number">100.</span>)) x) i)</span><br><span class="line">    </span><br><span class="line"><span class="keyword">let</span> treeId3 = <span class="keyword">new</span> DecisionTree(decisionVariablesIListInt (inputsInt trainInputs), numClasses (Array.map int trainOutputs))</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> id3 = <span class="keyword">new</span> ID3Learning(treeId3)</span><br><span class="line"></span><br><span class="line">id3.ParallelOptions.MaxDegreeOfParallelism &lt;- <span class="number">1</span></span><br><span class="line"><span class="keyword">let</span> errorId3 = id3.Learn((inputsInt trainInputs), (Array.map int trainOutputs))</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> (trainResultsId3, trainTotalCorrectId3) = processResultsId3 treeId3 (inputsInt trainInputs) (Array.map int trainOutputs)    </span><br><span class="line"><span class="keyword">let</span> (testResultsId3, testTotalCorrectId3) = processResultsId3 treeId3 (inputsInt testInputs) (Array.map int testOutputs)</span><br><span class="line"></span><br><span class="line">showResults <span class="string">"Train"</span> trainTotalCorrectId3 (Array.length trainInputs)</span><br><span class="line">showResults <span class="string">"Test "</span> testTotalCorrectId3 (Array.length testInputs)</span><br></pre></td></tr></table></figure>
+<p>Although the end results were anticlimatic, it’s nice to see it all come together.  One consolation is with over 100 possible themes, 41% on the test set isn’t the worst thing in the world.  Hopefully this has offered some insight into how to use a decision tree in Accord.NET.  Until next time…</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1/">Decision Trees with F# and Accord.NET (Part 1)</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/12/Linear-Regression-and-F/">Linear Regression and F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/08/27/K-Means-Clustering-with-F/">K-Means Clustering with F#</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2/" data-id="cjo9c910o0004b9m03emtph04" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Accord-NET/">Accord.NET</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Classification/">Classification</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Data/">Data</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Decision-Trees/">Decision Trees</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Legos/">Legos</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Machine-Learning/">Machine Learning</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Statistics/">Statistics</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/12/13/F-and-Dynamic-Time-Warping/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          F# and Dynamic Time Warping
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Decision Trees with F# and Accord.NET (Part 1)</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 12.22px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dtw/" style="font-size: 10px;">Dtw</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.22px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13.33px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/05/10/Propagator-Networks-in-F/">Propagator Networks in F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/25/Web-Scraping-with-F/">Web Scraping with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/17/Introduction-to-F-Talk/">Introduction to F# Talk</a>
+          </li>
+        
+          <li>
+            <a href="/2020/03/08/F-and-Docker/">Containerizing F# with Docker</a>
+          </li>
+        
+          <li>
+            <a href="/2020/01/25/Preonic-V3/">Preonic V3 Build</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
