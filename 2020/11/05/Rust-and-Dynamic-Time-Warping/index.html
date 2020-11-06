@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Rust and Dynamic Time Warping | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="I’m back to a familar topic, dynamic time warping.  This time it’s my excuse to play with Rust.">
+<meta name="keywords" content="DTW,Dynamic Time Warping,Rust">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rust and Dynamic Time Warping">
+<meta property="og:url" content="http://codesuji.com/2020/11/05/Rust-and-Dynamic-Time-Warping/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="I’m back to a familar topic, dynamic time warping.  This time it’s my excuse to play with Rust.">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://codesuji.com/images/dtw2/chart-1.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw2/chart-2.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw2/chart-3.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw2/chart-4.png">
+<meta property="og:image" content="http://codesuji.com/images/dtw2/chart-5.png">
+<meta property="og:updated_time" content="2020-11-06T01:38:10.892Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Rust and Dynamic Time Warping">
+<meta name="twitter:description" content="I’m back to a familar topic, dynamic time warping.  This time it’s my excuse to play with Rust.">
+<meta name="twitter:image" content="http://codesuji.com/images/dtw2/chart-1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Rust-and-Dynamic-Time-Warping" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2020/11/05/Rust-and-Dynamic-Time-Warping/" class="article-date">
+  <time datetime="2020-11-06T01:17:11.000Z" itemprop="datePublished">2020-11-05</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Rust and Dynamic Time Warping
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 7 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>I’m back to a familar topic, dynamic time warping.  This time it’s my excuse to play with <a href="https://www.rust-lang.org/" target="_blank" rel="noopener">Rust</a>.</p>
+<a id="more"></a>
+<p>As a bit of refresher, Dynamic Time Warping (DTW) is a useful mechanism to compare signals, or series, while adjusting for frequency variance.  It has turned into one of my go-to algorithms when trying out a new language, Rust is no exception.  Today I’m going to explore implementing the DTW algorithm in Rust.  My goal is to be as idiomatic as possible, but since this is a learning process, I assume there will be some gaps.  Obviously for all this to work I need Rust, installation instructions can be found <a href="https://www.rust-lang.org/tools/install" target="_blank" rel="noopener">here</a>.</p>
+<p>There is a little setup first.  The plan is to read data from csv files, and use gnuplot for some sequence visualizations.  As a sidenote, the gnuplot crate assumes gnuplot is installed.  So I need to ensure that is installed.</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="keyword">crate</span> csv;</span><br><span class="line"></span><br><span class="line"><span class="keyword">use</span> csv::ReaderBuilder;</span><br><span class="line"><span class="keyword">use</span> gnuplot::&#123;Figure, Caption, Color&#125;;</span><br><span class="line"><span class="keyword">use</span> std::env;</span><br></pre></td></tr></table></figure>
+<p>Getting right into the meat of it, here is the dtw implementation.  The cost function takes 2 float vectors (and a debug flag) and returns a float as the cost, or difference, between the two sequences.  The internal structure that is traversed is a two-dimensional vector, the cost matrix.  After the matrix initialization, I iterate through both sequences, comparing and storing cummulative “best” distances.  As an initial pass I’m not interested in implementing some of the typical dtw optimizations.  That makes this implementation straight-forward, and a good first step.</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Calculate distance between values</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">distance</span></span>(a: <span class="built_in">f32</span>, b: <span class="built_in">f32</span>) -&gt; <span class="built_in">f32</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">f32</span>::abs(a - b);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Calculate cost difference between two sequences (dtw-style)</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">cost</span></span>(debug: <span class="built_in">bool</span>, a: &amp;[<span class="built_in">f32</span>], b: &amp;[<span class="built_in">f32</span>]) -&gt; <span class="built_in">f32</span> &#123;</span><br><span class="line">  <span class="comment">// Init matrix</span></span><br><span class="line">  <span class="keyword">let</span> matrix_a_len = a.len() + <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">let</span> matrix_b_len = b.len() + <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mut</span> data = <span class="built_in">vec!</span>[<span class="built_in">vec!</span>[<span class="built_in">f32</span>::MAX; matrix_b_len]; matrix_a_len];</span><br><span class="line">  data[<span class="number">0</span>][<span class="number">0</span>] = <span class="number">0</span>.;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Calculate cost matrix</span></span><br><span class="line">  <span class="comment">// <span class="doctag">NOTE:</span> ai and bi represent index in data (do -1 when referencing into the a and b vectors)</span></span><br><span class="line">  <span class="keyword">for</span> ai <span class="keyword">in</span> <span class="number">1</span>..matrix_a_len &#123;</span><br><span class="line">    <span class="keyword">for</span> bi <span class="keyword">in</span> <span class="number">1</span>..matrix_b_len &#123;</span><br><span class="line">      <span class="keyword">let</span> cost = distance(a[ai - <span class="number">1</span>], b[bi - <span class="number">1</span>]);</span><br><span class="line">      data[ai][bi] = cost + <span class="built_in">f32</span>::min(<span class="built_in">f32</span>::min(data[ai - <span class="number">1</span>][bi], data[ai][bi - <span class="number">1</span>]), data[ai - <span class="number">1</span>][bi - <span class="number">1</span>]);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Dump cost matrix</span></span><br><span class="line">  <span class="keyword">if</span> debug &#123;</span><br><span class="line">    <span class="keyword">for</span> ai <span class="keyword">in</span> <span class="number">0</span>..matrix_a_len &#123;</span><br><span class="line">      <span class="keyword">for</span> bi <span class="keyword">in</span> <span class="number">0</span>..matrix_b_len &#123;</span><br><span class="line">        <span class="built_in">print!</span>(<span class="string">"&#123;:5&#125; "</span>, (<span class="keyword">if</span> data[ai][bi] == <span class="built_in">f32</span>::MAX &#123; <span class="built_in">String</span>::from(<span class="string">"-"</span>) &#125; <span class="keyword">else</span> &#123; <span class="built_in">format!</span>(<span class="string">"&#123;:.*&#125;"</span>, <span class="number">2</span>, data[ai][bi]) &#125;));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="built_in">println!</span>(<span class="string">""</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Return final cost</span></span><br><span class="line">  <span class="keyword">return</span> data[a.len()][b.len()];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The algorithm doesn’t do much if it doesn’t have data.  I use this an excuse to learn how to use a csv parser.  I’m still getting a handle on the best way to deal with errors in Rust.  For my purposes printing an error, but filtering out bad data works for me.  The goal is to read a csv, and transform the first column into a vector.  I then return the resulting vector to eventually be consumed by the previously defined cost function.  The csv::ReaderBuilder works well for me out of the box, and it has several more options than I choose to use here. </p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Load a file for processing</span></span><br><span class="line"><span class="comment">/// Assumes rows with at least one column</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">load_file</span></span>(debug: <span class="built_in">bool</span>, filename: &amp;<span class="built_in">String</span>) -&gt; <span class="built_in">Result</span>&lt;<span class="built_in">Vec</span>&lt;<span class="built_in">f32</span>&gt;, csv::Error&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> debug &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"loading: &#123;&#125;"</span>, filename);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> reader =</span><br><span class="line">    ReaderBuilder::new()</span><br><span class="line">    .has_headers(<span class="literal">false</span>)</span><br><span class="line">    .delimiter(<span class="string">b','</span>)</span><br><span class="line">    .from_path(&amp;filename);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">match</span> reader &#123;</span><br><span class="line">    <span class="literal">Ok</span>(<span class="keyword">mut</span> r) =&gt; &#123;</span><br><span class="line">      <span class="keyword">let</span> data: <span class="built_in">Vec</span>&lt;<span class="built_in">f32</span>&gt; =</span><br><span class="line">        r</span><br><span class="line">        .records()</span><br><span class="line">        .filter_map(|x| x.ok())</span><br><span class="line">        .map(|x| (x[<span class="number">0</span>]).parse::&lt;<span class="built_in">f32</span>&gt;())</span><br><span class="line">        .filter_map(|x| &#123; <span class="keyword">match</span> &amp;x &#123;</span><br><span class="line">                            <span class="literal">Ok</span>(_) =&gt; &#123; () &#125;</span><br><span class="line">                            <span class="literal">Err</span>(e) =&gt; &#123; <span class="built_in">println!</span>(<span class="string">"&#123;&#125;"</span>, &amp;e) &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                        x.ok() &#125;)</span><br><span class="line">        .collect();</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> <span class="literal">Ok</span>(data);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="literal">Err</span>(e) =&gt; &#123;</span><br><span class="line">      <span class="literal">Err</span>(e)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>To aid in the development process it is useful to visualize the data.  For that I’ll use gnuplot, and thankfully there is a crate for me to use.  As mentioned previously, I need to also have gnuplot installed, beyond just the crate.  The comparison chart I put together here is pretty basic, but it meets my exploratory needs.</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Make a chart containing 2 sequences (for comparison)</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">make_chart</span></span>(debug: <span class="built_in">bool</span>, filename: &amp;<span class="built_in">str</span>, a: &amp;[<span class="built_in">f32</span>], b: &amp;[<span class="built_in">f32</span>]) &#123;</span><br><span class="line">  <span class="keyword">let</span> x_max = a.len().max(b.len()) <span class="keyword">as</span> <span class="built_in">i32</span>;</span><br><span class="line">  <span class="keyword">let</span> x: <span class="built_in">Vec</span>&lt;<span class="built_in">i32</span>&gt; = (<span class="number">0</span>..x_max).collect();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mut</span> chart = Figure::new();</span><br><span class="line">  chart</span><br><span class="line">    .set_terminal(<span class="string">"pngcairo"</span>, filename)</span><br><span class="line">    .axes2d()</span><br><span class="line">    .lines(&amp;x, a, &amp;[Caption(<span class="string">"A"</span>), Color(<span class="string">"red"</span>)])</span><br><span class="line">    .lines(&amp;x, b, &amp;[Caption(<span class="string">"B"</span>), Color(<span class="string">"blue"</span>)]);</span><br><span class="line">  chart.show();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Now, I’m finally to the point where I can put it all together.  To facilitate flexiblity, I take two csv files at the command line and compare their results.  After calculating the cost I create a combined chart of the sequences.</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// main</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">  <span class="keyword">let</span> args: <span class="built_in">Vec</span>&lt;<span class="built_in">String</span>&gt; = env::args().collect();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> debug =</span><br><span class="line">    args</span><br><span class="line">      .iter()</span><br><span class="line">      .map(|x| x == <span class="string">"--debug"</span>)</span><br><span class="line">      .fold(<span class="literal">false</span>, |acc, x| acc || x);</span><br><span class="line">  <span class="built_in">println!</span>(<span class="string">"&#123;&#125;"</span>, debug);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> filename1 = &amp;args[<span class="number">1</span>];</span><br><span class="line">  <span class="keyword">let</span> filename2 = &amp;args[<span class="number">2</span>];</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">let</span> file1 = load_file(debug, filename1);</span><br><span class="line">  <span class="keyword">let</span> file2 = load_file(debug, filename2);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">match</span> (file1, file2) &#123;</span><br><span class="line">    (<span class="literal">Ok</span>(file1), <span class="literal">Ok</span>(file2)) =&gt; &#123;</span><br><span class="line">      <span class="keyword">let</span> cost = cost(debug, &amp;file1, &amp;file2);</span><br><span class="line">      <span class="built_in">println!</span>(<span class="string">"cost: &#123;&#125;"</span>, cost);</span><br><span class="line"></span><br><span class="line">      make_chart(debug, <span class="string">"chart1.png"</span>, &amp;file1, &amp;file2);</span><br><span class="line">    &#125;</span><br><span class="line">    (<span class="literal">Err</span>(e), _) =&gt; &#123; <span class="built_in">println!</span>(<span class="string">"Error: &#123;&#125; &#123;&#125;"</span>, filename1, e); &#125;</span><br><span class="line">    (_, <span class="literal">Err</span>(e)) =&gt; &#123; <span class="built_in">println!</span>(<span class="string">"Error: &#123;&#125; &#123;&#125;"</span>, filename2, e); &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>With the code complete, it is time to test it out.  For that I grabbed some cpu logs from different workloads.  To simplify the post I’ll just focus on cpu; although memory, disk, and network are important to workload profiling.  The existing algorithm can easily have a modified distance calculation to handle multiple dimensions.  Now I just run the app to measure profile similarities and build charts for comparison.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ cargo run cpu1.csv cpu2.csv</span><br></pre></td></tr></table></figure>
+<p><img src="/images/dtw2/chart-1.png" alt="Workload 1"><br><img src="/images/dtw2/chart-2.png" alt="Workload 2"><br><img src="/images/dtw2/chart-3.png" alt="Workload 3"><br><img src="/images/dtw2/chart-4.png" alt="Workload 4"><br><img src="/images/dtw2/chart-5.png" alt="Workload 5"></p>
+<p>From the chart below, we can see Workloads 3, 4, and 5 have the closest profile.  Workloads 1 and 5 have the highest distance difference.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>W1</th>
+<th>W2</th>
+<th>W3</th>
+<th>W4</th>
+<th>W5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W1</td>
+<td></td>
+<td>1212</td>
+<td>1613</td>
+<td>2002</td>
+<td>2218</td>
+</tr>
+<tr>
+<td>W2</td>
+<td></td>
+<td></td>
+<td>1572</td>
+<td>1899</td>
+<td>1928</td>
+</tr>
+<tr>
+<td>W3</td>
+<td></td>
+<td></td>
+<td></td>
+<td>890</td>
+<td>585</td>
+</tr>
+<tr>
+<td>W4</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>1075</td>
+</tr>
+</tbody>
+</table>
+<p>Using Rust for implementing DTW went relatively smoothly.  My own code review exposes room for improvement and leveraging Rust better.  So I already have some avenues to follow for more learnings.  With that said, I’m pleased with how it all came together.  Honestly, it’s too early to judge, but I’m thrilled with what I see from Rust.  Even though I ran into the typical Rustism snags, coming from a functional background, I felt right at home with many of the idioms.  And those snags are just room for growth and part of the learning process.  Rust’s approach is solid and I like what I get out of some extra manual effort.  Expect more posts as I continue the experiments.  Until next time.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2019/10/11/FastDtw/">FastDtw, an F# Implementation</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/17/Dynamic-Time-Warping-an-F-Implementation/">Dynamic Time Warping, an F# Implementation</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/13/F-and-Dynamic-Time-Warping/">F# and Dynamic Time Warping</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2020/11/05/Rust-and-Dynamic-Time-Warping/" data-id="ckgvepgvv0000hcmwbpigv35v" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/DTW/">DTW</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Dynamic-Time-Warping/">Dynamic Time Warping</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Rust/">Rust</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2020/10/25/Nix-For-Development/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Nix for Development</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 14.44px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 13.33px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13.33px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Rust/" style="font-size: 10px;">Rust</a> <a href="/tags/STEM/" style="font-size: 11.11px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/11/05/Rust-and-Dynamic-Time-Warping/">Rust and Dynamic Time Warping</a>
+          </li>
+        
+          <li>
+            <a href="/2020/10/25/Nix-For-Development/">Nix for Development</a>
+          </li>
+        
+          <li>
+            <a href="/2020/10/19/Microbit-Introduction/">Playing with the micro:bit</a>
+          </li>
+        
+          <li>
+            <a href="/2020/05/10/Propagator-Networks-in-F/">Propagator Networks in F#</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/25/Web-Scraping-with-F/">Web Scraping with F#</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
