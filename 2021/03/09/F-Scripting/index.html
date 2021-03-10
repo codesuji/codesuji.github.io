@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>F# Scripting | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Today I want to provide a quick overview of F#‘s scripting capabilities and how they can integrate into your daily workflow.  Depending on your current perspective, you may not have considered using F">
+<meta name="keywords" content="F#,FSharp,Tips">
+<meta property="og:type" content="article">
+<meta property="og:title" content="F# Scripting">
+<meta property="og:url" content="http://codesuji.com/2021/03/09/F-Scripting/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Today I want to provide a quick overview of F#‘s scripting capabilities and how they can integrate into your daily workflow.  Depending on your current perspective, you may not have considered using F">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2021-03-10T00:42:47.337Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="F# Scripting">
+<meta name="twitter:description" content="Today I want to provide a quick overview of F#‘s scripting capabilities and how they can integrate into your daily workflow.  Depending on your current perspective, you may not have considered using F">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-Scripting" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2021/03/09/F-Scripting/" class="article-date">
+  <time datetime="2021-03-10T00:32:09.000Z" itemprop="datePublished">2021-03-09</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      F# Scripting
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 5 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Today I want to provide a quick overview of <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a>‘s scripting capabilities and how they can integrate into your daily workflow.  Depending on your current perspective, you may not have considered using F# as a daily scripting tool.  If not, then you should.  Why leave all the untapped power just setting there?</p>
+<a id="more"></a>
+<p>The fact is F# is a great language to bring to the table when you are dealing with either adhoc or periodic scripting jobs.  It doesn’t need to be relegated to just compiled apps.  Taking a step back, in the earlier days F# had a reasonable scripting story.  It was cross-platform, you just needed <a href="https://www.mono-project.com/" target="_blank" rel="noopener">Mono</a> and you could do interactive F# or run <code>.fsx</code> files for scripting.  When .NET Core entered the scene things got a bit muddled.  In the initial incarnation, .NET Core didn’t support interactive F#.  This meant you still needed Mono for scripting, even if you were writing compiled apps for .NET Core.  In the grand scheme of things, not the largest problem in the world, but still a pain.  It also didn’t feel like a very good story to tell, dealing with multiple runtime targets, depending on what you needed to do.  Thankfully we’re past that now.  .NET Core has supported <code>dotnet fsi</code> to run interactive F# and scripting for awhile now.  For me, this closes one of those annoying gaps.</p>
+<p>Where that leaves us today is writing F# scripts for general tasks is again a breeze.  I love bash as much as the next person, but F# brings way more power to the table when I need to do specialized work.  To show what I mean, I have a fictional scenario.  I want a script to do some simple loading of data into my <a href="https://redis.io" target="_blank" rel="noopener">Redis</a> instance.  For this I use the <a href="https://github.com/StackExchange/StackExchange.Redis/" target="_blank" rel="noopener">StackExchange.Redis</a> package.  This example is pretty simple.  I’ll read some data (config) files from a directory and load them into Redis for server consumption.  I’ll also read them back out, just to make sure things look as expected.</p>
+<p>The first thing to notice in the script below is the <code>#!usr/bin/env</code> line at the top.  If you’re a Windows user, ignore this.  But for the Linux users, this allows me to run the script directly instead of needing to run <code>dotnet fsi load-config.fsx</code> from the command line.  The second item to notice is the <code>#r</code> line.  This is how I load packages for the script.  Here I use nuget to grab the <code>StackExchange.Redis</code> package (specifically version 2.2.4).  There are other options for how resources can be loaded and you should checkout the <a href="https://docs.microsoft.com/en-us/dotnet/fsharp/tools/fsharp-interactive/" target="_blank" rel="noopener">F# Interactive</a> docs for more detail.  I’ve also choosen to load a custom library script with <code>#load</code>.  Beyond that, it’s a typical F# script.<br><figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">#!/usr/bin/env -S dotnet fsi</span><br><span class="line">#r <span class="string">"nuget: StackExchange.Redis, 2.2.4"</span></span><br><span class="line">#load <span class="string">"/home/codesuji/toolkit/codesuji.os.fsx"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">open</span> System</span><br><span class="line"><span class="keyword">open</span> StackExchange.Redis</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> redis = ConnectionMultiplexer.Connect(<span class="string">"localhost"</span>);</span><br><span class="line"><span class="keyword">let</span> db = redis.GetDatabase()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> fsi.CommandLineArgs.Length &lt; <span class="number">2</span> <span class="keyword">then</span></span><br><span class="line">  printfn <span class="string">"Error: Missing config directory"</span></span><br><span class="line">  Environment.Exit <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> configPath = fsi.CommandLineArgs.[<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">// Load configs</span></span><br><span class="line">printfn <span class="string">"Loading configs from: %s"</span> configPath</span><br><span class="line">IO.Directory.GetFiles(configPath, <span class="string">"config*"</span>)</span><br><span class="line">|&gt; Array.iter(<span class="keyword">fun</span> filename -&gt; <span class="keyword">let</span> key = filename.Replace(configPath, <span class="string">""</span>).Replace(<span class="string">"/"</span>, <span class="string">""</span>)</span><br><span class="line">                              <span class="keyword">let</span> data = IO.File.ReadAllText(filename)</span><br><span class="line">                              <span class="keyword">let</span> success = db.StringSet(RedisKey(key), RedisValue(data))</span><br><span class="line">                              <span class="keyword">if</span> not success <span class="keyword">then</span> printfn <span class="string">"Error loading: %s"</span> filename)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Show configs</span></span><br><span class="line">[ <span class="string">"config-website-dev"</span>; <span class="string">"config-website-qa"</span>; <span class="string">"config-website-prod"</span>]</span><br><span class="line">|&gt; List.iter(<span class="keyword">fun</span> key -&gt; <span class="keyword">let</span> value = db.StringGet(RedisKey(key))</span><br><span class="line">                        printfn <span class="string">"%s =\n%s"</span> key (<span class="keyword">if</span> value.HasValue <span class="keyword">then</span> value.ToString() <span class="keyword">else</span> <span class="string">"undefined"</span>))</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<p>This can be run one of two ways (depending on your environment).  One is <code>dotnet fsi redis-load-configs.fsx</code>.  The second (my preference) is <code>./redis-load-configs.fsx</code>.  Below I show the simple script in action.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">~/examples$ ./redis-load-configs.fsx ./configs</span><br><span class="line">Loading configs from: ./configs</span><br><span class="line">config-website-dev =</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">"debug"</span>: <span class="keyword">true</span>,</span><br><span class="line">  <span class="string">"timeout"</span>: <span class="number">30000</span>,</span><br><span class="line">  <span class="string">"suffix"</span>: <span class="string">"dev"</span>,</span><br><span class="line">  <span class="string">"features"</span>: &#123;</span><br><span class="line">    <span class="string">"foo"</span>: <span class="keyword">true</span>,</span><br><span class="line">    <span class="string">"bar"</span>: <span class="keyword">true</span> </span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">config-website-qa =</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">"debug"</span>: <span class="keyword">false</span>,</span><br><span class="line">  <span class="string">"timeout"</span>: <span class="number">10000</span>,</span><br><span class="line">  <span class="string">"suffix"</span>: <span class="string">"qa"</span>,</span><br><span class="line">  <span class="string">"features"</span>: &#123;</span><br><span class="line">    <span class="string">"foo"</span>: <span class="keyword">true</span>,</span><br><span class="line">    <span class="string">"bar"</span>: <span class="keyword">false</span> </span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">config-website-prod =</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">"debug"</span>: <span class="keyword">false</span>,</span><br><span class="line">  <span class="string">"timeout"</span>: <span class="number">10000</span>,</span><br><span class="line">  <span class="string">"suffix"</span>: <span class="string">"prod"</span>,</span><br><span class="line">  <span class="string">"features"</span>: &#123;</span><br><span class="line">    <span class="string">"foo"</span>: <span class="keyword">false</span>,</span><br><span class="line">    <span class="string">"bar"</span>: <span class="keyword">false</span> </span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>There isn’t much else to show.  The intent was to provide a quick little post of F# scripting and how you can use it to enhance your daily workflow.  So check it out.  With that, I say go forth and script!</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2020/04/25/Web-Scraping-with-F/">Web Scraping with F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/02/19/bf-compiler-part1-parsing/">BF Compiler Part 1 - Parsing</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2016/11/21/Face-Detection-with-FSharp-and-Accord-NET/">Face Detection with F# and Accord.NET</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2021/03/09/F-Scripting/" data-id="ckm2pff6i0000zcmw96sb06oc" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Tips/">Tips</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2020/12/12/Mqtt-Server-FSharp-3/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Building an MQTT server in F# - Part 3</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 14.44px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 13.33px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13.33px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Mqtt/" style="font-size: 12.22px;">Mqtt</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Rust/" style="font-size: 10px;">Rust</a> <a href="/tags/STEM/" style="font-size: 11.11px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Tips/" style="font-size: 11.11px;">Tips</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2021/03/09/F-Scripting/">F# Scripting</a>
+          </li>
+        
+          <li>
+            <a href="/2020/12/12/Mqtt-Server-FSharp-3/">Building an MQTT server in F# - Part 3</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/29/Mqtt-Server-FSharp-2/">Building an MQTT server in F# - Part 2</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/22/Mqtt-Server-FSharp-1/">Building an MQTT server in F# - Part 1</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/05/Rust-and-Dynamic-Time-Warping/">Rust and Dynamic Time Warping</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2021 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
