@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>AC-3 Constraint Solving with F# | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Constraint solvers are a useful tool to have in the toolbox.  You can pull one off the shelf, but there is value in understanding how they work.  To that end, I will explore implementing the AC-3 cons">
+<meta name="keywords" content="F#,FSharp">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AC-3 Constraint Solving with F#">
+<meta property="og:url" content="http://codesuji.com/2021/04/23/F-AC3-Solving/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Constraint solvers are a useful tool to have in the toolbox.  You can pull one off the shelf, but there is value in understanding how they work.  To that end, I will explore implementing the AC-3 cons">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://codesuji.com/images/ac31/ac3.png">
+<meta property="og:updated_time" content="2021-04-24T12:27:33.706Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="AC-3 Constraint Solving with F#">
+<meta name="twitter:description" content="Constraint solvers are a useful tool to have in the toolbox.  You can pull one off the shelf, but there is value in understanding how they work.  To that end, I will explore implementing the AC-3 cons">
+<meta name="twitter:image" content="http://codesuji.com/images/ac31/ac3.png">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-AC3-Solving" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2021/04/23/F-AC3-Solving/" class="article-date">
+  <time datetime="2021-04-24T03:01:45.000Z" itemprop="datePublished">2021-04-23</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      AC-3 Constraint Solving with F#
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 15 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Constraint solvers are a useful tool to have in the toolbox.  You can pull one off the shelf, but there is value in understanding how they work.  To that end, I will explore implementing the AC-3 constraint solver using <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a>.</p>
+<a id="more"></a>
+<p>The field of Constraint Satisfaction Problems (CSP) can be pretty vast.  The variety of solvers provide their own balance of benefits and approaches to a problem.  To provide some focus, it is worth discussing the general approach of the AC-3 constraint solver algorithm.  Before proceeding, I need to provide a couple definitions.  A CSP consists of several components.  It starts with variables.  Those variables can have possible values (domain).  Variables have relationships between each other (arc constraints).  A constraint is ultimately just a function which defines valid combinations of values with respect to a set of variables.</p>
+<p>It often helps to see how a problem is defined and how the components interact, so here is a simple example. Below defines three variables (A, B, C), all with their own set of possible values.  Additionally, there are some constraints.  A must be even, so its possible values are reduced from { 1, 2, 3 } to { 2 }.  B must be odd, so it is reduced to { 1, 3 }.  A must be less than B, so A is still { 2 } and B has to be { 3 } (since 1 will never be greater than any value in A, in this case 2).  C must be greater than A, which means C is reduced to { 3, 4, 5, 6 } (1 and 2 will never be greater than 2).  This is generally how the components interact.  If this doesn’t quite click for you yet, bear with me, I have more explanations below that will help solidify where this is all going.</p>
+<p>Variables:<br>A = { 1, 2, 3 }<br>B = { 1, 2, 3, 4 }<br>C = { 1, 2, 3, 4, 5, 6 }</p>
+<p>Constraints:<br>A, even()<br>B, odd()<br>A, B, lessThan()<br>C, A, greaterThan()</p>
+<p>The AC-3 algorithm makes two passes, one for unary constraints and another for binary constraints.  These passes reduce the domain of variables, eliminating impossible values based on those constraints.  Unary constraints are pretty straight forward, if a value in the domain fails the constraint (returns false), it is eliminated.  Like the previous example, if “A must be even”, odd numbers are removed from A’s domain.  Binary constraints are more involved.  The same rules apply, but it is applied with respect to two variables.  This has the property that constraints can have a cascading effect across variables and their domains; the algorithm needs a way to handle this.  It uses a work queue.  As a variable’s domain is modified, it’s arc neighbors are added onto the work queue.  This ensures the necessary processing is performed as long as domains keep changing.  At some point all variables’ domains are reduced as much as possible, and the work queue empties out.  Once all of this is done, if a variable domain is empty, then the solve “fails”.  There are no possible provided values for at least one of the variables that can adhere to the provided set of constraints.  On the other hand, if each variable has at least one value in its domain, then the solution is considered arc consistent, and the reduced domains are provided back to the caller.  With this brief description out of the way, I’ll dive right into the code and add more details as I move along.  So, like any other F# program, I need some good types to define the problem,  I’m also going to package the logic into a module.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Perform AC-3 constraint solving</span></span><br><span class="line"><span class="meta">[&lt;RequireQualifiedAccessAttribute&gt;]</span></span><br><span class="line"><span class="keyword">module</span> Ac3 =</span><br><span class="line">  <span class="comment">/// Variable domain</span></span><br><span class="line">  <span class="class"><span class="keyword">type</span> <span class="title">Domain</span> </span>= int list</span><br><span class="line">  <span class="comment">/// Variable Id (for lookup in map)</span></span><br><span class="line">  <span class="class"><span class="keyword">type</span> <span class="title">Id</span> </span>= int</span><br><span class="line">  <span class="comment">/// Variables (key=id, value=domain)</span></span><br><span class="line">  <span class="class"><span class="keyword">type</span> <span class="title">Variables</span> </span>= Map&lt;Id, Domain&gt;</span><br><span class="line">  <span class="comment">/// List of unary constraints for variables (&lt;variable id&gt;, &lt;constraint function&gt;)</span></span><br><span class="line">  <span class="class"><span class="keyword">type</span> <span class="title">UnaryConstraints</span> </span>= (Id * (int -&gt; bool)) list</span><br><span class="line">  <span class="comment">/// List of binary constraints for variables (&lt;variable id1&gt;, &lt;variable id2&gt;, &lt;constraint function&gt;)</span></span><br><span class="line">  <span class="class"><span class="keyword">type</span> <span class="title">BinaryConstraints</span> </span>= (Id * Id * (int -&gt; int -&gt; bool)) list</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Convert an informal list of variables to the Ac3.Variables type</span></span><br><span class="line">  <span class="keyword">let</span> listToVariables (variables: (int list) list) :Variables =</span><br><span class="line">    variables</span><br><span class="line">    |&gt; List.mapi (<span class="keyword">fun</span> i x -&gt; (i, x))</span><br><span class="line">    |&gt; Map.ofList</span><br></pre></td></tr></table></figure>
+<p>Performing domain reduction based on the unary constraints is the first major task.  Conceptually it is a relatively straightforward process.  Process each constraint separately.  For each variable, iterate through each value of it’s respective domain.  Using the constraint, filter out values that won’t work.  Wrap this all in some recursive calls, and return the reduced variable domains.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Reduce a variable's domain based on unary constraints</span></span><br><span class="line"><span class="comment">/// Return the resulting set of Variables with updated domain(s)</span></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">rec</span> <span class="keyword">private</span> ucReduce (uc: UnaryConstraints) (variables: Variables) :Variables =</span><br><span class="line">  <span class="comment">// Iterate through all unary constraints, for each impacted variable, update it's domain</span></span><br><span class="line">  <span class="keyword">match</span> uc <span class="keyword">with</span></span><br><span class="line">  | h :: t -&gt;</span><br><span class="line">      <span class="keyword">let</span> (id, f) = h</span><br><span class="line">      <span class="keyword">let</span> d' =</span><br><span class="line">        variables.Item id</span><br><span class="line">        |&gt; List.filter f</span><br><span class="line"></span><br><span class="line">      <span class="keyword">let</span> variables' =</span><br><span class="line">        variables</span><br><span class="line">        |&gt; Map.remove id</span><br><span class="line">        |&gt; Map.add id d'</span><br><span class="line"></span><br><span class="line">      ucReduce t variables'</span><br><span class="line">  | _ -&gt; variables</span><br></pre></td></tr></table></figure>
+<p>The second major task is processing the binary constraints.  Since these functions define the interaction of two variables, it is a bit more involved.  It works off a queue of variables.  After pulling a variable off the queue, it does a domain reduction based on every binary constraint that applies to it.  This means for each constraint, iterating through it’s possible values and a neighbor’s possible values; and removing impossible combinations.  During this process, if it reduces it’s domain, then the algorithm puts all of it’s neighbors on the work queue.  This is because if a variable’s domain is reduced, it is possible that arc-connected variables could now have their domains reduced further.  It is a reasonably efficient method to continuously check all impacted arc constraints without processing more than it needs to.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Get a variable's neighbors (id list)</span></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">private</span> neighbors (bc: BinaryConstraints) (id: Id) :int list =</span><br><span class="line">  <span class="comment">// Get neighbors of a variable (this is based on the binary constraints)</span></span><br><span class="line">  bc</span><br><span class="line">  |&gt; List.filter (<span class="keyword">fun</span> (id1, id2, _) -&gt; id1 = id || id2 = id)</span><br><span class="line">  |&gt; List.map (<span class="keyword">fun</span> (id1, id2, _) -&gt; <span class="keyword">if</span> id1 = id <span class="keyword">then</span> id2 <span class="keyword">else</span> id1)</span><br><span class="line">  |&gt; List.distinct</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Reduce a variable's domain for a specific variable set and function</span></span><br><span class="line"><span class="comment">/// Returns: (&lt;domain changed&gt;, &lt;reduced domain&gt;)</span></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">private</span> reduceDomain (variables: Variables) (bc: BinaryConstraints) (id: Id) :bool * Domain =</span><br><span class="line">  <span class="comment">// Get constraints associated with the variable (id)</span></span><br><span class="line">  <span class="keyword">let</span> relevantConstraints =</span><br><span class="line">    bc</span><br><span class="line">    |&gt; List.filter (<span class="keyword">fun</span> (id1, id2, _) -&gt; id1 = id || id2 = id)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Starting variable domain</span></span><br><span class="line">  <span class="keyword">let</span> d = variables.Item id</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Iterate through constraints, saving the variable's new domain into the state</span></span><br><span class="line">  <span class="comment">// The final result is the reduced domain for the variable (and whether it changed or not)</span></span><br><span class="line">  <span class="keyword">let</span> (_, d') =</span><br><span class="line">    relevantConstraints</span><br><span class="line">    |&gt; List.mapFold</span><br><span class="line">       (<span class="keyword">fun</span> state c -&gt;</span><br><span class="line">         <span class="comment">// Extract constraint parts</span></span><br><span class="line">         <span class="keyword">let</span> (id1, id2, f) = c </span><br><span class="line"></span><br><span class="line">         <span class="comment">// Update the variable's domain based on contraint</span></span><br><span class="line">         <span class="keyword">let</span> d' =</span><br><span class="line">           <span class="keyword">if</span> id1 = id <span class="keyword">then</span></span><br><span class="line">             <span class="comment">// id1 is the variable we are processing (use state), iterate through domain values of id2)</span></span><br><span class="line">             state</span><br><span class="line">             |&gt; List.filter (<span class="keyword">fun</span> v1 -&gt; (variables.Item id2)</span><br><span class="line">                                       |&gt; List.exists (<span class="keyword">fun</span> v2 -&gt; f v1 v2))</span><br><span class="line">           <span class="keyword">else</span></span><br><span class="line">             <span class="comment">// id2 is the variable we are processing (use state), iterate through domain values of id1)</span></span><br><span class="line">             state</span><br><span class="line">             |&gt; List.filter (<span class="keyword">fun</span> v2 -&gt; (variables.Item id1)</span><br><span class="line">                                       |&gt; List.exists (<span class="keyword">fun</span> v1 -&gt; f v1 v2))</span><br><span class="line"></span><br><span class="line">         <span class="comment">// I don't care about the individual item result, I only care about the state (d' is the updated state of the domain)</span></span><br><span class="line">         (None, d'))</span><br><span class="line">       d</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Determine if the variable's domain is updated</span></span><br><span class="line">  <span class="keyword">let</span> changed = d.Length &lt;&gt; d'.Length</span><br><span class="line">  (changed, d')</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/// Reduce a variable's domain based on binary constraints</span></span><br><span class="line"><span class="comment">/// Return the resulting set of Variables with updated domain(s)</span></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">private</span> bcReduce (bc: BinaryConstraints) (variables: Variables) :Variables =</span><br><span class="line">  <span class="comment">/// Perform a recursive domain reduction based on a variable worklist</span></span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">rec</span> bcReduce' (variables: Variables) (workList: Id list) :Variables =</span><br><span class="line">    <span class="keyword">match</span> workList <span class="keyword">with</span></span><br><span class="line">    | id :: t -&gt;</span><br><span class="line">        <span class="keyword">let</span> (changed, d') = reduceDomain variables bc id</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> changed <span class="keyword">then</span></span><br><span class="line">          <span class="comment">// The variable's domain was changed, update the worklist and continue</span></span><br><span class="line">          <span class="keyword">let</span> variables' =</span><br><span class="line">            variables |&gt; Map.remove id |&gt; Map.add id d'</span><br><span class="line"></span><br><span class="line">          <span class="keyword">let</span> workList' = List.concat [ neighbors bc id; t ]</span><br><span class="line">          bcReduce' variables' workList'</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">          <span class="comment">// The variable's domain was not changed, continue with remaining worklist</span></span><br><span class="line">          bcReduce' variables t</span><br><span class="line">    | _ -&gt; variables</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Define the initial working list of variables to process</span></span><br><span class="line">  <span class="keyword">let</span> workList =</span><br><span class="line">    bc</span><br><span class="line">    |&gt; List.map (<span class="keyword">fun</span> (id1, _, _) -&gt; id1)</span><br><span class="line">    |&gt; List.distinct</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Perform the arc constraint reduction</span></span><br><span class="line">  bcReduce' variables workList</span><br></pre></td></tr></table></figure>
+<p>The solver puts all of the pieces together.  It takes the variables, and runs them through a unary constraint reducer, then the binary constraint reducer.  Once this is done it just needs to check for success.  If any of the domains are empty, then there are no valid solutions.  This is because during the reduction process it removes impossible values, leaving you with only possible values.  An empty domain is a result of no possibly valid values based on the constraints. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Solve AC-3 constraint problem for the set of unary and binary constraints, and the variable domains.</span></span><br><span class="line"><span class="keyword">let</span> solve (uc: UnaryConstraints) (bc: BinaryConstraints) (variables: Variables) =</span><br><span class="line">  <span class="comment">// Apply unary, then binary constraints </span></span><br><span class="line">  <span class="keyword">let</span> variables' = variables |&gt; ucReduce uc |&gt; bcReduce bc</span><br><span class="line"></span><br><span class="line">  <span class="comment">// If any of domains are empty, no success</span></span><br><span class="line">  <span class="keyword">let</span> success =</span><br><span class="line">    variables'</span><br><span class="line">    |&gt; Map.exists (<span class="keyword">fun</span> k v -&gt; List.isEmpty v)</span><br><span class="line">    |&gt; not</span><br><span class="line"></span><br><span class="line">  (success, variables')</span><br></pre></td></tr></table></figure>
+<p>Now that the building blocks are together, it is time to test a constraint satisfaction problem.  For example purposes, I’ll keep it simple.  There are 4 variables, all with the integer domain { 0, 1, 2, 3, 4, 5, 6, 7 8, 9, 10 }.  For reference sake, I’ll call the first variable (index 0), v0; the second variable (index 1), v1, etc.  For unary constraints, v0 &amp; v1 must be even numbers; v3 must be an odd number.  The combined binary constraints require that v0 &lt; v1 &lt; v2 &lt; v3.  Running <code>solve</code> will apply the AC-3 constraint solver and return true/false (where true means it is arc consistent, false means it is not).  If true, it also returns the [potentially] reduced variable domains based on arc consistency. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> even x = x % <span class="number">2</span> = <span class="number">0</span></span><br><span class="line"><span class="keyword">let</span> odd x = x % <span class="number">2</span> &lt;&gt; <span class="number">0</span></span><br><span class="line"><span class="keyword">let</span> lessThan x y = x &lt; y</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> variables =</span><br><span class="line">  [ [ <span class="number">0</span> .. <span class="number">10</span> ]</span><br><span class="line">    [ <span class="number">0</span> .. <span class="number">10</span> ]</span><br><span class="line">    [ <span class="number">0</span> .. <span class="number">10</span> ]</span><br><span class="line">    [ <span class="number">0</span> .. <span class="number">10</span> ] ]</span><br><span class="line">  |&gt; Ac3.listToVariables</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> uc =</span><br><span class="line">  [ (<span class="number">0</span>, even)</span><br><span class="line">    (<span class="number">1</span>, even)</span><br><span class="line">    (<span class="number">3</span>, odd) ]</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> bc =</span><br><span class="line">  [ (<span class="number">0</span>, <span class="number">1</span>, lessThan)</span><br><span class="line">    (<span class="number">1</span>, <span class="number">2</span>, lessThan)</span><br><span class="line">    (<span class="number">2</span>, <span class="number">3</span>, lessThan) ]</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> (success, reducedVariables) = Ac3.solve uc bc variables</span><br><span class="line">printfn <span class="string">"%A"</span> success</span><br><span class="line">reducedVariables</span><br><span class="line">|&gt; Map.toList</span><br><span class="line">|&gt; List.iter (<span class="keyword">fun</span> x -&gt; printfn <span class="string">"%A"</span> x)</span><br></pre></td></tr></table></figure>
+<p>The results below show that is arc consistent (yay).  They also show the reduced domains of the variables.  This is a good time to dig into the details.  For explanatory sake, I’ll focus on variable 0 (v0).  First, it’s unary constraint requires it to be even.  So immediately it’s domain has to be reduced to { 0, 2, 4, 6, 8, 10 }.  Second, the complete set of binary constraints require v0 &lt; v1 &lt; v2 &lt; v3.  Working backwards, v3 (which has be be odd due to it’s unary constraint), has a maximum value of 9.  This means the max of v2 is 8, and v1 is 7 (actually 6, since it has to be even).  This means the maximum value of v0 is 4.  So, the reduced domain for v0 is { 0, 2, 4 }, which we see below (perfect).  This example is really simple, but it helps to show how the impact of arc constraints cascading between variables. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">true</span></span><br><span class="line">(<span class="number">0</span>, [<span class="number">0</span>; <span class="number">2</span>; <span class="number">4</span>])</span><br><span class="line">(<span class="number">1</span>, [<span class="number">2</span>; <span class="number">4</span>; <span class="number">6</span>])</span><br><span class="line">(<span class="number">2</span>, [<span class="number">3</span>; <span class="number">4</span>; <span class="number">5</span>; <span class="number">6</span>; <span class="number">7</span>; <span class="number">8</span>])</span><br><span class="line">(<span class="number">3</span>, [<span class="number">5</span>; <span class="number">7</span>; <span class="number">9</span>])</span><br></pre></td></tr></table></figure>
+<p>That was a good starting example, but it is time to test the solver a bit more.  I will add an additional constraint between variables 1 &amp; 3.  It isn’t enough to be less than, but there must be a larger gap (x + 4) between them.  The logic to reduce variable domains work as before, but some variables have been reduced even further.  The results show that this not impacts the domains of 1 and 3, but variable 0 as well; variable 2 seems unphased by this additional constraint.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">  <span class="keyword">let</span> bc =</span><br><span class="line">    [ (<span class="number">0</span>, <span class="number">1</span>, lessThan)</span><br><span class="line">      (<span class="number">1</span>, <span class="number">2</span>, lessThan)</span><br><span class="line">      (<span class="number">2</span>, <span class="number">3</span>, lessThan)</span><br><span class="line">      (<span class="number">1</span>, <span class="number">3</span>, (<span class="keyword">fun</span> x y -&gt; x + <span class="number">4</span> &lt; y)) ]</span><br><span class="line"></span><br><span class="line"><span class="comment">// Results:</span></span><br><span class="line"><span class="keyword">true</span></span><br><span class="line">(<span class="number">0</span>, [<span class="number">0</span>; <span class="number">2</span>])</span><br><span class="line">(<span class="number">1</span>, [<span class="number">2</span>; <span class="number">4</span>])</span><br><span class="line">(<span class="number">2</span>, [<span class="number">3</span>; <span class="number">4</span>; <span class="number">5</span>; <span class="number">6</span>; <span class="number">7</span>; <span class="number">8</span>])</span><br><span class="line">(<span class="number">3</span>, [<span class="number">7</span>; <span class="number">9</span>])</span><br></pre></td></tr></table></figure>
+<p>These examples have been insightful, but failures teach too.  Now it is time to take a look at a set of constraints that don’t work.  The constraints up to this point set up a progression where variable 0 &lt; 1 &lt; 2 &lt; 3.  Adding a constraint that v3 must also be less than v0 induces a conflict.  The constraint solver finds this discrepancy.  The solver returns false, the real indicator; but the variable domains are empty as well (bad sign).</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">  <span class="keyword">let</span> bc =</span><br><span class="line">    [ (<span class="number">0</span>, <span class="number">1</span>, lessThan)</span><br><span class="line">      (<span class="number">1</span>, <span class="number">2</span>, lessThan)</span><br><span class="line">      (<span class="number">2</span>, <span class="number">3</span>, lessThan)</span><br><span class="line">      (<span class="number">1</span>, <span class="number">3</span>, (<span class="keyword">fun</span> x y -&gt; x + <span class="number">4</span> &lt; y))</span><br><span class="line">      (<span class="number">3</span>, <span class="number">0</span>, lessThan) ]</span><br><span class="line"></span><br><span class="line"><span class="comment">// Results:</span></span><br><span class="line"><span class="keyword">false</span></span><br><span class="line">(<span class="number">0</span>, [])</span><br><span class="line">(<span class="number">1</span>, [])</span><br><span class="line">(<span class="number">2</span>, [])</span><br><span class="line">(<span class="number">3</span>, [])</span><br></pre></td></tr></table></figure>
+<p>These examples give a glimpse into the methodology of a constraint solver, specifically AC-3.  This has been fun.  I hope you enjoyed this small view into how F# can be used to build interesting things, like the AC-3 constraint solver.  There is an endless source of interesting problems, and having powerful tools in your toolbox can go a long way.  Until next time.</p>
+<p><img src="/images/ac31/ac3.png" alt=""></p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/12/Linear-Regression-and-F/">Linear Regression and F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2020/11/29/Mqtt-Server-FSharp-2/">Building an MQTT server in F# - Part 2</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/02/28/F-and-DotEnv/">F# and DotEnv</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2021/04/23/F-AC3-Solving/" data-id="cknv500lj0000nkmwykgcoxxe" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2021/04/10/F-Vim/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">F# the Vim way</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.78px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15.56px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14.44px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11.11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11.11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13.33px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11.11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 14.44px;">DTW</a> <a href="/tags/Data/" style="font-size: 16.67px;">Data</a> <a href="/tags/Database/" style="font-size: 11.11px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11.11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 13.33px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12.22px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11.11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11.11px;">Http</a> <a href="/tags/Images/" style="font-size: 12.22px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12.22px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13.33px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11.11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.67px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12.22px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 18.89px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Mqtt/" style="font-size: 12.22px;">Mqtt</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12.22px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 10px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Rust/" style="font-size: 10px;">Rust</a> <a href="/tags/STEM/" style="font-size: 11.11px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.22px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11.11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13.33px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14.44px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Tips/" style="font-size: 12.22px;">Tips</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11.11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11.11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2021/04/23/F-AC3-Solving/">AC-3 Constraint Solving with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/10/F-Vim/">F# the Vim way</a>
+          </li>
+        
+          <li>
+            <a href="/2021/03/09/F-Scripting/">F# Scripting</a>
+          </li>
+        
+          <li>
+            <a href="/2020/12/12/Mqtt-Server-FSharp-3/">Building an MQTT server in F# - Part 3</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/29/Mqtt-Server-FSharp-2/">Building an MQTT server in F# - Part 2</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2021 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
