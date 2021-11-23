@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Leveraging RocksDB with F# | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Sometimes an application has a need for a local key/value store.  In these scenarios, there are several options, including RocksDB.  Today’s exploration will be to dig into using RocksDB with F#.">
+<meta name="keywords" content="F#,FSharp,Database">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Leveraging RocksDB with F#">
+<meta property="og:url" content="http://codesuji.com/2021/11/21/F-RocksDB/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Sometimes an application has a need for a local key/value store.  In these scenarios, there are several options, including RocksDB.  Today’s exploration will be to dig into using RocksDB with F#.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2021-11-23T03:31:56.551Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Leveraging RocksDB with F#">
+<meta name="twitter:description" content="Sometimes an application has a need for a local key/value store.  In these scenarios, there are several options, including RocksDB.  Today’s exploration will be to dig into using RocksDB with F#.">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-RocksDB" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2021/11/21/F-RocksDB/" class="article-date">
+  <time datetime="2021-11-21T13:13:12.000Z" itemprop="datePublished">2021-11-21</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Leveraging RocksDB with F#
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 14 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Sometimes an application has a need for a local key/value store.  In these scenarios, there are several options, including <a href="https://rocksdb.org/" target="_blank" rel="noopener">RocksDB</a>.  Today’s exploration will be to dig into using RocksDB with <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a>.</p>
+<a id="more"></a>
+<p>If you’re unfamilar with <a href="https://rocksdb.org/" target="_blank" rel="noopener">RocksDB</a>, it is a local key/value store that you can embed in your application.  I’ve found it to be a valuable addition to the application toolbox.  For anyone following along, The below examples use .NET version 5 and the RocksDB wrapper library RocksDbSharp version 6.2.2.  I’ve also included some simple setup and helper functions that are used in the later examples.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ dotnet add package RocksDbNative --version 6.2.2</span><br><span class="line">$ dotnet add package RocksDbSharp --version 6.2.2</span><br></pre></td></tr></table></figure>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> RocksDbSharp</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Convert a string to a byte array</span></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">inline</span> toBytes (s: string) = Encoding.UTF8.GetBytes s</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Convert a byte array to a string</span></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">inline</span> fromBytes (b: byte[]) = Encoding.UTF8.GetString b</span><br></pre></td></tr></table></figure>
+<p>The obvious place to get started is with some simple saving and retrieval of key/value pairs.  Before jumping right in, it is useful to know that RocksDB stores keys and values as byte arrays.  This provides a good deal of flexibility, but it puts the responsibility on the developer to determine the best serialization method for object storage.  Depending on the data being stored, this can be an extra step to worry about, but I like the power it provides with a raw interface.  To this end, RocksDBSharp supports direct interactions using byte array keys and values.  For convenience is also supports the common case of accepting strings as keys and values, converting them to byte arrays under the covers.  For the following example, the scenario is storing multiple worker states in the key/value store.  The first thing to do is open the database. In this particular case, I’ll also create the database if it doesn’t exist.  The library supports many of the standard RocksDB database configuration options.  Once the database is open, I can start to do something useful.  Data is added using <code>Put</code>, retrieved using <code>Get</code>, and deleted using <code>Remove</code>.  It also provides a handy <code>MultiGet</code> for retrieving multiple values into a collection.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> dbPath = <span class="string">"/var/data/worker-data"</span></span><br><span class="line"><span class="keyword">let</span> options = DbOptions().SetCreateIfMissing(<span class="keyword">true</span>)</span><br><span class="line"><span class="keyword">use</span> db = RocksDb.Open(options, dbPath)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Save worker states to database</span></span><br><span class="line">db.Put(<span class="string">"worker1"</span>, <span class="string">"34,18,72"</span>)</span><br><span class="line">db.Put(<span class="string">"worker2"</span>, <span class="string">"1,42.2,15.4"</span>)</span><br><span class="line">db.Put(<span class="string">"worker3"</span>, <span class="string">"9.8,13.5,3.8"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Get worker states from database</span></span><br><span class="line">printfn <span class="string">"worker 1: %s"</span> (db.Get(<span class="string">"worker1"</span>))</span><br><span class="line">printfn <span class="string">"worker 2: %s"</span> (db.Get(<span class="string">"worker2"</span>))</span><br><span class="line">printfn <span class="string">"worker 3: %s"</span> (db.Get(<span class="string">"worker3"</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment">// Delete a worker state</span></span><br><span class="line">db.Remove(<span class="string">"worker2"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Byte array example</span></span><br><span class="line"><span class="keyword">let</span> worker4Name = toBytes <span class="string">"worker4"</span></span><br><span class="line"><span class="keyword">let</span> worker4State = [| byte <span class="number">26</span>; byte <span class="number">27</span>; byte <span class="number">28</span> |]</span><br><span class="line">db.Put(worker4Name, worker4State)</span><br><span class="line"></span><br><span class="line">printfn <span class="string">"worker 4: %A"</span> (db.Get(worker4Name))</span><br><span class="line"></span><br><span class="line"><span class="comment">// MultiGet</span></span><br><span class="line"><span class="keyword">let</span> workerStates = db.MultiGet([| <span class="string">"worker1"</span>; <span class="string">"worker2"</span>; <span class="string">"worker3"</span> |])</span><br><span class="line"></span><br><span class="line">workerStates</span><br><span class="line">|&gt; Seq.iter (<span class="keyword">fun</span> worker -&gt; printfn $<span class="string">"&#123;worker.Key&#125; &#123;worker.Value&#125;"</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> worker <span class="keyword">in</span> workerStates <span class="keyword">do</span></span><br><span class="line">  printfn $<span class="string">"&#123;worker.Key&#125; &#123;worker.Value&#125;</span></span><br></pre></td></tr></table></figure>
+<p>Anyone who has worked with a key/value store recognizes an inherent challenge of key organization.  A lot can be done using naming conventions, but sometimes there is a need for better segmentation.  Although separate databases are an option, RocksDB has a nicer option.  It supports column families.  Column families are a way to group together related data into its own structure within the same database.  By specifying the Column Family when doing gets/puts, the data is segmented appropriately.  In the previous example I was storing just worker states.  Assuming I need to support different types of data, it potentially makes sense to segment worker states from user session data.  Obviously proper naming conventions for keys can provide simple groupings, but column families bring a more proper segmentation of data.  It should be noted, this isn’t a security boundary, but a structural one to assist with data interactions.</p>
+<p>Looking at the example below, there are a couple key parts.  First is that the database must be opened with the available column family definitions.  More specifically, this must include the definitions of all column families in the database.  In this case, I’m defining two column families: one for worker states, and one for user session data.  The second is that <code>Get</code> and <code>Put</code> must specify the column family where the data is located.  Beyond that, the interactions are similar to the previous example.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> dbPath = <span class="string">"/var/data/state-data"</span></span><br><span class="line"><span class="keyword">let</span> options =</span><br><span class="line">  DbOptions()</span><br><span class="line">    .SetCreateIfMissing(<span class="keyword">true</span>)</span><br><span class="line">    .SetCreateMissingColumnFamilies(<span class="keyword">true</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Define column families</span></span><br><span class="line"><span class="keyword">let</span> columnFamilies = ColumnFamilies()</span><br><span class="line">columnFamilies.Add(ColumnFamilies.Descriptor(<span class="string">"workers"</span>, ColumnFamilyOptions()))</span><br><span class="line">columnFamilies.Add(ColumnFamilies.Descriptor(<span class="string">"sessions"</span>, ColumnFamilyOptions()))</span><br><span class="line"></span><br><span class="line"><span class="keyword">use</span> db = RocksDb.Open(options, dbPath, columnFamilies)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Define column family references</span></span><br><span class="line"><span class="keyword">let</span> workersFamily = db.GetColumnFamily(<span class="string">"workers"</span>)</span><br><span class="line"><span class="keyword">let</span> sessionsFamily = db.GetColumnFamily(<span class="string">"sessions"</span>)</span><br><span class="line"></span><br><span class="line">db.Put(<span class="string">"worker5"</span>, <span class="string">"12,34,56"</span>, cf = workersFamily)</span><br><span class="line">db.Put(<span class="string">"session100"</span>, <span class="string">"3000,4021"</span>, cf = sessionsFamily)</span><br><span class="line"></span><br><span class="line">printfn <span class="string">"worker5: %s"</span> (db.Get(<span class="string">"worker5"</span>, cf = workersFamily))</span><br><span class="line">printfn <span class="string">"session100: %s"</span> (db.Get(<span class="string">"session100"</span>, cf = sessionsFamily))</span><br></pre></td></tr></table></figure>
+<p>RocksDB isn’t limited to just single key lookups. It also supports iterators.  Say, for example, that I want to grab a set of session data.  Below is an example of how to do that.  To start out, I create a fake set of sessions and store them in the database.  This way I have something to query against.  The iterator can limit by a range of keys.  The Lower bound is defined by the initial <code>Seek()</code> method.  The upper bound is defined by the <code>SetIterateUpperBound()</code> option defined when opening the iterator.  An upper bound isn’t strictly required, if not defined it reads to the end of all keys.  The example below will return all key/value pairs where the key is &gt;= <code>session_40</code> and &lt; <code>session_50</code>.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Setup db options </span></span><br><span class="line"><span class="keyword">let</span> options = DbOptions().SetCreateIfMissing(<span class="keyword">true</span>)</span><br><span class="line"><span class="keyword">use</span> db = RocksDb.Open(options, dbPath)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Add session data</span></span><br><span class="line"><span class="keyword">let</span> rand = Random() </span><br><span class="line"><span class="keyword">for</span> _ <span class="keyword">in</span> [<span class="number">1.</span><span class="number">.1000</span>] <span class="keyword">do</span></span><br><span class="line">  <span class="keyword">let</span> sessionId = $<span class="string">"session_%02d&#123;rand.Next(100)&#125;"</span></span><br><span class="line">  <span class="keyword">let</span> sessionData = Array.init <span class="number">5</span> (<span class="keyword">fun</span> _ -&gt; rand.Next(<span class="number">100</span>).ToString()) |&gt; String.concat <span class="string">","</span></span><br><span class="line">  db.Put(sessionId, sessionData)</span><br><span class="line">  printfn $<span class="string">"added: &#123;sessionId&#125; &#123;db.Get(sessionId)&#125;"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Iterate over a segment of the sessions</span></span><br><span class="line"><span class="keyword">use</span> iterator = db.NewIterator(readOptions = ReadOptions().SetIterateUpperBound(<span class="string">"session_50"</span>))</span><br><span class="line">iterator.Seek(<span class="string">"session_40"</span>) |&gt; ignore</span><br><span class="line"><span class="keyword">while</span> iterator.Valid() <span class="keyword">do</span></span><br><span class="line">  <span class="keyword">let</span> key = iterator.Key()</span><br><span class="line">  <span class="keyword">let</span> value = iterator.Value()</span><br><span class="line">  printfn $<span class="string">"session: &#123;fromBytes key&#125; = &#123;fromBytes value&#125;"</span></span><br><span class="line">  iterator.Next() |&gt; ignore</span><br></pre></td></tr></table></figure>
+<p>Sometimes it is useful to save a set of changes to the database in a single batch or to work with a set of data prior to actually writing it to the database.  RocksDB provides a WriteBatch interface that permits just that.  It supports the common actions like Get/Put/Remove. This allows for the ability to keep data in memory to do data manipulation while leveraging the familiar database interface.  Once the new data is in the desired state, then it can be saved to the database by calling <code>Write</code>.  This call is an atomic transaction for saving the data to key/value store.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> options = DbOptions().SetCreateIfMissing(<span class="keyword">true</span>)</span><br><span class="line"><span class="keyword">use</span> db = RocksDb.Open(options, dbPath)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Save worker states to batch </span></span><br><span class="line"><span class="keyword">use</span> writeBatch =</span><br><span class="line">  (<span class="keyword">new</span> WriteBatchWithIndex())</span><br><span class="line">    .Put(<span class="string">"worker1"</span>, <span class="string">"34,18,72"</span>)</span><br><span class="line">    .Put(<span class="string">"worker2"</span>, <span class="string">"1,42.2,15.4"</span>)</span><br><span class="line">    .Put(<span class="string">"worker3"</span>, <span class="string">"9.8,13.5,3.8"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Get worker states from write batch </span></span><br><span class="line">printfn <span class="string">"worker 1: %s"</span> (writeBatch.Get(<span class="string">"worker1"</span>))</span><br><span class="line">printfn <span class="string">"worker 2: %s"</span> (writeBatch.Get(<span class="string">"worker2"</span>))</span><br><span class="line">printfn <span class="string">"worker 3: %s"</span> (writeBatch.Get(<span class="string">"worker3"</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment">// Write the batch to the persistent store</span></span><br><span class="line">db.Write(writeBatch)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Get worker states from persistent store </span></span><br><span class="line">printfn <span class="string">"worker 1: %s"</span> (db.Get(<span class="string">"worker1"</span>))</span><br><span class="line">printfn <span class="string">"worker 2: %s"</span> (db.Get(<span class="string">"worker2"</span>))</span><br><span class="line">printfn <span class="string">"worker 3: %s"</span> (db.Get(<span class="string">"worker3"</span>))</span><br></pre></td></tr></table></figure>
+<p>Next I want to discuss transaction support. This is also the perfect time to address some deficiencies and features in this particular library.  The RocksDbSharp library does not have a nice wrapper for every bit of RocksDB functionality, including transaction support.  Nicely enough, it does provide a reasonable middle ground to fill in those gaps.  It includes “Native” wrappers around the raw apis.  This means even if RocksDbSharp doesn’t have a nice wrapper, it at least provides a lower level mechanism to access the underlying RocksDB APIs.  This is great, and exactly what I need to get transactions working.  For example purposes I’m going to keep all the <code>Native</code> calls together.  In a real project, I’d put this into it’s own module/class to properly abstract the underlying apis for the rest of the application.</p>
+<p>Since this is all lower level, it won’t be as clean as the previous code, but it gets me where I need to go.  The most obvious thing about the code below is all the calls using the <code>Native.Instance.&lt;method&gt;</code> syntax.  This is the RocksDbSharp interface to the lower-level apis.  Although I try to avoid them when possible, I need to use some mutable variables in order to manually cleanup objects with some <code>.Dispose()</code> calls.</p>
+<p>Now to walk through the process.  First, RocksDB uses a specific <code>transaction database</code> object.  It also requires its own options object.  For the particular example I needed to increase the transaction expiration timeout, the default was just too short.  Your mileage may vary.  The transaction object needs a write options object, so I set that up as well.  I then setup a couple mutable variables so I can properly dispose of them in the <code>finally</code> block.</p>
+<p>There are a couple things to call out for the general flow.</p>
+<ul>
+<li>Open the transaction-supporting database<br><code>dbTrans &lt;- Native.Instance.rocksdb_transactiondb_open(options.Handle, transactionOptions, dbPath)</code></li>
+<li>Begin the transaction<br><code>txn &lt;- Native.Instance.rocksdb_transaction_begin(dbTrans, writeOptions, transactionOptions, nullptr)</code></li>
+<li>Add a key/value pair to the transaction<br><code>Native.Instance.rocksdb_transaction_put(txn, key, unativeint key.Length, value, unativeint value.Length, ref err)</code></li>
+<li>Rollback the transaction if necessary<br><code>Native.Instance.rocksdb_transaction_rollback(txn)</code></li>
+<li>Commit the transaction<br><code>Native.Instance.rocksdb_transaction_commit(txn)</code></li>
+<li>In the finally block, perform all the cleanup necessary</li>
+</ul>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Define worker states</span></span><br><span class="line"><span class="keyword">let</span> workerData = </span><br><span class="line">  [</span><br><span class="line">    (<span class="string">"worker1"</span>, [ <span class="number">1</span>; <span class="number">2</span>; <span class="number">3</span> ])</span><br><span class="line">    (<span class="string">"worker2"</span>, [ <span class="number">10</span>; <span class="number">20</span>; <span class="number">30</span> ])</span><br><span class="line">    (<span class="string">"worker3"</span>, [ <span class="number">100</span>; <span class="number">200</span>; <span class="number">300</span> ])</span><br><span class="line">  ]</span><br><span class="line"></span><br><span class="line"><span class="comment">// Setup db options </span></span><br><span class="line"><span class="keyword">let</span> options = DbOptions().SetCreateIfMissing(<span class="keyword">true</span>)</span><br><span class="line"><span class="keyword">let</span> transactionOptions = Native.Instance.rocksdb_transactiondb_options_create()</span><br><span class="line"><span class="comment">// Increase the expiration time for the transaction to complete</span></span><br><span class="line">Native.Instance.rocksdb_transaction_options_set_expiration(transactionOptions, int64 <span class="number">10000</span>)</span><br><span class="line"><span class="keyword">let</span> writeOptions = Native.Instance.rocksdb_writeoptions_create()</span><br><span class="line"></span><br><span class="line"><span class="comment">// Keep everything in a try block, and cleanup in the finally block </span></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">mutable</span> dbTrans = IntPtr.Zero</span><br><span class="line"><span class="keyword">let</span> <span class="keyword">mutable</span> txn = IntPtr.Zero</span><br><span class="line"><span class="keyword">let</span> nullptr = IntPtr.Zero</span><br><span class="line"><span class="keyword">try</span></span><br><span class="line">  <span class="comment">// Open database supporting transactions</span></span><br><span class="line">  dbTrans &lt;- Native.Instance.rocksdb_transactiondb_open(options.Handle, transactionOptions, dbPath)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Begin transaction </span></span><br><span class="line">  txn &lt;- Native.Instance.rocksdb_transaction_begin(dbTrans, writeOptions, transactionOptions, nullptr)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Save new workers' states to db</span></span><br><span class="line">  <span class="keyword">for</span> worker <span class="keyword">in</span> workerData <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">let</span> workerId =</span><br><span class="line">        fst worker</span><br><span class="line">        |&gt; toBytes</span><br><span class="line">    <span class="keyword">let</span> workerState =</span><br><span class="line">        snd worker</span><br><span class="line">        |&gt; List.map (<span class="keyword">fun</span> x -&gt; x.ToString())</span><br><span class="line">        |&gt; String.concat <span class="string">","</span></span><br><span class="line">        |&gt; toBytes</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mutable</span> err = IntPtr.Zero</span><br><span class="line">    Native.Instance.rocksdb_transaction_put(txn, workerId, unativeint workerId.Length, workerState, unativeint workerState.Length, ref err)</span><br><span class="line">    <span class="keyword">if</span> err &lt;&gt; IntPtr.Zero <span class="keyword">then</span></span><br><span class="line">      <span class="comment">// There was an error, rollback</span></span><br><span class="line">      printfn $<span class="string">"Error: &#123;err&#125;"</span></span><br><span class="line">      Native.Instance.rocksdb_transaction_rollback(txn)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> someRandomError <span class="keyword">then</span></span><br><span class="line">    <span class="comment">// There was an error, rollback</span></span><br><span class="line">    Native.Instance.rocksdb_transaction_rollback(txn)</span><br><span class="line">    printfn <span class="string">"Transaction rolled back"</span></span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    <span class="comment">// Commit transaction</span></span><br><span class="line">    Native.Instance.rocksdb_transaction_commit(txn)</span><br><span class="line">    printfn <span class="string">"Transaction complete"</span></span><br><span class="line"><span class="keyword">finally</span></span><br><span class="line">  <span class="comment">// Cleanup everything created using native interfaces</span></span><br><span class="line">  Native.Instance.rocksdb_transaction_destroy(txn)</span><br><span class="line">  Native.Instance.rocksdb_transactiondb_close(dbTrans)</span><br><span class="line">  Native.Instance.rocksdb_transactiondb_options_destroy(transactionOptions)</span><br><span class="line">  Native.Instance.rocksdb_writeoptions_destroy(writeOptions)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Read data after transaction is complete</span></span><br><span class="line"><span class="keyword">use</span> db2 = RocksDb.Open(options, dbPath)</span><br><span class="line"><span class="keyword">for</span> worker <span class="keyword">in</span> [ <span class="string">"worker1"</span>; <span class="string">"worker2"</span>; <span class="string">"worker3"</span>] <span class="keyword">do</span></span><br><span class="line">  <span class="keyword">let</span> workerState = db2.Get(worker)</span><br><span class="line">  printfn $<span class="string">"&#123;worker&#125;: &#123;workerState&#125;"</span></span><br></pre></td></tr></table></figure>
+<p>Using a database is more than just saving and retrieving data.  Backups and snapshots are often something that need to be handled.  RocksDB and the RocksDbSharp library provide a simple way to address these issues using checkpoints.  This is a way to easily snapshot the database state for either a point-in-time reference as a full data store backup.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> options = DbOptions().SetCreateIfMissing(<span class="keyword">true</span>)</span><br><span class="line"><span class="keyword">use</span> db = RocksDb.Open(options, dbPath)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Save a checkpoint</span></span><br><span class="line"><span class="keyword">let</span> checkpointPath = $<span class="string">"&#123;dbPath&#125;.chk"</span></span><br><span class="line"><span class="keyword">if</span> IO.Directory.Exists(checkpointPath) <span class="keyword">then</span> IO.Directory.Delete(checkpointPath, recursive = <span class="keyword">true</span>)</span><br><span class="line">db.Checkpoint().Save(checkpointPath)</span><br></pre></td></tr></table></figure>
+<p>There is a lot more of RocksDB I could cover, but the goal is to give a taste of how the RocksDBSharp library can be leveraged.  Hopefully this gives you enough of a start to take your F# project further using RocksDB.  Until next time, rock on.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2017/07/29/F-and-Dapper/">F# and Dapper</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/07/28/F-and-SQLite/">F# and SQLite</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/02/19/Building-Game-with-SignalR-and-F/">Building a Game with SignalR and F#</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2021/11/21/F-RocksDB/" data-id="ckw95w2ml0000fqmwhx7hse6c" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Database/">Database</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2021/08/07/F-String-Search/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Examining Boyer-Moore String Search with F#</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 18px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 14px;">DTW</a> <a href="/tags/Data/" style="font-size: 17px;">Data</a> <a href="/tags/Database/" style="font-size: 12px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 13px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11px;">Http</a> <a href="/tags/Images/" style="font-size: 12px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 19px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Mqtt/" style="font-size: 12px;">Mqtt</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 11px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Rust/" style="font-size: 10px;">Rust</a> <a href="/tags/STEM/" style="font-size: 11px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 11px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13px;">Statistics</a> <a href="/tags/Tail-calls/" style="font-size: 10px;">Tail calls</a> <a href="/tags/Text/" style="font-size: 14px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10px;">Timeseries</a> <a href="/tags/Tips/" style="font-size: 12px;">Tips</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2021/11/21/F-RocksDB/">Leveraging RocksDB with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2021/08/07/F-String-Search/">Examining Boyer-Moore String Search with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2021/07/28/Data-in-Motion-Drought/">Data in Motion - Drought Map</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/23/F-AC3-Solving/">AC-3 Constraint Solving with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/10/F-Vim/">F# the Vim way</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2021 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
