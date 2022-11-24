@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Watc | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Recently Ted Unangst wrote about his tool, watc, to extract line count and file size statistics to support some of his work.  Chris Wellons followed up with his take on watc.  Inspired by both posts,">
+<meta name="keywords" content="F#,FSharp,Performance,Tools">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Watc">
+<meta property="og:url" content="http://codesuji.com/2022/08/13/Watc/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Recently Ted Unangst wrote about his tool, watc, to extract line count and file size statistics to support some of his work.  Chris Wellons followed up with his take on watc.  Inspired by both posts,">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2022-11-24T13:03:57.676Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Watc">
+<meta name="twitter:description" content="Recently Ted Unangst wrote about his tool, watc, to extract line count and file size statistics to support some of his work.  Chris Wellons followed up with his take on watc.  Inspired by both posts,">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Watc" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/08/13/Watc/" class="article-date">
+  <time datetime="2022-08-14T03:09:37.000Z" itemprop="datePublished">2022-08-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Watc
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 7 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Recently Ted Unangst wrote about his tool, <a href="https://flak.tedunangst.com/post/watc" target="_blank" rel="noopener">watc</a>, to extract line count and file size statistics to support some of his work.  Chris Wellons followed up with his take on <a href="https://nullprogram.com/blog/2022/05/22/" target="_blank" rel="noopener">watc</a>.  Inspired by both posts, I thought it would be an interesting tool to add to my own toolbox.  It pairs nicely with some of my current work on extracting useful information from code repositories.  This feels like a good way to put together a quick tool using <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a>.  I’ll also use this as an opportunity to show some F# along the way.</p>
+<a id="more"></a>
+<p>Like Chris, I tend to favor non-interactive apps for this time of tooling.  I have my own personal additions, but I follow his design a bit closer.  At a high level, the app is a relatively simple matter of iterating a directory structure and aggregating line count and file sizes.   Since the goal is analyzing source code, it will filter binaries, .git, build artifacts, etc; allowing me to stay focused on what I immediately care about.  Command line parameters allow me to dictate summary level, sorting, and report formatting.  You can find the full code <a href="https://bitbucket.org/0x6a62/watc" target="_blank" rel="noopener">here</a>, but I’m just going to focus on a couple small aspects.  Before I get to the point, below is a small example of what the results look like. </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">$ ./watc --depth=2 --sort=lines ~/projects/fsharp/src</span><br><span class="line">/home/codesuji/projects/fsharp/src       430.9K LOC    23.0MB</span><br><span class="line">  Compiler                               356.0K LOC    19.3MB</span><br><span class="line">    xlf                                  126.6K LOC     8.8MB</span><br><span class="line">    Checking                              55.2K LOC     2.8MB</span><br><span class="line">    TypedTree                             31.5K LOC     1.4MB</span><br><span class="line">    AbstractIL                            30.6K LOC     1.1MB</span><br><span class="line">    Service                               22.2K LOC     1.1MB</span><br><span class="line">    Driver                                14.0K LOC   659.7KB</span><br><span class="line">    Utilities                             11.5K LOC   409.5KB</span><br><span class="line">    SyntaxTree                            11.1K LOC   426.0KB</span><br><span class="line">    CodeGen                               10.8K LOC   536.4KB</span><br><span class="line">    Optimize                               8.9K LOC   417.7KB</span><br><span class="line">    Interactive                            8.2K LOC   433.6KB (1)</span><br><span class="line">    Symbols                                7.3K LOC   317.3KB</span><br><span class="line">    Facilities                             5.0K LOC   206.6KB (1)</span><br><span class="line">    DependencyManager                      1.2K LOC    57.5KB (1)</span><br><span class="line">    Legacy                                  659 LOC    31.4KB</span><br><span class="line">  FSharp.Core                             66.2K LOC     3.2MB</span><br><span class="line">    xlf                                    9.3K LOC   571.8KB</span><br><span class="line">    math                                    134 LOC     5.0KB</span><br><span class="line">  FSharp.Build                             4.0K LOC   191.4KB</span><br><span class="line">    xlf                                     416 LOC    29.1KB</span><br><span class="line">  FSharp.DependencyManager.Nuget           1.9K LOC    88.0KB</span><br><span class="line">    xlf                                     818 LOC    38.7KB</span><br><span class="line">  fsi                                      1.7K LOC   159.0KB</span><br><span class="line">  FSharp.Compiler.Interactive.Settings      408 LOC    16.4KB</span><br><span class="line">    xlf                                      78 LOC     5.1KB</span><br><span class="line">  fsc                                       194 LOC     7.7KB</span><br><span class="line">  Microsoft.FSharp.Compiler                 103 LOC     7.7KB</span><br><span class="line">  FSharp.Compiler.Server.Shared              95 LOC     3.2KB</span><br><span class="line">  fsiAnyCpu                                  69 LOC     2.7KB</span><br><span class="line">  fscAnyCpu                                  66 LOC     2.9KB</span><br></pre></td></tr></table></figure>
+<p>With some of the demonstration out of the way, time to get to the point.  Improving application performance is a complicated and nuanced topic; obvious statement I know.  Seeing the hoops some languages need to jump through to support parallelism is a good reminder is it doesn’t always have to be difficult. This leads me to F#.  Today’s post is a pretty shallow view, looking for a quick win, but sometimes that’s all you need.  For relatively simple tasks, parallelism can be simple to acheive with F#.  A conversion of <code>Array.map</code> to <code>Array.Parallel.map</code> gives quick access to parallelism out of the box.  To illustrate this, I’ll pull the related section out of the code.</p>
+<p>Before, single-threaded:</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> processDir maxDepth showFiles dir =</span><br><span class="line">  ...</span><br><span class="line">    <span class="keyword">let</span> filesLines =</span><br><span class="line">      files</span><br><span class="line">      |&gt; Array.map (<span class="keyword">fun</span> x -&gt;</span><br><span class="line">          &#123; Node.Name = Path.GetFileName x</span><br><span class="line">            Type = NodeType.File</span><br><span class="line">            Lines = getFileLines x</span><br><span class="line">            Bytes = getFileBytes x</span><br><span class="line">            DirCount = <span class="number">0</span></span><br><span class="line">            Children = [||]</span><br><span class="line">          &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> dirsLines =</span><br><span class="line">      dirs</span><br><span class="line">      |&gt; Array.map (<span class="keyword">fun</span> x -&gt; processDir' (currentDepth + <span class="number">1</span>) x)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> lineSum =</span><br><span class="line">      [| filesLines; dirsLines |]</span><br><span class="line">      |&gt; Array.concat</span><br><span class="line">      |&gt; Array.map (<span class="keyword">fun</span> x -&gt; x.Lines)</span><br><span class="line">      |&gt; Array.sum</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> byteSum =</span><br><span class="line">      [| filesLines; dirsLines |]</span><br><span class="line">      |&gt; Array.concat</span><br><span class="line">      |&gt; Array.map (<span class="keyword">fun</span> x -&gt; x.Bytes)</span><br><span class="line">      |&gt; Array.sum</span><br><span class="line"></span><br><span class="line">  ...</span><br></pre></td></tr></table></figure>
+<p>After, multi-threaded:</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> processDir maxDepth showFiles dir =</span><br><span class="line">  ...</span><br><span class="line">    <span class="keyword">let</span> filesLines =</span><br><span class="line">      files</span><br><span class="line">      |&gt; Array.Parallel.map (<span class="keyword">fun</span> x -&gt; <span class="comment">// LINE CHANGED</span></span><br><span class="line">          &#123; Node.Name = Path.GetFileName x</span><br><span class="line">            Type = NodeType.File</span><br><span class="line">            Lines = getFileLines x</span><br><span class="line">            Bytes = getFileBytes x</span><br><span class="line">            DirCount = <span class="number">0</span></span><br><span class="line">            Children = [||]</span><br><span class="line">          &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> dirsLines =</span><br><span class="line">      dirs</span><br><span class="line">      |&gt; Array.Parallel.map (<span class="keyword">fun</span> x -&gt; processDir' (currentDepth + <span class="number">1</span>) x) <span class="comment">// LINE CHANGED</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> lineSum =</span><br><span class="line">      [| filesLines; dirsLines |]</span><br><span class="line">      |&gt; Array.concat</span><br><span class="line">      |&gt; Array.Parallel.map (<span class="keyword">fun</span> x -&gt; x.Lines) <span class="comment">// LINE CHANGED</span></span><br><span class="line">      |&gt; Array.sum</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> byteSum =</span><br><span class="line">      [| filesLines; dirsLines |]</span><br><span class="line">      |&gt; Array.concat</span><br><span class="line">      |&gt; Array.Parallel.map (<span class="keyword">fun</span> x -&gt; x.Bytes) <span class="comment">// LINE CHANGED</span></span><br><span class="line">      |&gt; Array.sum</span><br><span class="line"></span><br><span class="line">  ...</span><br></pre></td></tr></table></figure>
+<p>Above you’ll see four line changes, resulting in a faster application.  At this point, it is worth noting this is a cool trick, with caveats. When it fits the needs, it is a simple way to get a performance improvement. But, not all situations are the same.  Sometimes design dictates a need for more control over the implementation.  It is also something you need to test to ensure you’re getting the proper benefits, and making the correct tradeoffs.  There are many, particularly large scale apps, where this won’t necessarily work and you’d have to use other techniques.  But I do enjoy how for many cases, this is a quick win.</p>
+<p>I mentioned testing earlier. This is such a small project, I didn’t break out more advanced benchmarks. I just ran some quick sanity checks to see how the changes impacted runtime. I performed tests using two different directories, the F# and Rust language github repos.  I ran it multiple times, clearing system caches between tests.  In a very unscientific fashion, below are representative results of running <code>time</code> using a serial versus parallel version of watc.  It shows the app running faster in elapsed time (real time), which is what I’m aiming for.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"># time ./watc ~/projects/fsharp</span><br><span class="line"></span><br><span class="line">Serial:</span><br><span class="line">real  0m2.429s</span><br><span class="line">user  0m0.933s</span><br><span class="line">sys   0m0.467s</span><br><span class="line"></span><br><span class="line">Parallel:</span><br><span class="line">real  0m1.135s</span><br><span class="line">user  0m1.156s</span><br><span class="line">sys   0m0.346s</span><br><span class="line"></span><br><span class="line"># time ./watc ~/projects/rust/</span><br><span class="line"></span><br><span class="line">Serial:</span><br><span class="line">real  0m6.367s</span><br><span class="line">user  0m2.071s</span><br><span class="line">sys   0m1.286s</span><br><span class="line"></span><br><span class="line">Parallel:</span><br><span class="line">real  0m0.855s</span><br><span class="line">user  0m2.222s</span><br><span class="line">sys   0m0.971s</span><br></pre></td></tr></table></figure>
+<p>That’s all I have for today.  <code>Array.Parallel</code> has given me a nice performance boost when I’m doing repo recon, and I’ll take it.  Beyond that, I just wanted to give a quick view into watc, F#-style.  Until next time.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2018/12/18/F-Benchmarking/">F# Benchmarking</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/10/13/F-Performance-Profiling/">Performance Profiling F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/04/24/FSharp-and-Word-Stems/">F# and Word Stems</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2022/08/13/Watc/" data-id="clanyycjf00002fmwf0xo92it" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Performance/">Performance</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Tools/">Tools</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2022/07/24/Data-in-Motion-Earthquakes/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Data in Motion - Earthquakes Map</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15px;">Accord.NET</a> <a href="/tags/Analytics/" style="font-size: 14px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 14px;">DTW</a> <a href="/tags/Data/" style="font-size: 18px;">Data</a> <a href="/tags/Database/" style="font-size: 13px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 13px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11px;">Http</a> <a href="/tags/Images/" style="font-size: 12px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 19px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Mqtt/" style="font-size: 12px;">Mqtt</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 12px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Rust/" style="font-size: 10px;">Rust</a> <a href="/tags/STEM/" style="font-size: 11px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 11px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 13px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13px;">Statistics</a> <a href="/tags/Text/" style="font-size: 14px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 11px;">Timeseries</a> <a href="/tags/Tips/" style="font-size: 12px;">Tips</a> <a href="/tags/Tools/" style="font-size: 10px;">Tools</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/Types/" style="font-size: 10px;">Types</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2022/08/13/Watc/">Watc</a>
+          </li>
+        
+          <li>
+            <a href="/2022/07/24/Data-in-Motion-Earthquakes/">Data in Motion - Earthquakes Map</a>
+          </li>
+        
+          <li>
+            <a href="/2022/05/17/Data-in-Motion-Population/">Data in Motion - Population Map</a>
+          </li>
+        
+          <li>
+            <a href="/2022/01/30/F-and-MLNet-Anomaly-2/">Taking Stock of More Anomalies with F# and ML.NET</a>
+          </li>
+        
+          <li>
+            <a href="/2021/12/11/Discriminated-Unions-and-Dapper/">Discriminated Unions and Dapper</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2022 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
