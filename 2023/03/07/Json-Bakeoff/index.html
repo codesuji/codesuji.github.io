@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>The Great Json Bake-Off | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="It is difficult to build much without needing to deal with json at some point. In the world of F# there are several options.  Today I want to lay out some of the popular choices and offer some some co">
+<meta name="keywords" content="F#,FSharp,Data,Performance">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The Great Json Bake-Off">
+<meta property="og:url" content="http://codesuji.com/2023/03/07/Json-Bakeoff/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="It is difficult to build much without needing to deal with json at some point. In the world of F# there are several options.  Today I want to lay out some of the popular choices and offer some some co">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2023-03-07T18:46:10.654Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="The Great Json Bake-Off">
+<meta name="twitter:description" content="It is difficult to build much without needing to deal with json at some point. In the world of F# there are several options.  Today I want to lay out some of the popular choices and offer some some co">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Json-Bakeoff" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2023/03/07/Json-Bakeoff/" class="article-date">
+  <time datetime="2023-03-07T12:57:32.000Z" itemprop="datePublished">2023-03-07</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      The Great Json Bake-Off
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 31 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>It is difficult to build much without needing to deal with json at some point. In the world of <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a> there are several options.  Today I want to lay out some of the popular choices and offer some some compare and contrast.  These libraries all have their own strengths and weaknesses, and bringing it all into a single place to highlight these is a useful point of reference for decision making and general understanding.</p>
+<a id="more"></a>
+<p>First, a couple disclaimers.  What I’m presenting is not an exhaustive list of libraries, but it is what I have found are commonly referenced and used.  The benchmarks provided are intended to be representative, but should be taken with a grain of salt (as with all benchmarks).  Other systems and data may see slightly different results than what I’m showing here.  Most of these libraries have the ability to support custom serialization/deserialization and all kinds of options. The goal is not to dive into a bunch of rabbit holes, but what does typical usage looks like.  If there is another library you’d like to see, an error I made, or a performance aspect I missed, hit me up and I’ll make corrections/additions.  The goal is to offer an honest representation, and it is important to get this as correct as possible.  Second, the libraries I’ll be investigating are below.  The first three libraries are F#-specific, the last two are the common json encoders in the .NET ecosystem that everyone knows.  </p>
+<ul>
+<li><a href="https://github.com/Microsoft/fsharplu" target="_blank" rel="noopener">FSharpLu</a></li>
+<li><a href="https://thoth-org.github.io/Thoth.Json/" target="_blank" rel="noopener">Thoth</a></li>
+<li><a href="https://github.com/fsprojects/Fleece" target="_blank" rel="noopener">Fleece</a></li>
+<li><a href="https://www.newtonsoft.com/json" target="_blank" rel="noopener">Newtonsoft</a></li>
+<li><a href="https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/overview" target="_blank" rel="noopener">System.Text.Json</a></li>
+</ul>
+<p>The benchmarks are run on Linux, using .NET 7.  Below are the library versions.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"># BenchmarkDotNet</span><br><span class="line">dotnet add BenchmarkDotNet --version 0.13.4</span><br><span class="line"></span><br><span class="line"># FSharpLu</span><br><span class="line">dotnet add Microsoft.FSharpLu.Json --version 0.11.7</span><br><span class="line"></span><br><span class="line"># Thoth</span><br><span class="line">dotnet add package Thoth.Json.Net --version 11.0.0</span><br><span class="line"></span><br><span class="line"># Fleece (using System.Text.Json)</span><br><span class="line">dotnet add Fleece --version 0.10.0</span><br><span class="line">dotnet add Fleece.SystemTextJson --version 0.10.0</span><br><span class="line"></span><br><span class="line"># Newtonsoft</span><br><span class="line">dotnet add Newtonsoft.Json --version 13.0.2</span><br><span class="line"></span><br><span class="line"># System.Text.Json (with Discriminated Union support)</span><br><span class="line">dotnet add package System.Text.Json --version 7.0.2</span><br><span class="line">dotnet add FSharp.SystemTextJson --version 1.1.23</span><br></pre></td></tr></table></figure>
+<p>In the spirit of testing common use cases, below are the data types I’ll be serializing/deserializing to/from json.  I also include some code samples.  This at least helps level-set the type of data being handled.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Discriminated Union and Record types</span></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Email</span> </span>= string</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Industry</span> </span>=</span><br><span class="line">  | Education</span><br><span class="line">  | Manufacturing</span><br><span class="line">  | Finance</span><br><span class="line">  | Retail</span><br><span class="line">  | Other <span class="keyword">of</span> string</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Stats</span> </span>= int * int * int</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Customer</span> </span>= &#123;</span><br><span class="line">  Id: Guid</span><br><span class="line">  Name: string</span><br><span class="line">  Created: DateTime</span><br><span class="line">  Contacts: Email list</span><br><span class="line">  Industry: Industry</span><br><span class="line">  Stats: Stats</span><br><span class="line">  Notes: string option</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// int list example</span></span><br><span class="line"><span class="keyword">let</span> data :int list = [<span class="number">472</span>; <span class="number">4</span>; <span class="number">137</span>; <span class="number">599</span>; <span class="number">455</span>; <span class="number">923</span>; <span class="number">542</span>; <span class="number">457</span>; <span class="number">309</span>; <span class="number">338</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">// string list example</span></span><br><span class="line"><span class="keyword">let</span> data: string list = [<span class="string">"abc"</span>; <span class="string">"def"</span>; <span class="string">"ghi"</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">// record list example</span></span><br><span class="line"><span class="keyword">let</span> data: Customer list = [</span><br><span class="line">  &#123; Customer.Id = Guid.NewGuid()</span><br><span class="line">    Name = <span class="string">"Foo Inc."</span></span><br><span class="line">    Created = DateTime.UtcNow</span><br><span class="line">    Contacts = [</span><br><span class="line">      Email(<span class="string">"user1@test.com"</span>)</span><br><span class="line">      Email(<span class="string">"user2@test.com"</span>) ]</span><br><span class="line">    Industry = Industry.Finance</span><br><span class="line">    Stats = <span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span></span><br><span class="line">    Notes = Some(<span class="string">"This is a note"</span>) &#125; </span><br><span class="line">  &#123; Customer.Id = Guid.NewGuid()</span><br><span class="line">    Name = <span class="string">"Bar Inc."</span></span><br><span class="line">    Created = DateTime.UtcNow</span><br><span class="line">    Contacts = [</span><br><span class="line">      Email(<span class="string">"user1@test.com"</span>)</span><br><span class="line">      Email(<span class="string">"user2@test.com"</span>) ]</span><br><span class="line">    Industry = Industry.Education</span><br><span class="line">    Stats = <span class="number">40</span>, <span class="number">50</span>, <span class="number">60</span></span><br><span class="line">    Notes = None &#125; ]</span><br><span class="line"></span><br><span class="line"><span class="comment">// single record example</span></span><br><span class="line"><span class="keyword">let</span> data: Customer = &#123;</span><br><span class="line">  Customer.Id = Guid.NewGuid()</span><br><span class="line">  Name = <span class="string">"Foo Inc."</span></span><br><span class="line">  Created = DateTime.UtcNow</span><br><span class="line">  Contacts = [</span><br><span class="line">    Email(<span class="string">"user1@test.com"</span>)</span><br><span class="line">    Email(<span class="string">"user2@test.com"</span>) ]</span><br><span class="line">  Industry = Industry.Finance</span><br><span class="line">  Stats = <span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span></span><br><span class="line">  Notes = Some(<span class="string">"This is a note"</span>) &#125;</span><br></pre></td></tr></table></figure>
+<p>One of the characteristics that really sticks out when serializing F# objects to json is how the library handles F#-specific types, namely Discriminated Unions (DU) and Tuples.  This can be a point of taste, but I prefer the way <code>FSharpLu</code>, <code>Thoth</code>, and <code>Fleece</code> handle DUs.  Even for these libraries there are are variations.  FSharpLu and Thoth auto-encode without any extra effort, while Fleece requires writing encoders/decoders for anything beyond primitive types.  This falls into the balance of more/less power and is a specific library design choice.  Fleece is inspired by <a href="https://hackage.haskell.org/package/aeson-0.7.0.0/docs/Data-Aeson.html" target="_blank" rel="noopener">Aeson</a>.  This typically means more work upfront, but offers power regarding data representation.  Without putting too fine a point on it, this can be a significant advantage.</p>
+<p>In the spirit of investigating variations, I also include multiple Thoth methods.  The first is Auto encoding/decoding, which is what most people will use. The second uses pre-cached encoders/decoders by type.  Caching requires an extra step prior to usage, but can offer a performance boost.  The third is manual encoding/decoding in a similar vein to Fleece.  This allows control of the encoding/decoding json, and potentially a performance boost.  It is nice to have this as an capability, although the Fleece ergonomics are a bit nicer. </p>
+<p>Then there are the traditional .NET json libraries.  <code>Newtonsoft.Json</code> auto-encodes out of the box, although the default encoding of some types feels awkward to my F# eyes.  <code>System.Text.Json</code> also auto-encodes, except for Discriminated Unions.  If you try to use it with a Discriminated Union, you’ll get a compile error.  To overcome this, I use <code>FSharp.SystemTextJson</code> to add DU support.  I think its great this library exists, but it does highlight a functionality gap for <code>System.Text.Json</code>.</p>
+<p>What does all of this mean in practice? Time for some examples of where these libraries differ.  Primitive types like int and string aren’t interesting; they all encode the same way, so basically “nothing to see here”. To that end, I’ll focus on the Customer record type specified above.  I’ll start where they all encode data in the same manner.  For reference, here is where they all match serialization (missing are Industry and Stats fields):<br><figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">"Id"</span>: <span class="string">"1d765765-9ad9-46e1-989e-b3e4fa2ff3e6"</span>,</span><br><span class="line">  <span class="string">"Name"</span>: <span class="string">"Foo Inc."</span>,</span><br><span class="line">  <span class="string">"Created"</span>: <span class="string">"2023-03-03T16:49:07.8710678Z"</span>,</span><br><span class="line">  <span class="string">"Contacts"</span>: [</span><br><span class="line">    <span class="string">"user1@test.com"</span>,</span><br><span class="line">    <span class="string">"user2@test.com"</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="string">"Notes"</span>: <span class="string">"This is a note"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Using the above as a baseline, I can now dig into the serialization differences.  First up is the Industry DU.  As a refresher, Industry can be one of several fixed types (e.g. Finance, Manufacturing, etc) or an <code>Other</code> value with a custom string.  Below are both encodings, broken down by library.  FSharpLu, Thoth, and Fleece are the most intuitive.  Fleece is a special case because I chose to encode <code>Other</code> as <code>Other=&lt;value&gt;</code> to show some customization (more on how that happens later), but Fleece could look however makes the most sense to you.  The Newtonsoft and System.Text.Json serializations are a bit more verbose.  It is a more complex type, so in general this is fine, but the representation does feel a little weird.  I think when interacting with external systems this could potentially be an issue, but in the grand scheme of things, this isn’t a really a deal breaker.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">### Industry = Finance</span><br><span class="line"></span><br><span class="line"># FSharpLu</span><br><span class="line">  &quot;Industry&quot;: &quot;Finance&quot;</span><br><span class="line"></span><br><span class="line"># Thoth</span><br><span class="line">  &quot;Industry&quot;: &quot;Finance&quot;</span><br><span class="line"></span><br><span class="line"># Fleece</span><br><span class="line">  &quot;Industry&quot;: &quot;Finance&quot;</span><br><span class="line"></span><br><span class="line"># Newtonsoft.Json</span><br><span class="line">  &quot;Industry&quot;: &#123;&quot;Case&quot;: &quot;Finance&quot;&#125;</span><br><span class="line"></span><br><span class="line"># System.Text.Json</span><br><span class="line">  &quot;Industry&quot;: &#123;&quot;Case&quot;: &quot;Finance&quot;&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">### Industry = Other(&quot;Recycling&quot;)</span><br><span class="line"></span><br><span class="line"># FSharpLu</span><br><span class="line">  &quot;Industry&quot;: &#123;</span><br><span class="line">    &quot;Other&quot;: &quot;Recycling&quot;</span><br><span class="line">  &#125;,</span><br><span class="line"></span><br><span class="line"># Thoth</span><br><span class="line">  &quot;Industry&quot;: [</span><br><span class="line">    &quot;Other&quot;,</span><br><span class="line">    &quot;Recycling&quot; ]</span><br><span class="line"></span><br><span class="line"># Fleece</span><br><span class="line">  &quot;Industry&quot;: &quot;Other=Recycling&quot;</span><br><span class="line"></span><br><span class="line"># Newtonsoft.Json</span><br><span class="line">  &quot;Industry&quot;: &#123;</span><br><span class="line">    &quot;Case&quot;: &quot;Other&quot;,</span><br><span class="line">    &quot;Fields&quot;: [&quot;Recycling&quot;]&#125;</span><br><span class="line"></span><br><span class="line"># System.Text.Json</span><br><span class="line">  &quot;Industry&quot;: &#123;</span><br><span class="line">    &quot;Case&quot;: &quot;Other&quot;,</span><br><span class="line">    &quot;Fields&quot;: [&quot;Recycling&quot;]&#125;</span><br></pre></td></tr></table></figure>
+<p>Now on to the Stats tuple. Four of the five encode it as an array. From a data structure perspective this is interesting and mostly pragmatic representation that maps to other languages without too much hassle.  Newtonsoft is interesting in that it has the most honest data representation, but feels kind of clunky when encoding.  With that said, I prefer this method for the following reason.  What I don’t show here is the case when the tuple is mixed types (e.g. <code>int * int * string</code>), in that case the other libraries show <code>[10, 20, &quot;30&quot;]</code>, which could be an issue if the decoder expected an array to have a single type.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">### Stats = 10, 20, 30</span><br><span class="line"></span><br><span class="line"># FSharpLu</span><br><span class="line">  &quot;Stats&quot;: [10, 20, 30]</span><br><span class="line"></span><br><span class="line"># Thoth</span><br><span class="line">  &quot;Stats&quot;: [10, 20, 30]</span><br><span class="line"></span><br><span class="line"># Fleece</span><br><span class="line">  &quot;stats&quot;: [10, 20, 30]</span><br><span class="line"></span><br><span class="line"># Newtonsoft.Json</span><br><span class="line">  &quot;Stats&quot;: &#123;&quot;Item1&quot;: 10, &quot;Item2&quot;: 20, &quot;Item3&quot;: 30&#125;</span><br><span class="line"></span><br><span class="line"># System.Text.Json</span><br><span class="line">  &quot;Stats&quot;: [10, 20, 30]</span><br></pre></td></tr></table></figure>
+<p>Now that I’ve looked at the results, it is time to see how the serialization/deserialize happens.  Libraries are more than just the results, they also include the developer ergonomics.  In addition to caveats mentioned above, some of these libraries have multiple ways to do things, I’ve just picked what is most convenient for my tests.  Now is a good time to mention the above type definitions were abbreviated for readability; its now to bring out all the gruesome details.  The most notable blocks are the Fleece codec and Thoth decoder/encoders, both of which are for manual encoding support.  I’ve commented where library-supporting code exists.  You’ll may also notice static member vs. module code organization; this to to match the respective library conventions, even though within a singular codebase it falls on the side of inconsistency.   Frankly, its a lot of extra code to add to a type, but that is the cost of hand encoding/decoding.  It may be too much to stomach for some, but sometimes the flexibility is worth the effort.  Just to be clear, the Thoth-specific decoder/encoder modules are only required for manual usage, when using Auto options, these are not necessary.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Email</span> </span>= string</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Thoth manual decoder/encoder support</span></span><br><span class="line"><span class="keyword">module</span> Email =</span><br><span class="line">  <span class="keyword">let</span> decoder :Decoder&lt;Email&gt; =</span><br><span class="line">    Decode.object (<span class="keyword">fun</span> get -&gt; (get.Required.Raw Decode.string))</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> encoder =</span><br><span class="line">    Encode.string</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Industry</span> </span>=</span><br><span class="line">  | Education</span><br><span class="line">  | Manufacturing</span><br><span class="line">  | Finance</span><br><span class="line">  | Retail</span><br><span class="line">  | Other <span class="keyword">of</span> string</span><br><span class="line">  <span class="keyword">with</span> </span><br><span class="line">  <span class="comment">/// Fleece json codec (decoder)</span></span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">member</span> jsonDecoder = <span class="keyword">function</span></span><br><span class="line">    | JString <span class="string">"Education"</span> -&gt; Decode.Success Education</span><br><span class="line">    | JString <span class="string">"Manufacturing"</span> -&gt; Decode.Success Manufacturing</span><br><span class="line">    | JString <span class="string">"Finance"</span> -&gt; Decode.Success Finance</span><br><span class="line">    | JString <span class="string">"Retail"</span> -&gt; Decode.Success Retail</span><br><span class="line">    | JString x <span class="keyword">as</span> v -&gt; Decode.Success(Other(x.Replace(<span class="string">"Other="</span>, <span class="string">""</span>)))</span><br><span class="line">    | x -&gt; Decode.Fail.strExpected x</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Fleece json codec (encoder)</span></span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">member</span> jsonEncoder = <span class="keyword">function</span></span><br><span class="line">    | Education -&gt; JString <span class="string">"Education"</span></span><br><span class="line">    | Manufacturing -&gt; JString <span class="string">"Manufacturing"</span></span><br><span class="line">    | Finance -&gt; JString <span class="string">"Finance"</span></span><br><span class="line">    | Retail -&gt; JString <span class="string">"Retail"</span></span><br><span class="line">    | Other(x) -&gt; JString $<span class="string">"Other=&#123;x&#125;"</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Fleece json codec</span></span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">member</span> jsonCodec = Industry.jsonDecoder &lt;-&gt; Industry.jsonEncoder</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Fleece get_Codec</span></span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">member</span> get_Codec() =</span><br><span class="line">    Industry.jsonCodec</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Thoth manual decoder/encoder support</span></span><br><span class="line"><span class="keyword">module</span> Industry =</span><br><span class="line">  <span class="keyword">let</span> decoder: Decoder&lt;Industry&gt; =</span><br><span class="line">    Decode.string</span><br><span class="line">    |&gt; Decode.andThen (<span class="keyword">function</span></span><br><span class="line">        | <span class="string">"Education"</span> -&gt; Decode.succeed Education</span><br><span class="line">        | <span class="string">"Manufacturing"</span> -&gt; Decode.succeed Manufacturing</span><br><span class="line">        | <span class="string">"Finance"</span> -&gt; Decode.succeed Finance</span><br><span class="line">        | <span class="string">"Retail"</span> -&gt; Decode.succeed Retail</span><br><span class="line">        | string <span class="keyword">as</span> s -&gt; Decode.succeed (Other(s))</span><br><span class="line">        | invalid -&gt; Decode.fail $<span class="string">"Error: &#123;invalid&#125;"</span>)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> encoder (industry: Industry) =</span><br><span class="line">    <span class="keyword">let</span> s  =</span><br><span class="line">      <span class="keyword">match</span> industry <span class="keyword">with</span></span><br><span class="line">      | Other(s) -&gt; $<span class="string">"&#123;s&#125;"</span></span><br><span class="line">      | i -&gt; i.ToString()</span><br><span class="line"></span><br><span class="line">    Encode.string s</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Stats</span> </span>= int * int * int</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Thoth manual decoder/encoder support</span></span><br><span class="line"><span class="keyword">module</span> Stats =</span><br><span class="line">  <span class="comment">/// Decode array to Stats. json=[#,#,#] to Stats(#,#,#)</span></span><br><span class="line">  <span class="keyword">let</span> decoder :Decoder&lt;Stats&gt; =</span><br><span class="line">    Decode.object (<span class="keyword">fun</span> get -&gt;</span><br><span class="line">      get.Required.Raw (</span><br><span class="line">        Decode.list Decode.int</span><br><span class="line">        |&gt; Decode.andThen (<span class="keyword">fun</span> data -&gt;</span><br><span class="line">            <span class="keyword">if</span> data.Length = <span class="number">3</span> <span class="keyword">then</span></span><br><span class="line">              <span class="keyword">let</span> (a, b, c) = (data[<span class="number">0</span>], data[<span class="number">1</span>], data[<span class="number">2</span>])</span><br><span class="line">              Decode.succeed (a, b, c)</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">              Decode.fail <span class="string">"Invalid Stats format. Expected '[ #, #, # ]'."</span>)))</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Encode Stats tuple to json array. Stats(#,#,#) to json=[#,#,#]</span></span><br><span class="line">  <span class="keyword">let</span> encoder (stats: Stats) =</span><br><span class="line">    <span class="keyword">let</span> (a, b, c) = stats</span><br><span class="line">    Encode.list [ Encode.int a; Encode.int b; Encode.int c ]</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Customer</span> </span>= &#123;</span><br><span class="line">  Id: Guid</span><br><span class="line">  Name: string</span><br><span class="line">  Created: DateTime</span><br><span class="line">  Contacts: Email list</span><br><span class="line">  Industry: Industry</span><br><span class="line">  Stats: Stats</span><br><span class="line">  Notes: string option</span><br><span class="line">&#125; <span class="keyword">with</span></span><br><span class="line">  <span class="comment">/// Fleece codec</span></span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">member</span> get_Codec() =</span><br><span class="line">    codec &#123;</span><br><span class="line">      <span class="keyword">let!</span> id = jreq <span class="string">"Id"</span> (<span class="keyword">fun</span> x -&gt; Some(x.Id))</span><br><span class="line">      <span class="keyword">and</span>! name = jreq <span class="string">"Name"</span> (<span class="keyword">fun</span> x -&gt; Some(x.Name))</span><br><span class="line">      <span class="keyword">and</span>! created = jreq <span class="string">"Created"</span> (<span class="keyword">fun</span> x -&gt; Some(x.Created))</span><br><span class="line">      <span class="keyword">and</span>! contacts = jreq <span class="string">"Contacts"</span> (<span class="keyword">fun</span> x -&gt; Some(x.Contacts))</span><br><span class="line">      <span class="keyword">and</span>! industry = jreqWith Industry.jsonCodec <span class="string">"Industry"</span> (<span class="keyword">fun</span> x -&gt; Some(x.Industry))</span><br><span class="line">      <span class="keyword">and</span>! stats = jreq <span class="string">"Stats"</span> (<span class="keyword">fun</span> x -&gt; Some(x.Stats))</span><br><span class="line">      <span class="keyword">and</span>! notes = jopt <span class="string">"Notes"</span> (<span class="keyword">fun</span> x -&gt; x.Notes)</span><br><span class="line">      <span class="keyword">return</span> &#123; </span><br><span class="line">        Customer.Id = id</span><br><span class="line">        Name = name</span><br><span class="line">        Created = created</span><br><span class="line">        Contacts = contacts</span><br><span class="line">        Industry = industry</span><br><span class="line">        Stats = stats</span><br><span class="line">        Notes = notes &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    |&gt; ofObjCodec</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Thoth manual decoder/encoder support</span></span><br><span class="line"><span class="keyword">module</span> Customer =</span><br><span class="line">  <span class="keyword">let</span> contactsDecoder :Decoder&lt;Email list&gt; =</span><br><span class="line">    Decode.list Email.decoder</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> contactsEncoder (contacts: Email list) =</span><br><span class="line">    contacts</span><br><span class="line">    |&gt; List.map Email.encoder</span><br><span class="line">    |&gt; Encode.list</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> decoder: Decoder&lt;Customer&gt; =</span><br><span class="line">    Decode.object (<span class="keyword">fun</span> get -&gt;</span><br><span class="line">      &#123;</span><br><span class="line">        Id = get.Required.Field <span class="string">"Id"</span> Decode.guid</span><br><span class="line">        Name = get.Required.Field <span class="string">"Name"</span> Decode.string</span><br><span class="line">        Created = get.Required.Field <span class="string">"Created"</span> Decode.datetimeUtc</span><br><span class="line">        Contacts = get.Required.Field <span class="string">"Contacts"</span> contactsDecoder</span><br><span class="line">        Industry = get.Required.Field <span class="string">"Industry"</span> Industry.decoder</span><br><span class="line">        Stats = get.Required.Field <span class="string">"Stats"</span> Stats.decoder</span><br><span class="line">        Notes = get.Optional.Field <span class="string">"Notes"</span> Decode.string</span><br><span class="line">      &#125;</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> encoder (customer: Customer) =</span><br><span class="line">    Encode.object [</span><br><span class="line">        <span class="string">"Id"</span>, Encode.guid customer.Id</span><br><span class="line">        <span class="string">"Name"</span>, Encode.string customer.Name</span><br><span class="line">        <span class="string">"Created"</span>, Encode.datetime customer.Created</span><br><span class="line">        <span class="string">"Contacts"</span>, contactsEncoder customer.Contacts</span><br><span class="line">        <span class="string">"Industry"</span>, Industry.encoder customer.Industry</span><br><span class="line">        <span class="string">"Stats"</span>, Stats.encoder customer.Stats</span><br><span class="line">        <span class="string">"Notes"</span>, Encode.option Encode.string customer.Notes</span><br><span class="line">    ]</span><br></pre></td></tr></table></figure>
+<p>The actual serialization and deserialization for all libraries is simple and straight-forward.  Manual encoding when using Thoth takes a bit more effort, but not much.  They all support custom options, but this is the bare bones method to get data converted back and forth.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// FSharpLu</span></span><br><span class="line"><span class="keyword">let</span> json = Compact.serialize customer</span><br><span class="line"><span class="keyword">let</span> customer = Compact.deserialize json</span><br><span class="line"></span><br><span class="line"><span class="comment">// Thoth</span></span><br><span class="line"><span class="keyword">let</span> json = Encode.Auto.toString(<span class="number">2</span>, customer)</span><br><span class="line"><span class="keyword">let</span> customer = Decode.Auto.fromString&lt;Customer&gt;(json)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Thoth (Cached)</span></span><br><span class="line"><span class="keyword">let</span> thothCachedCustomerEncoder =</span><br><span class="line">  Encode.Auto.generateEncoderCached&lt;Customer&gt;(caseStrategy = PascalCase, extra = Extra.empty)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> thothCachedCustomerDecoder =</span><br><span class="line">  Decode.Auto.generateDecoderCached&lt;Customer&gt;(caseStrategy = PascalCase, extra = Extra.empty)</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> json = Encode.toString <span class="number">2</span> (thothCachedCustomerEncoder customer)</span><br><span class="line"><span class="keyword">let</span> customer = Decode.fromString (thothCachedCustomerDecoder) json</span><br><span class="line"></span><br><span class="line"><span class="comment">// Thoth (Manual)</span></span><br><span class="line"><span class="keyword">let</span> json = customer |&gt; Customer.encoder |&gt; Encode.toString <span class="number">2</span></span><br><span class="line"><span class="keyword">let</span> customer = Decode.fromString Customer.decoder json</span><br><span class="line"></span><br><span class="line"><span class="comment">// Fleece</span></span><br><span class="line"><span class="keyword">let</span> json = toJsonText customer</span><br><span class="line"><span class="keyword">let</span> customer: Customer ParseResult = ofJsonText json</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewtonSoft.Json</span></span><br><span class="line"><span class="keyword">let</span> json = Newtonsoft.Json.JsonConvert.SerializeObject customer</span><br><span class="line"><span class="keyword">let</span> customer = Newtonsoft.Json.JsonConvert.DeserializeObject&lt;Customer&gt; json</span><br><span class="line"></span><br><span class="line"><span class="comment">// System.Text.Json</span></span><br><span class="line"><span class="comment">/// Serialization options for System.Text.Json (to support F#)</span></span><br><span class="line"><span class="keyword">let</span> jsonOptions = JsonFSharpOptions.Default().ToJsonSerializerOptions()</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> json = JsonSerializer.Serialize&lt;Customer&gt;(customer, jsonOptions)</span><br><span class="line"><span class="keyword">let</span> customer = JsonSerializer.Deserialize&lt;Customer&gt;(json, jsonOptions)</span><br></pre></td></tr></table></figure>
+<p>There is one more major piece to discuss, performance.  This is where BenchmarkDotNet comes into play.  I investigate several different scenarios.  I focus mostly on different object types: int list, string list, Customer list, and Customer.  An additional variation is list size, for this I run the tests with size: 1, 100, and 1000.  The combination of these tests will provide some insight regarding performance (for both speed and memory).  For the most part, the benchmark code is straight forward.  The only variation to note is that I try to keep the serialized json consistent, but I do need multiple versions of the json strings, since the libraries support slightly different encodings.  Beyond that, they are all operating on the same data.  Fair warning, the benchmark results are pretty hefty, but it’s the only way to see all the different breakdowns.</p>
+<p><strong>### System:</strong><br>BenchmarkDotNet=v0.13.4, OS=ubuntu 20.04<br>Intel Core i7-9750H CPU 2.60GHz, 1 CPU, 12 logical and 6 physical cores<br>.NET SDK=7.0.101<br>  [Host]     : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2 DEBUG<br>  DefaultJob : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2</p>
+<p><strong>### Serialization:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>ListSize</th>
+<th style="text-align:right">Mean</th>
+<th style="text-align:right">Error</th>
+<th style="text-align:right">StdDev</th>
+<th style="text-align:right">Median</th>
+<th style="text-align:right">Gen0</th>
+<th style="text-align:right">Gen1</th>
+<th style="text-align:right">Gen2</th>
+<th style="text-align:right">Allocated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>IntListFSharpLu</td>
+<td>1</td>
+<td style="text-align:right">7,043.0 ns</td>
+<td style="text-align:right">43.89 ns</td>
+<td style="text-align:right">41.05 ns</td>
+<td style="text-align:right">7,033.7 ns</td>
+<td style="text-align:right">0.6</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">4167 B</td>
+</tr>
+<tr>
+<td>IntListThoth</td>
+<td>1</td>
+<td style="text-align:right">1,194.4 ns</td>
+<td style="text-align:right">7.02 ns</td>
+<td style="text-align:right">6.22 ns</td>
+<td style="text-align:right">1,197.0 ns</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1168 B</td>
+</tr>
+<tr>
+<td>IntListThothCached</td>
+<td>1</td>
+<td style="text-align:right">406.7 ns</td>
+<td style="text-align:right">3.48 ns</td>
+<td style="text-align:right">3.25 ns</td>
+<td style="text-align:right">405.5 ns</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1039 B</td>
+</tr>
+<tr>
+<td>IntListThothManual</td>
+<td>1</td>
+<td style="text-align:right">164.1 ns</td>
+<td style="text-align:right">0.27 ns</td>
+<td style="text-align:right">0.24 ns</td>
+<td style="text-align:right">164.1 ns</td>
+<td style="text-align:right">0.0</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">408 B</td>
+</tr>
+<tr>
+<td>IntListFleece</td>
+<td>1</td>
+<td style="text-align:right">1,174.0 ns</td>
+<td style="text-align:right">6.37 ns</td>
+<td style="text-align:right">5.65 ns</td>
+<td style="text-align:right">1,172.6 ns</td>
+<td style="text-align:right">0.9</td>
+<td style="text-align:right">0.0</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">5832 B</td>
+</tr>
+<tr>
+<td>IntListNewtonsoft</td>
+<td>1</td>
+<td style="text-align:right">389.2 ns</td>
+<td style="text-align:right">0.55 ns</td>
+<td style="text-align:right">0.43 ns</td>
+<td style="text-align:right">389.2 ns</td>
+<td style="text-align:right">0.2</td>
+<td style="text-align:right">0.0</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1447 B</td>
+</tr>
+<tr>
+<td>IntListTextJson</td>
+<td>1</td>
+<td style="text-align:right">316.4 ns</td>
+<td style="text-align:right">1.62 ns</td>
+<td style="text-align:right">1.51 ns</td>
+<td style="text-align:right">316.2 ns</td>
+<td style="text-align:right">0.0</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">136 B</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>StringListFSharpLu</td>
+<td>1</td>
+<td style="text-align:right">23,558.4 ns</td>
+<td style="text-align:right">32.47 ns</td>
+<td style="text-align:right">30.37 ns</td>
+<td style="text-align:right">23,567.7 ns</td>
+<td style="text-align:right">2.7</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">17161 B</td>
+</tr>
+<tr>
+<td>StringListThoth</td>
+<td>1</td>
+<td style="text-align:right">17,798.6 ns</td>
+<td style="text-align:right">34.58 ns</td>
+<td style="text-align:right">30.65 ns</td>
+<td style="text-align:right">17,790.3 ns</td>
+<td style="text-align:right">2.2</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">14276 B</td>
+</tr>
+<tr>
+<td>StringListThothCached</td>
+<td>1</td>
+<td style="text-align:right">17,000.0 ns</td>
+<td style="text-align:right">28.15 ns</td>
+<td style="text-align:right">26.34 ns</td>
+<td style="text-align:right">16,994.6 ns</td>
+<td style="text-align:right">2.2</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">14144 B</td>
+</tr>
+<tr>
+<td>StringListThothManual</td>
+<td>1</td>
+<td style="text-align:right">16,396.5 ns</td>
+<td style="text-align:right">12.94 ns</td>
+<td style="text-align:right">10.81 ns</td>
+<td style="text-align:right">16,398.5 ns</td>
+<td style="text-align:right">2.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">13216 B</td>
+</tr>
+<tr>
+<td>StringListFleece</td>
+<td>1</td>
+<td style="text-align:right">17,498.7 ns</td>
+<td style="text-align:right">20.93 ns</td>
+<td style="text-align:right">16.34 ns</td>
+<td style="text-align:right">17,500.4 ns</td>
+<td style="text-align:right">2.9</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">18841 B</td>
+</tr>
+<tr>
+<td>StringListNewtonsoft</td>
+<td>1</td>
+<td style="text-align:right">16,627.6 ns</td>
+<td style="text-align:right">17.37 ns</td>
+<td style="text-align:right">14.51 ns</td>
+<td style="text-align:right">16,625.7 ns</td>
+<td style="text-align:right">2.2</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">14320 B</td>
+</tr>
+<tr>
+<td>StringListTextJson</td>
+<td>1</td>
+<td style="text-align:right">16,270.4 ns</td>
+<td style="text-align:right">44.64 ns</td>
+<td style="text-align:right">41.76 ns</td>
+<td style="text-align:right">16,262.5 ns</td>
+<td style="text-align:right">2.0</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">13032 B</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>RecordListFSharpLu</td>
+<td>1</td>
+<td style="text-align:right">48,328.4 ns</td>
+<td style="text-align:right">189.01 ns</td>
+<td style="text-align:right">176.80 ns</td>
+<td style="text-align:right">48,287.4 ns</td>
+<td style="text-align:right">2.4</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">15483 B</td>
+</tr>
+<tr>
+<td>RecordListThoth</td>
+<td>1</td>
+<td style="text-align:right">84,474.2 ns</td>
+<td style="text-align:right">307.36 ns</td>
+<td style="text-align:right">287.50 ns</td>
+<td style="text-align:right">84,523.1 ns</td>
+<td style="text-align:right">4.7</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">30290 B</td>
+</tr>
+<tr>
+<td>RecordListThothCached</td>
+<td>1</td>
+<td style="text-align:right">44,234.5 ns</td>
+<td style="text-align:right">150.27 ns</td>
+<td style="text-align:right">140.56 ns</td>
+<td style="text-align:right">44,270.8 ns</td>
+<td style="text-align:right">3.2</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">20479 B</td>
+</tr>
+<tr>
+<td>RecordListThothManual</td>
+<td>1</td>
+<td style="text-align:right">45,829.3 ns</td>
+<td style="text-align:right">63.85 ns</td>
+<td style="text-align:right">59.72 ns</td>
+<td style="text-align:right">45,842.2 ns</td>
+<td style="text-align:right">3.7</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">23980 B</td>
+</tr>
+<tr>
+<td>RecordListFleece</td>
+<td>1</td>
+<td style="text-align:right">12,916.2 ns</td>
+<td style="text-align:right">29.86 ns</td>
+<td style="text-align:right">23.31 ns</td>
+<td style="text-align:right">12,924.2 ns</td>
+<td style="text-align:right">3.4</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">21768 B</td>
+</tr>
+<tr>
+<td>RecordListNewtonsoft</td>
+<td>1</td>
+<td style="text-align:right">4,928.5 ns</td>
+<td style="text-align:right">20.42 ns</td>
+<td style="text-align:right">18.11 ns</td>
+<td style="text-align:right">4,922.4 ns</td>
+<td style="text-align:right">0.7</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">4871 B</td>
+</tr>
+<tr>
+<td>RecordListTextJson</td>
+<td>1</td>
+<td style="text-align:right">4,409.8 ns</td>
+<td style="text-align:right">12.55 ns</td>
+<td style="text-align:right">11.12 ns</td>
+<td style="text-align:right">4,413.0 ns</td>
+<td style="text-align:right">0.3</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">2247 B</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>OneRecordFSharpLu</td>
+<td>1</td>
+<td style="text-align:right">43,885.5 ns</td>
+<td style="text-align:right">111.43 ns</td>
+<td style="text-align:right">98.78 ns</td>
+<td style="text-align:right">43,885.5 ns</td>
+<td style="text-align:right">2.3</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">14553 B</td>
+</tr>
+<tr>
+<td>OneRecordThoth</td>
+<td>1</td>
+<td style="text-align:right">83,886.9 ns</td>
+<td style="text-align:right">264.00 ns</td>
+<td style="text-align:right">246.94 ns</td>
+<td style="text-align:right">83,845.5 ns</td>
+<td style="text-align:right">4.6</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">29321 B</td>
+</tr>
+<tr>
+<td>OneRecordThothCached</td>
+<td>1</td>
+<td style="text-align:right">43,521.3 ns</td>
+<td style="text-align:right">306.90 ns</td>
+<td style="text-align:right">287.08 ns</td>
+<td style="text-align:right">43,645.5 ns</td>
+<td style="text-align:right">3.1</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">19608 B</td>
+</tr>
+<tr>
+<td>OneRecordThothManual</td>
+<td>1</td>
+<td style="text-align:right">48,191.4 ns</td>
+<td style="text-align:right">94.14 ns</td>
+<td style="text-align:right">83.45 ns</td>
+<td style="text-align:right">48,174.8 ns</td>
+<td style="text-align:right">3.6</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">23070 B</td>
+</tr>
+<tr>
+<td>OneRecordFleece</td>
+<td>1</td>
+<td style="text-align:right">11,719.4 ns</td>
+<td style="text-align:right">34.92 ns</td>
+<td style="text-align:right">29.16 ns</td>
+<td style="text-align:right">11,727.1 ns</td>
+<td style="text-align:right">3.2</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">20439 B</td>
+</tr>
+<tr>
+<td>OneRecordNewtonsoft</td>
+<td>1</td>
+<td style="text-align:right">4,362.4 ns</td>
+<td style="text-align:right">38.07 ns</td>
+<td style="text-align:right">35.61 ns</td>
+<td style="text-align:right">4,375.7 ns</td>
+<td style="text-align:right">0.7</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">4587 B</td>
+</tr>
+<tr>
+<td>OneRecordTextJson</td>
+<td>1</td>
+<td style="text-align:right">4,088.9 ns</td>
+<td style="text-align:right">9.79 ns</td>
+<td style="text-align:right">8.68 ns</td>
+<td style="text-align:right">4,085.0 ns</td>
+<td style="text-align:right">0.3</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1963 B</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>IntListFSharpLu</td>
+<td>100</td>
+<td style="text-align:right">20,188.5 ns</td>
+<td style="text-align:right">86.07 ns</td>
+<td style="text-align:right">80.51 ns</td>
+<td style="text-align:right">20,171.1 ns</td>
+<td style="text-align:right">3.4</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">21864 B</td>
+</tr>
+<tr>
+<td>IntListThoth</td>
+<td>100</td>
+<td style="text-align:right">14,860.5 ns</td>
+<td style="text-align:right">42.98 ns</td>
+<td style="text-align:right">38.10 ns</td>
+<td style="text-align:right">14,859.4 ns</td>
+<td style="text-align:right">3.4</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">21745 B</td>
+</tr>
+<tr>
+<td>IntListThothCached</td>
+<td>100</td>
+<td style="text-align:right">13,736.9 ns</td>
+<td style="text-align:right">44.20 ns</td>
+<td style="text-align:right">41.35 ns</td>
+<td style="text-align:right">13,720.9 ns</td>
+<td style="text-align:right">3.4</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">21607 B</td>
+</tr>
+<tr>
+<td>IntListThothManual</td>
+<td>100</td>
+<td style="text-align:right">9,308.6 ns</td>
+<td style="text-align:right">15.10 ns</td>
+<td style="text-align:right">12.61 ns</td>
+<td style="text-align:right">9,305.5 ns</td>
+<td style="text-align:right">2.8</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">17952 B</td>
+</tr>
+<tr>
+<td>IntListFleece</td>
+<td>100</td>
+<td style="text-align:right">16,534.7 ns</td>
+<td style="text-align:right">52.73 ns</td>
+<td style="text-align:right">46.74 ns</td>
+<td style="text-align:right">16,519.1 ns</td>
+<td style="text-align:right">5.8</td>
+<td style="text-align:right">0.2</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">36727 B</td>
+</tr>
+<tr>
+<td>IntListNewtonsoft</td>
+<td>100</td>
+<td style="text-align:right">7,372.3 ns</td>
+<td style="text-align:right">6.85 ns</td>
+<td style="text-align:right">6.07 ns</td>
+<td style="text-align:right">7,371.9 ns</td>
+<td style="text-align:right">1.3</td>
+<td style="text-align:right">0.0</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">8741 B</td>
+</tr>
+<tr>
+<td>IntListTextJson</td>
+<td>100</td>
+<td style="text-align:right">3,831.8 ns</td>
+<td style="text-align:right">4.95 ns</td>
+<td style="text-align:right">4.63 ns</td>
+<td style="text-align:right">3,832.3 ns</td>
+<td style="text-align:right">0.7</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">4469 B</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>StringListFSharpLu</td>
+<td>100</td>
+<td style="text-align:right">1,649,890.3 ns</td>
+<td style="text-align:right">2,182.75 ns</td>
+<td style="text-align:right">2,041.75 ns</td>
+<td style="text-align:right">1,649,718.0 ns</td>
+<td style="text-align:right">208.9</td>
+<td style="text-align:right">13.6</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1315335 B</td>
+</tr>
+<tr>
+<td>StringListThoth</td>
+<td>100</td>
+<td style="text-align:right">1,603,423.3 ns</td>
+<td style="text-align:right">3,536.47 ns</td>
+<td style="text-align:right">2,953.12 ns</td>
+<td style="text-align:right">1,602,939.4 ns</td>
+<td style="text-align:right">208.9</td>
+<td style="text-align:right">11.7</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1313783 B</td>
+</tr>
+<tr>
+<td>StringListThothCached</td>
+<td>100</td>
+<td style="text-align:right">1,558,011.5 ns</td>
+<td style="text-align:right">3,719.41 ns</td>
+<td style="text-align:right">3,479.14 ns</td>
+<td style="text-align:right">1,558,608.2 ns</td>
+<td style="text-align:right">208.9</td>
+<td style="text-align:right">13.6</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1313298 B</td>
+</tr>
+<tr>
+<td>StringListThothManual</td>
+<td>100</td>
+<td style="text-align:right">1,609,062.4 ns</td>
+<td style="text-align:right">2,173.69 ns</td>
+<td style="text-align:right">2,033.27 ns</td>
+<td style="text-align:right">1,609,041.0 ns</td>
+<td style="text-align:right">207.0</td>
+<td style="text-align:right">19.5</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1299154 B</td>
+</tr>
+<tr>
+<td>StringListFleece</td>
+<td>100</td>
+<td style="text-align:right">1,701,875.8 ns</td>
+<td style="text-align:right">3,307.47 ns</td>
+<td style="text-align:right">3,093.81 ns</td>
+<td style="text-align:right">1,701,224.7 ns</td>
+<td style="text-align:right">212.8</td>
+<td style="text-align:right">13.6</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1336981 B</td>
+</tr>
+<tr>
+<td>StringListNewtonsoft</td>
+<td>100</td>
+<td style="text-align:right">1,663,057.9 ns</td>
+<td style="text-align:right">2,827.21 ns</td>
+<td style="text-align:right">2,506.25 ns</td>
+<td style="text-align:right">1,662,869.2 ns</td>
+<td style="text-align:right">207.0</td>
+<td style="text-align:right">11.7</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1303146 B</td>
+</tr>
+<tr>
+<td>StringListTextJson</td>
+<td>100</td>
+<td style="text-align:right">1,572,979.7 ns</td>
+<td style="text-align:right">2,086.97 ns</td>
+<td style="text-align:right">1,850.05 ns</td>
+<td style="text-align:right">1,573,096.4 ns</td>
+<td style="text-align:right">205.0</td>
+<td style="text-align:right">11.7</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1293890 B</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>RecordListFSharpLu</td>
+<td>100</td>
+<td style="text-align:right">709,046.5 ns</td>
+<td style="text-align:right">1,413.84 ns</td>
+<td style="text-align:right">1,322.50 ns</td>
+<td style="text-align:right">709,459.4 ns</td>
+<td style="text-align:right">89.8</td>
+<td style="text-align:right">27.3</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">568895 B</td>
+</tr>
+<tr>
+<td>RecordListThoth</td>
+<td>100</td>
+<td style="text-align:right">4,123,862.4 ns</td>
+<td style="text-align:right">20,371.95 ns</td>
+<td style="text-align:right">19,055.93 ns</td>
+<td style="text-align:right">4,118,491.6 ns</td>
+<td style="text-align:right">304.6</td>
+<td style="text-align:right">210.9</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1914472 B</td>
+</tr>
+<tr>
+<td>RecordListThothCached</td>
+<td>100</td>
+<td style="text-align:right">4,068,735.7 ns</td>
+<td style="text-align:right">18,677.86 ns</td>
+<td style="text-align:right">17,471.28 ns</td>
+<td style="text-align:right">4,060,941.0 ns</td>
+<td style="text-align:right">296.8</td>
+<td style="text-align:right">195.3</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1901524 B</td>
+</tr>
+<tr>
+<td>RecordListThothManual</td>
+<td>100</td>
+<td style="text-align:right">4,531,003.4 ns</td>
+<td style="text-align:right">11,349.26 ns</td>
+<td style="text-align:right">10,616.10 ns</td>
+<td style="text-align:right">4,534,660.2 ns</td>
+<td style="text-align:right">351.5</td>
+<td style="text-align:right">140.6</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">2249710 B</td>
+</tr>
+<tr>
+<td>RecordListFleece</td>
+<td>100</td>
+<td style="text-align:right">857,710.4 ns</td>
+<td style="text-align:right">2,601.90 ns</td>
+<td style="text-align:right">2,433.82 ns</td>
+<td style="text-align:right">857,026.0 ns</td>
+<td style="text-align:right">206.0</td>
+<td style="text-align:right">0.9</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1294299 B</td>
+</tr>
+<tr>
+<td>RecordListNewtonsoft</td>
+<td>100</td>
+<td style="text-align:right">405,181.7 ns</td>
+<td style="text-align:right">701.05 ns</td>
+<td style="text-align:right">621.47 ns</td>
+<td style="text-align:right">405,120.1 ns</td>
+<td style="text-align:right">50.7</td>
+<td style="text-align:right">13.6</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">321528 B</td>
+</tr>
+<tr>
+<td>RecordListTextJson</td>
+<td>100</td>
+<td style="text-align:right">362,255.9 ns</td>
+<td style="text-align:right">631.07 ns</td>
+<td style="text-align:right">559.42 ns</td>
+<td style="text-align:right">362,328.9 ns</td>
+<td style="text-align:right">34.6</td>
+<td style="text-align:right">8.3</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">220188 B</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>IntListFSharpLu</td>
+<td>1000</td>
+<td style="text-align:right">133,347.3 ns</td>
+<td style="text-align:right">1,257.91 ns</td>
+<td style="text-align:right">1,176.65 ns</td>
+<td style="text-align:right">133,482.3 ns</td>
+<td style="text-align:right">28.8</td>
+<td style="text-align:right">5.3</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">182022 B</td>
+</tr>
+<tr>
+<td>IntListThoth</td>
+<td>1000</td>
+<td style="text-align:right">134,059.9 ns</td>
+<td style="text-align:right">306.36 ns</td>
+<td style="text-align:right">255.82 ns</td>
+<td style="text-align:right">134,002.1 ns</td>
+<td style="text-align:right">31.2</td>
+<td style="text-align:right">3.4</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">196388 B</td>
+</tr>
+<tr>
+<td>IntListThothCached</td>
+<td>1000</td>
+<td style="text-align:right">128,716.7 ns</td>
+<td style="text-align:right">1,423.84 ns</td>
+<td style="text-align:right">1,331.86 ns</td>
+<td style="text-align:right">127,905.5 ns</td>
+<td style="text-align:right">31.0</td>
+<td style="text-align:right">2.4</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">196170 B</td>
+</tr>
+<tr>
+<td>IntListThothManual</td>
+<td>1000</td>
+<td style="text-align:right">93,161.8 ns</td>
+<td style="text-align:right">454.78 ns</td>
+<td style="text-align:right">425.40 ns</td>
+<td style="text-align:right">93,178.4 ns</td>
+<td style="text-align:right">27.4</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">172760 B</td>
+</tr>
+<tr>
+<td>IntListFleece</td>
+<td>1000</td>
+<td style="text-align:right">149,448.3 ns</td>
+<td style="text-align:right">386.25 ns</td>
+<td style="text-align:right">342.40 ns</td>
+<td style="text-align:right">149,418.3 ns</td>
+<td style="text-align:right">44.1</td>
+<td style="text-align:right">9.7</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">277991 B</td>
+</tr>
+<tr>
+<td>IntListNewtonsoft</td>
+<td>1000</td>
+<td style="text-align:right">68,508.4 ns</td>
+<td style="text-align:right">220.08 ns</td>
+<td style="text-align:right">195.09 ns</td>
+<td style="text-align:right">68,464.8 ns</td>
+<td style="text-align:right">12.2</td>
+<td style="text-align:right">1.3</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">77127 B</td>
+</tr>
+<tr>
+<td>IntListTextJson</td>
+<td>1000</td>
+<td style="text-align:right">34,069.5 ns</td>
+<td style="text-align:right">107.37 ns</td>
+<td style="text-align:right">89.66 ns</td>
+<td style="text-align:right">34,113.2 ns</td>
+<td style="text-align:right">6.9</td>
+<td style="text-align:right">0.4</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">43871 B</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>StringListFSharpLu</td>
+<td>1000</td>
+<td style="text-align:right">17,584,797.3 ns</td>
+<td style="text-align:right">29,524.67 ns</td>
+<td style="text-align:right">27,617.39 ns</td>
+<td style="text-align:right">17,584,905.4 ns</td>
+<td style="text-align:right">2062.5</td>
+<td style="text-align:right">125.0</td>
+<td style="text-align:right">31.2</td>
+<td style="text-align:right">13116871 B</td>
+</tr>
+<tr>
+<td>StringListThoth</td>
+<td>1000</td>
+<td style="text-align:right">16,840,644.9 ns</td>
+<td style="text-align:right">28,439.32 ns</td>
+<td style="text-align:right">25,210.72 ns</td>
+<td style="text-align:right">16,842,766.9 ns</td>
+<td style="text-align:right">2062.5</td>
+<td style="text-align:right">125.0</td>
+<td style="text-align:right">31.2</td>
+<td style="text-align:right">13110095 B</td>
+</tr>
+<tr>
+<td>StringListThothCached</td>
+<td>1000</td>
+<td style="text-align:right">16,990,921.6 ns</td>
+<td style="text-align:right">51,412.23 ns</td>
+<td style="text-align:right">45,575.60 ns</td>
+<td style="text-align:right">16,988,783.6 ns</td>
+<td style="text-align:right">2062.5</td>
+<td style="text-align:right">125.0</td>
+<td style="text-align:right">31.2</td>
+<td style="text-align:right">13108271 B</td>
+</tr>
+<tr>
+<td>StringListThothManual</td>
+<td>1000</td>
+<td style="text-align:right">16,557,071.7 ns</td>
+<td style="text-align:right">146,791.20 ns</td>
+<td style="text-align:right">137,308.58 ns</td>
+<td style="text-align:right">16,601,215.2 ns</td>
+<td style="text-align:right">2062.5</td>
+<td style="text-align:right">31.2</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">12984789 B</td>
+</tr>
+<tr>
+<td>StringListFleece</td>
+<td>1000</td>
+<td style="text-align:right">17,261,490.7 ns</td>
+<td style="text-align:right">55,897.70 ns</td>
+<td style="text-align:right">52,286.74 ns</td>
+<td style="text-align:right">17,263,192.8 ns</td>
+<td style="text-align:right">2125.0</td>
+<td style="text-align:right">93.7</td>
+<td style="text-align:right">31.2</td>
+<td style="text-align:right">13385711 B</td>
+</tr>
+<tr>
+<td>StringListNewtonsoft</td>
+<td>1000</td>
+<td style="text-align:right">16,650,742.4 ns</td>
+<td style="text-align:right">50,595.94 ns</td>
+<td style="text-align:right">44,851.98 ns</td>
+<td style="text-align:right">16,638,779.1 ns</td>
+<td style="text-align:right">2062.5</td>
+<td style="text-align:right">156.2</td>
+<td style="text-align:right">31.2</td>
+<td style="text-align:right">13019946 B</td>
+</tr>
+<tr>
+<td>StringListTextJson</td>
+<td>1000</td>
+<td style="text-align:right">16,210,066.4 ns</td>
+<td style="text-align:right">18,023.81 ns</td>
+<td style="text-align:right">15,977.64 ns</td>
+<td style="text-align:right">16,215,392.3 ns</td>
+<td style="text-align:right">2031.2</td>
+<td style="text-align:right">62.5</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">12938117 B</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>RecordListFSharpLu</td>
+<td>1000</td>
+<td style="text-align:right">7,418,860.9 ns</td>
+<td style="text-align:right">16,006.82 ns</td>
+<td style="text-align:right">14,972.79 ns</td>
+<td style="text-align:right">7,413,755.7 ns</td>
+<td style="text-align:right">789.0</td>
+<td style="text-align:right">757.8</td>
+<td style="text-align:right">195.3</td>
+<td style="text-align:right">5522664 B</td>
+</tr>
+<tr>
+<td>RecordListThoth</td>
+<td>1000</td>
+<td style="text-align:right">45,465,135.8 ns</td>
+<td style="text-align:right">385,734.45 ns</td>
+<td style="text-align:right">360,816.24 ns</td>
+<td style="text-align:right">45,402,331.0 ns</td>
+<td style="text-align:right">2818.1</td>
+<td style="text-align:right">727.2</td>
+<td style="text-align:right">454.5</td>
+<td style="text-align:right">18928991 B</td>
+</tr>
+<tr>
+<td>RecordListThothCached</td>
+<td>1000</td>
+<td style="text-align:right">48,735,891.0 ns</td>
+<td style="text-align:right">831,080.08 ns</td>
+<td style="text-align:right">1,243,921.53 ns</td>
+<td style="text-align:right">47,969,807.8 ns</td>
+<td style="text-align:right">2818.1</td>
+<td style="text-align:right">727.2</td>
+<td style="text-align:right">454.5</td>
+<td style="text-align:right">18902199 B</td>
+</tr>
+<tr>
+<td>RecordListThothManual</td>
+<td>1000</td>
+<td style="text-align:right">54,555,776.3 ns</td>
+<td style="text-align:right">125,263.21 ns</td>
+<td style="text-align:right">117,171.29 ns</td>
+<td style="text-align:right">54,558,445.9 ns</td>
+<td style="text-align:right">3600.0</td>
+<td style="text-align:right">700.0</td>
+<td style="text-align:right">200.0</td>
+<td style="text-align:right">22406518 B</td>
+</tr>
+<tr>
+<td>RecordListFleece</td>
+<td>1000</td>
+<td style="text-align:right">13,469,301.0 ns</td>
+<td style="text-align:right">100,449.31 ns</td>
+<td style="text-align:right">89,045.70 ns</td>
+<td style="text-align:right">13,458,451.0 ns</td>
+<td style="text-align:right">1843.7</td>
+<td style="text-align:right">843.7</td>
+<td style="text-align:right">578.1</td>
+<td style="text-align:right">12810464 B</td>
+</tr>
+<tr>
+<td>RecordListNewtonsoft</td>
+<td>1000</td>
+<td style="text-align:right">4,360,206.6 ns</td>
+<td style="text-align:right">30,850.12 ns</td>
+<td style="text-align:right">28,857.22 ns</td>
+<td style="text-align:right">4,368,718.1 ns</td>
+<td style="text-align:right">546.8</td>
+<td style="text-align:right">375.0</td>
+<td style="text-align:right">140.6</td>
+<td style="text-align:right">3208284 B</td>
+</tr>
+<tr>
+<td>RecordListTextJson</td>
+<td>1000</td>
+<td style="text-align:right">3,924,525.0 ns</td>
+<td style="text-align:right">16,541.52 ns</td>
+<td style="text-align:right">14,663.63 ns</td>
+<td style="text-align:right">3,920,796.3 ns</td>
+<td style="text-align:right">406.2</td>
+<td style="text-align:right">257.8</td>
+<td style="text-align:right">140.6</td>
+<td style="text-align:right">2222653 B</td>
+</tr>
+</tbody>
+</table>
+<p><strong>### Deserialization:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>ListSize</th>
+<th style="text-align:right">Mean</th>
+<th style="text-align:right">Error</th>
+<th style="text-align:right">StdDev</th>
+<th style="text-align:right">Gen0</th>
+<th style="text-align:right">Gen1</th>
+<th style="text-align:right">Gen2</th>
+<th style="text-align:right">Allocated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>IntListFSharpLu</td>
+<td>1</td>
+<td style="text-align:right">15.6 μs</td>
+<td style="text-align:right">0.1459 μs</td>
+<td style="text-align:right">0.1365 μs</td>
+<td style="text-align:right">1.4954</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">9.29 KB</td>
+</tr>
+<tr>
+<td>IntListThoth</td>
+<td>1</td>
+<td style="text-align:right">17.9 μs</td>
+<td style="text-align:right">0.0496 μs</td>
+<td style="text-align:right">0.0440 μs</td>
+<td style="text-align:right">1.4343</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">8.88 KB</td>
+</tr>
+<tr>
+<td>IntListThothCached</td>
+<td>1</td>
+<td style="text-align:right">16.9 μs</td>
+<td style="text-align:right">0.1128 μs</td>
+<td style="text-align:right">0.1055 μs</td>
+<td style="text-align:right">1.4038</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">8.74 KB</td>
+</tr>
+<tr>
+<td>IntListThothManual</td>
+<td>1</td>
+<td style="text-align:right">10.1 μs</td>
+<td style="text-align:right">0.0488 μs</td>
+<td style="text-align:right">0.0457 μs</td>
+<td style="text-align:right">1.2360</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">7.66 KB</td>
+</tr>
+<tr>
+<td>IntListFleece</td>
+<td>1</td>
+<td style="text-align:right">10.6 μs</td>
+<td style="text-align:right">0.0179 μs</td>
+<td style="text-align:right">0.0159 μs</td>
+<td style="text-align:right">1.0071</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">6.26 KB</td>
+</tr>
+<tr>
+<td>IntListNewtonsoft</td>
+<td>1</td>
+<td style="text-align:right">9.0 μs</td>
+<td style="text-align:right">0.0284 μs</td>
+<td style="text-align:right">0.0265 μs</td>
+<td style="text-align:right">1.0986</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">6.79 KB</td>
+</tr>
+<tr>
+<td>IntListTextJson</td>
+<td>1</td>
+<td style="text-align:right">8.5 μs</td>
+<td style="text-align:right">0.0106 μs</td>
+<td style="text-align:right">0.0088 μs</td>
+<td style="text-align:right">0.6714</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">4.2 KB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>StringListFSharpLu</td>
+<td>1</td>
+<td style="text-align:right">33.7 μs</td>
+<td style="text-align:right">0.1217 μs</td>
+<td style="text-align:right">0.1138 μs</td>
+<td style="text-align:right">3.6011</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">22.17 KB</td>
+</tr>
+<tr>
+<td>StringListThoth</td>
+<td>1</td>
+<td style="text-align:right">35.5 μs</td>
+<td style="text-align:right">0.0508 μs</td>
+<td style="text-align:right">0.0450 μs</td>
+<td style="text-align:right">3.4790</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">21.56 KB</td>
+</tr>
+<tr>
+<td>StringListThothCached</td>
+<td>1</td>
+<td style="text-align:right">32.7 μs</td>
+<td style="text-align:right">0.0909 μs</td>
+<td style="text-align:right">0.0850 μs</td>
+<td style="text-align:right">3.4790</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">21.42 KB</td>
+</tr>
+<tr>
+<td>StringListThothManual</td>
+<td>1</td>
+<td style="text-align:right">30.5 μs</td>
+<td style="text-align:right">0.0669 μs</td>
+<td style="text-align:right">0.0593 μs</td>
+<td style="text-align:right">3.4790</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">21.43 KB</td>
+</tr>
+<tr>
+<td>StringListFleece</td>
+<td>1</td>
+<td style="text-align:right">30.0 μs</td>
+<td style="text-align:right">0.0498 μs</td>
+<td style="text-align:right">0.0441 μs</td>
+<td style="text-align:right">3.1128</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">19.09 KB</td>
+</tr>
+<tr>
+<td>StringListNewtonsoft</td>
+<td>1</td>
+<td style="text-align:right">27.1 μs</td>
+<td style="text-align:right">0.0321 μs</td>
+<td style="text-align:right">0.0268 μs</td>
+<td style="text-align:right">3.1738</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">19.56 KB</td>
+</tr>
+<tr>
+<td>StringListTextJson</td>
+<td>1</td>
+<td style="text-align:right">26.0 μs</td>
+<td style="text-align:right">0.0560 μs</td>
+<td style="text-align:right">0.0524 μs</td>
+<td style="text-align:right">2.7466</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">16.99 KB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>RecordListFSharpLu</td>
+<td>1</td>
+<td style="text-align:right">103.2 μs</td>
+<td style="text-align:right">0.2298 μs</td>
+<td style="text-align:right">0.2037 μs</td>
+<td style="text-align:right">4.8828</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">30.07 KB</td>
+</tr>
+<tr>
+<td>RecordListThoth</td>
+<td>1</td>
+<td style="text-align:right">209.4 μs</td>
+<td style="text-align:right">0.3070 μs</td>
+<td style="text-align:right">0.2872 μs</td>
+<td style="text-align:right">10.9863</td>
+<td style="text-align:right">0.2441</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">68.71 KB</td>
+</tr>
+<tr>
+<td>RecordListThothCached</td>
+<td>1</td>
+<td style="text-align:right">163.9 μs</td>
+<td style="text-align:right">0.4874 μs</td>
+<td style="text-align:right">0.4559 μs</td>
+<td style="text-align:right">9.5215</td>
+<td style="text-align:right">0.2441</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">58.5 KB</td>
+</tr>
+<tr>
+<td>RecordListThothManual</td>
+<td>1</td>
+<td style="text-align:right">72.3 μs</td>
+<td style="text-align:right">0.1873 μs</td>
+<td style="text-align:right">0.1752 μs</td>
+<td style="text-align:right">4.0283</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">24.73 KB</td>
+</tr>
+<tr>
+<td>RecordListFleece</td>
+<td>1</td>
+<td style="text-align:right">24.1 μs</td>
+<td style="text-align:right">0.0792 μs</td>
+<td style="text-align:right">0.0741 μs</td>
+<td style="text-align:right">3.4485</td>
+<td style="text-align:right">0.0916</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">21.25 KB</td>
+</tr>
+<tr>
+<td>RecordListNewtonsoft</td>
+<td>1</td>
+<td style="text-align:right">12.2 μs</td>
+<td style="text-align:right">0.0365 μs</td>
+<td style="text-align:right">0.0342 μs</td>
+<td style="text-align:right">1.5717</td>
+<td style="text-align:right">0.0153</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">9.65 KB</td>
+</tr>
+<tr>
+<td>RecordListTextJson</td>
+<td>1</td>
+<td style="text-align:right">11.9 μs</td>
+<td style="text-align:right">0.0402 μs</td>
+<td style="text-align:right">0.0376 μs</td>
+<td style="text-align:right">0.5035</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">3.16 KB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>OneRecordFSharpLu</td>
+<td>1</td>
+<td style="text-align:right">95.5 μs</td>
+<td style="text-align:right">0.2836 μs</td>
+<td style="text-align:right">0.2652 μs</td>
+<td style="text-align:right">4.5166</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">28.38 KB</td>
+</tr>
+<tr>
+<td>OneRecordThoth</td>
+<td>1</td>
+<td style="text-align:right">182.2 μs</td>
+<td style="text-align:right">0.5150 μs</td>
+<td style="text-align:right">0.4817 μs</td>
+<td style="text-align:right">8.7891</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">54.73 KB</td>
+</tr>
+<tr>
+<td>OneRecordThothCached</td>
+<td>1</td>
+<td style="text-align:right">137.7 μs</td>
+<td style="text-align:right">0.3629 μs</td>
+<td style="text-align:right">0.3031 μs</td>
+<td style="text-align:right">7.0801</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">44.69 KB</td>
+</tr>
+<tr>
+<td>OneRecordThothManual</td>
+<td>1</td>
+<td style="text-align:right">66.1 μs</td>
+<td style="text-align:right">0.1749 μs</td>
+<td style="text-align:right">0.1460 μs</td>
+<td style="text-align:right">3.7842</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">23.21 KB</td>
+</tr>
+<tr>
+<td>OneRecordFleece</td>
+<td>1</td>
+<td style="text-align:right">21.1 μs</td>
+<td style="text-align:right">0.0523 μs</td>
+<td style="text-align:right">0.0464 μs</td>
+<td style="text-align:right">3.1738</td>
+<td style="text-align:right">0.0916</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">19.46 KB</td>
+</tr>
+<tr>
+<td>OneRecordNewtonsoft</td>
+<td>1</td>
+<td style="text-align:right">11.4 μs</td>
+<td style="text-align:right">0.0185 μs</td>
+<td style="text-align:right">0.0164 μs</td>
+<td style="text-align:right">1.4954</td>
+<td style="text-align:right">0.0153</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">9.21 KB</td>
+</tr>
+<tr>
+<td>OneRecordTextJson</td>
+<td>1</td>
+<td style="text-align:right">10.5 μs</td>
+<td style="text-align:right">0.0313 μs</td>
+<td style="text-align:right">0.0293 μs</td>
+<td style="text-align:right">0.4425</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">2.76 KB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>IntListFSharpLu</td>
+<td>100</td>
+<td style="text-align:right">41.6 μs</td>
+<td style="text-align:right">0.1170 μs</td>
+<td style="text-align:right">0.1094 μs</td>
+<td style="text-align:right">5.3711</td>
+<td style="text-align:right">0.1831</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">33.05 KB</td>
+</tr>
+<tr>
+<td>IntListThoth</td>
+<td>100</td>
+<td style="text-align:right">131.1 μs</td>
+<td style="text-align:right">1.2809 μs</td>
+<td style="text-align:right">1.1981 μs</td>
+<td style="text-align:right">10.7422</td>
+<td style="text-align:right">0.4883</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">66.87 KB</td>
+</tr>
+<tr>
+<td>IntListThothCached</td>
+<td>100</td>
+<td style="text-align:right">131.9 μs</td>
+<td style="text-align:right">1.1325 μs</td>
+<td style="text-align:right">1.0039 μs</td>
+<td style="text-align:right">10.7422</td>
+<td style="text-align:right">0.4883</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">66.72 KB</td>
+</tr>
+<tr>
+<td>IntListThothManual</td>
+<td>100</td>
+<td style="text-align:right">54.6 μs</td>
+<td style="text-align:right">0.0609 μs</td>
+<td style="text-align:right">0.0570 μs</td>
+<td style="text-align:right">9.0942</td>
+<td style="text-align:right">0.4272</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">55.76 KB</td>
+</tr>
+<tr>
+<td>IntListFleece</td>
+<td>100</td>
+<td style="text-align:right">53.1 μs</td>
+<td style="text-align:right">0.1576 μs</td>
+<td style="text-align:right">0.1474 μs</td>
+<td style="text-align:right">9.3994</td>
+<td style="text-align:right">0.3052</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">57.82 KB</td>
+</tr>
+<tr>
+<td>IntListNewtonsoft</td>
+<td>100</td>
+<td style="text-align:right">34.5 μs</td>
+<td style="text-align:right">0.0915 μs</td>
+<td style="text-align:right">0.0811 μs</td>
+<td style="text-align:right">4.9438</td>
+<td style="text-align:right">0.1221</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">30.55 KB</td>
+</tr>
+<tr>
+<td>IntListTextJson</td>
+<td>100</td>
+<td style="text-align:right">30.7 μs</td>
+<td style="text-align:right">0.0543 μs</td>
+<td style="text-align:right">0.0481 μs</td>
+<td style="text-align:right">4.2419</td>
+<td style="text-align:right">0.1221</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">26.05 KB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>StringListFSharpLu</td>
+<td>100</td>
+<td style="text-align:right">1,763.7 μs</td>
+<td style="text-align:right">2.6119 μs</td>
+<td style="text-align:right">2.4432 μs</td>
+<td style="text-align:right">210.9375</td>
+<td style="text-align:right">15.6250</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1303.58 KB</td>
+</tr>
+<tr>
+<td>StringListThoth</td>
+<td>100</td>
+<td style="text-align:right">1,895.9 μs</td>
+<td style="text-align:right">3.5673 μs</td>
+<td style="text-align:right">3.1623 μs</td>
+<td style="text-align:right">216.7969</td>
+<td style="text-align:right">17.5781</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1329.64 KB</td>
+</tr>
+<tr>
+<td>StringListThothCached</td>
+<td>100</td>
+<td style="text-align:right">1,774.0 μs</td>
+<td style="text-align:right">6.9559 μs</td>
+<td style="text-align:right">6.5066 μs</td>
+<td style="text-align:right">216.7969</td>
+<td style="text-align:right">17.5781</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1329.27 KB</td>
+</tr>
+<tr>
+<td>StringListThothManual</td>
+<td>100</td>
+<td style="text-align:right">1,761.7 μs</td>
+<td style="text-align:right">34.6178 μs</td>
+<td style="text-align:right">35.5499 μs</td>
+<td style="text-align:right">212.8906</td>
+<td style="text-align:right">7.8125</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1308.76 KB</td>
+</tr>
+<tr>
+<td>StringListFleece</td>
+<td>100</td>
+<td style="text-align:right">1,773.9 μs</td>
+<td style="text-align:right">5.0636 μs</td>
+<td style="text-align:right">4.4888 μs</td>
+<td style="text-align:right">216.7969</td>
+<td style="text-align:right">19.5313</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1333.79 KB</td>
+</tr>
+<tr>
+<td>StringListNewtonsoft</td>
+<td>100</td>
+<td style="text-align:right">1,715.8 μs</td>
+<td style="text-align:right">6.6255 μs</td>
+<td style="text-align:right">6.1975 μs</td>
+<td style="text-align:right">210.9375</td>
+<td style="text-align:right">15.6250</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1300.96 KB</td>
+</tr>
+<tr>
+<td>StringListTextJson</td>
+<td>100</td>
+<td style="text-align:right">1,841.5 μs</td>
+<td style="text-align:right">2.5186 μs</td>
+<td style="text-align:right">2.1032 μs</td>
+<td style="text-align:right">210.9375</td>
+<td style="text-align:right">15.6250</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1299.17 KB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>RecordListFSharpLu</td>
+<td>100</td>
+<td style="text-align:right">1,506.4 μs</td>
+<td style="text-align:right">3.7216 μs</td>
+<td style="text-align:right">3.4812 μs</td>
+<td style="text-align:right">156.2500</td>
+<td style="text-align:right">50.7813</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">969.71 KB</td>
+</tr>
+<tr>
+<td>RecordListThoth</td>
+<td>100</td>
+<td style="text-align:right">10,375.6 μs</td>
+<td style="text-align:right">84.5533 μs</td>
+<td style="text-align:right">79.0912 μs</td>
+<td style="text-align:right">718.7500</td>
+<td style="text-align:right">531.2500</td>
+<td style="text-align:right">15.6250</td>
+<td style="text-align:right">4452.71 KB</td>
+</tr>
+<tr>
+<td>RecordListThothCached</td>
+<td>100</td>
+<td style="text-align:right">10,250.9 μs</td>
+<td style="text-align:right">34.5145 μs</td>
+<td style="text-align:right">32.2849 μs</td>
+<td style="text-align:right">718.7500</td>
+<td style="text-align:right">562.5000</td>
+<td style="text-align:right">15.6250</td>
+<td style="text-align:right">4442.12 KB</td>
+</tr>
+<tr>
+<td>RecordListThothManual</td>
+<td>100</td>
+<td style="text-align:right">1,599.8 μs</td>
+<td style="text-align:right">4.6668 μs</td>
+<td style="text-align:right">4.1370 μs</td>
+<td style="text-align:right">189.4531</td>
+<td style="text-align:right">89.8438</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">1164.58 KB</td>
+</tr>
+<tr>
+<td>RecordListFleece</td>
+<td>100</td>
+<td style="text-align:right">498.4 μs</td>
+<td style="text-align:right">0.6963 μs</td>
+<td style="text-align:right">0.6173 μs</td>
+<td style="text-align:right">48.8281</td>
+<td style="text-align:right">1.9531</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">305.02 KB</td>
+</tr>
+<tr>
+<td>RecordListNewtonsoft</td>
+<td>100</td>
+<td style="text-align:right">854.5 μs</td>
+<td style="text-align:right">3.7517 μs</td>
+<td style="text-align:right">3.5094 μs</td>
+<td style="text-align:right">81.0547</td>
+<td style="text-align:right">22.4609</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">502.68 KB</td>
+</tr>
+<tr>
+<td>RecordListTextJson</td>
+<td>100</td>
+<td style="text-align:right">979.8 μs</td>
+<td style="text-align:right">2.1825 μs</td>
+<td style="text-align:right">2.0416 μs</td>
+<td style="text-align:right">48.8281</td>
+<td style="text-align:right">11.7188</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">304.22 KB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>IntListFSharpLu</td>
+<td>1000</td>
+<td style="text-align:right">256.8 μs</td>
+<td style="text-align:right">0.4628 μs</td>
+<td style="text-align:right">0.3864 μs</td>
+<td style="text-align:right">39.5508</td>
+<td style="text-align:right">6.3477</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">245.56 KB</td>
+</tr>
+<tr>
+<td>IntListThoth</td>
+<td>1000</td>
+<td style="text-align:right">1,158.0 μs</td>
+<td style="text-align:right">1.9641 μs</td>
+<td style="text-align:right">1.8372 μs</td>
+<td style="text-align:right">95.7031</td>
+<td style="text-align:right">37.1094</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">588.79 KB</td>
+</tr>
+<tr>
+<td>IntListThothCached</td>
+<td>1000</td>
+<td style="text-align:right">1,159.7 μs</td>
+<td style="text-align:right">3.3701 μs</td>
+<td style="text-align:right">2.8142 μs</td>
+<td style="text-align:right">95.7031</td>
+<td style="text-align:right">39.0625</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">588.44 KB</td>
+</tr>
+<tr>
+<td>IntListThothManual</td>
+<td>1000</td>
+<td style="text-align:right">454.2 μs</td>
+<td style="text-align:right">0.6121 μs</td>
+<td style="text-align:right">0.5426 μs</td>
+<td style="text-align:right">79.1016</td>
+<td style="text-align:right">1.9531</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">486.03 KB</td>
+</tr>
+<tr>
+<td>IntListFleece</td>
+<td>1000</td>
+<td style="text-align:right">443.5 μs</td>
+<td style="text-align:right">0.5548 μs</td>
+<td style="text-align:right">0.5189 μs</td>
+<td style="text-align:right">84.4727</td>
+<td style="text-align:right">1.9531</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">520.01 KB</td>
+</tr>
+<tr>
+<td>IntListNewtonsoft</td>
+<td>1000</td>
+<td style="text-align:right">264.2 μs</td>
+<td style="text-align:right">1.9403 μs</td>
+<td style="text-align:right">1.8149 μs</td>
+<td style="text-align:right">39.5508</td>
+<td style="text-align:right">9.2773</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">243.05 KB</td>
+</tr>
+<tr>
+<td>IntListTextJson</td>
+<td>1000</td>
+<td style="text-align:right">233.1 μs</td>
+<td style="text-align:right">0.8043 μs</td>
+<td style="text-align:right">0.7129 μs</td>
+<td style="text-align:right">35.8887</td>
+<td style="text-align:right">8.0566</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">221.16 KB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>StringListFSharpLu</td>
+<td>1000</td>
+<td style="text-align:right">16,952.5 μs</td>
+<td style="text-align:right">31.5653 μs</td>
+<td style="text-align:right">27.9819 μs</td>
+<td style="text-align:right">2093.7500</td>
+<td style="text-align:right">31.2500</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">12948.04 KB</td>
+</tr>
+<tr>
+<td>StringListThoth</td>
+<td>1000</td>
+<td style="text-align:right">18,092.8 μs</td>
+<td style="text-align:right">201.8233 μs</td>
+<td style="text-align:right">188.7856 μs</td>
+<td style="text-align:right">2156.2500</td>
+<td style="text-align:right">125.0000</td>
+<td style="text-align:right">31.2500</td>
+<td style="text-align:right">13214.55 KB</td>
+</tr>
+<tr>
+<td>StringListThothCached</td>
+<td>1000</td>
+<td style="text-align:right">18,802.7 μs</td>
+<td style="text-align:right">81.7247 μs</td>
+<td style="text-align:right">76.4453 μs</td>
+<td style="text-align:right">2156.2500</td>
+<td style="text-align:right">125.0000</td>
+<td style="text-align:right">31.2500</td>
+<td style="text-align:right">13213.3 KB</td>
+</tr>
+<tr>
+<td>StringListThothManual</td>
+<td>1000</td>
+<td style="text-align:right">17,291.1 μs</td>
+<td style="text-align:right">183.9874 μs</td>
+<td style="text-align:right">172.1019 μs</td>
+<td style="text-align:right">2093.7500</td>
+<td style="text-align:right">281.2500</td>
+<td style="text-align:right">31.2500</td>
+<td style="text-align:right">13002.46 KB</td>
+</tr>
+<tr>
+<td>StringListFleece</td>
+<td>1000</td>
+<td style="text-align:right">18,058.9 μs</td>
+<td style="text-align:right">51.8915 μs</td>
+<td style="text-align:right">40.5135 μs</td>
+<td style="text-align:right">2156.2500</td>
+<td style="text-align:right">156.2500</td>
+<td style="text-align:right">31.2500</td>
+<td style="text-align:right">13305.53 KB</td>
+</tr>
+<tr>
+<td>StringListNewtonsoft</td>
+<td>1000</td>
+<td style="text-align:right">17,507.9 μs</td>
+<td style="text-align:right">66.8627 μs</td>
+<td style="text-align:right">62.5434 μs</td>
+<td style="text-align:right">2093.7500</td>
+<td style="text-align:right">31.2500</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">12945.42 KB</td>
+</tr>
+<tr>
+<td>StringListTextJson</td>
+<td>1000</td>
+<td style="text-align:right">16,826.3 μs</td>
+<td style="text-align:right">37.8847 μs</td>
+<td style="text-align:right">33.5838 μs</td>
+<td style="text-align:right">2093.7500</td>
+<td style="text-align:right">31.2500</td>
+<td style="text-align:right">-</td>
+<td style="text-align:right">12950.66 KB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+<td style="text-align:right"></td>
+</tr>
+<tr>
+<td>RecordListFSharpLu</td>
+<td>1000</td>
+<td style="text-align:right">16,157.2 μs</td>
+<td style="text-align:right">68.4580 μs</td>
+<td style="text-align:right">64.0357 μs</td>
+<td style="text-align:right">1406.2500</td>
+<td style="text-align:right">500.0000</td>
+<td style="text-align:right">250.0000</td>
+<td style="text-align:right">9433.67 KB</td>
+</tr>
+<tr>
+<td>RecordListThoth</td>
+<td>1000</td>
+<td style="text-align:right">106,187.4 μs</td>
+<td style="text-align:right">633.2908 μs</td>
+<td style="text-align:right">592.3806 μs</td>
+<td style="text-align:right">7000.0000</td>
+<td style="text-align:right">750.0000</td>
+<td style="text-align:right">500.0000</td>
+<td style="text-align:right">44255.41 KB</td>
+</tr>
+<tr>
+<td>RecordListThothCached</td>
+<td>1000</td>
+<td style="text-align:right">108,517.2 μs</td>
+<td style="text-align:right">608.9917 μs</td>
+<td style="text-align:right">539.8552 μs</td>
+<td style="text-align:right">7200.0000</td>
+<td style="text-align:right">800.0000</td>
+<td style="text-align:right">400.0000</td>
+<td style="text-align:right">44214.61 KB</td>
+</tr>
+<tr>
+<td>RecordListThothManual</td>
+<td>1000</td>
+<td style="text-align:right">21,465.3 μs</td>
+<td style="text-align:right">120.3867 μs</td>
+<td style="text-align:right">112.6098 μs</td>
+<td style="text-align:right">1750.0000</td>
+<td style="text-align:right">1500.0000</td>
+<td style="text-align:right">718.7500</td>
+<td style="text-align:right">11445.14 KB</td>
+</tr>
+<tr>
+<td>RecordListFleece</td>
+<td>1000</td>
+<td style="text-align:right">5,433.1 μs</td>
+<td style="text-align:right">98.3105 μs</td>
+<td style="text-align:right">91.9597 μs</td>
+<td style="text-align:right">632.8125</td>
+<td style="text-align:right">500.0000</td>
+<td style="text-align:right">359.3750</td>
+<td style="text-align:right">3292.54 KB</td>
+</tr>
+<tr>
+<td>RecordListNewtonsoft</td>
+<td>1000</td>
+<td style="text-align:right">9,820.1 μs</td>
+<td style="text-align:right">18.1347 μs</td>
+<td style="text-align:right">15.1433 μs</td>
+<td style="text-align:right">796.8750</td>
+<td style="text-align:right">781.2500</td>
+<td style="text-align:right">140.6250</td>
+<td style="text-align:right">4995.52 KB</td>
+</tr>
+<tr>
+<td>RecordListTextJson</td>
+<td>1000</td>
+<td style="text-align:right">10,365.1 μs</td>
+<td style="text-align:right">26.4786 μs</td>
+<td style="text-align:right">22.1108 μs</td>
+<td style="text-align:right">531.2500</td>
+<td style="text-align:right">515.6250</td>
+<td style="text-align:right">125.0000</td>
+<td style="text-align:right">3064.77 KB</td>
+</tr>
+</tbody>
+</table>
+<p>There are a couple trends to gleen from the above results.  At a high level, F#-specific libraries incur a performance cost.  Newtonsoft and System.Text.Json are typically 5x-10x faster than FSharpLu and Thoth, and 2x-3x faster than Fleece.  Datatype impacts performance differences, but the trends hold for the most part (with the exception of string lists, where string handling dominates encoding).  Library memory usage holds similar trends, just not as pronounced in most cases.  Memory usage does show its impact on the larger ListSize (1000), where speed and the GC take a pretty hard hit.</p>
+<p>Looking at the results a bit closer, Newtonsoft and System.Text.Json are in the same ballpark, but System.Text.Json nearly always had a slight lead in performance.  On average, Thoth is the slowest, although cached encodings offer a small boost.  Manual encoding for Thoth certainly makes it more competitive with FSharpLu and Fleece.  Speaking of which, FSharpLu and Fleece are steadily in the middle of the pack.  Fleece typically has performance several times faster, trending it closer to Newtonsoft and System.Text.Json performance.  I suspect this is a result of manual encoding versus reflection, but just a hunch.</p>
+<p>What does all this mean?  Well, it depends (I hope you weren’t expecting a simple answer).  Clearly there is a performance difference between the libraries, sometimes up to an order of magnitude (that is more the exception than the rule).  When talking nanoseconds and microseconds, most use cases honestly aren’t going to see a noticeable difference.  This is where ergonomics and flexibility need to factor into a decision.  Everything has its trade off, and finding what works for your specific case is a process. If straight-up performance matters most, there are some clear leaders.  Admittedly, the benchmark results surprised me.  I didn’t expect the F#-specific libraries to have such a large gap.  I also expected manual encoding to offer a better performance benefit over reflection than it did.  As they say, you learn something new every day, and today is no exception.   So there you have it, a comparison with some of the major json encoding libraries supported in F#.  Seeing all the trade-offs in one place can assist in decisions moving forward and understanding what makes the best library for particular use cases.  A better grasp on all the impact of all components in a system will help make any project stronger.  As I mentioned in the beginning, if you see any errors or opportunities for improvement, let me know.  Until next time, stay calm and keep encoding…</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2022/08/13/Watc/">Watc</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/20/F-and-Text-Analytics/">F# and Text Analytics</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2021/07/28/Data-in-Motion-Drought/">Data in Motion - Drought Map</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2023/03/07/Json-Bakeoff/" data-id="cleyfh06j0001iimw7tkzsics" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Data/">Data</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Performance/">Performance</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2022/12/31/lvar/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">F# and LVars</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15px;">Accord.NET</a> <a href="/tags/Algorithms/" style="font-size: 15px;">Algorithms</a> <a href="/tags/Analytics/" style="font-size: 14px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 14px;">DTW</a> <a href="/tags/Data/" style="font-size: 18px;">Data</a> <a href="/tags/Database/" style="font-size: 13px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 13px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11px;">Http</a> <a href="/tags/Images/" style="font-size: 12px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 19px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Mqtt/" style="font-size: 12px;">Mqtt</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 13px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Rust/" style="font-size: 10px;">Rust</a> <a href="/tags/STEM/" style="font-size: 11px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 11px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 13px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13px;">Statistics</a> <a href="/tags/Text/" style="font-size: 14px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 11px;">Timeseries</a> <a href="/tags/Tips/" style="font-size: 12px;">Tips</a> <a href="/tags/Tools/" style="font-size: 10px;">Tools</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/Types/" style="font-size: 10px;">Types</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/07/Json-Bakeoff/">The Great Json Bake-Off</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/31/lvar/">F# and LVars</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/13/Yaml-and-F/">Yaml and F#</a>
+          </li>
+        
+          <li>
+            <a href="/2022/08/13/Watc/">Watc</a>
+          </li>
+        
+          <li>
+            <a href="/2022/07/24/Data-in-Motion-Earthquakes/">Data in Motion - Earthquakes Map</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2023 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

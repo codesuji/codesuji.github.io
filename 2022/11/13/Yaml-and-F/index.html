@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Yaml and F# | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Yaml is a useful format for both configuration and simple data representation that pops up from time to time.  As a result, it is helpful to know how to use it and coding in F#.  Today I’ll take a qui">
+<meta name="keywords" content="F#,FSharp">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Yaml and F#">
+<meta property="og:url" content="http://codesuji.com/2022/11/13/Yaml-and-F/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Yaml is a useful format for both configuration and simple data representation that pops up from time to time.  As a result, it is helpful to know how to use it and coding in F#.  Today I’ll take a qui">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2023-01-09T02:13:34.026Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Yaml and F#">
+<meta name="twitter:description" content="Yaml is a useful format for both configuration and simple data representation that pops up from time to time.  As a result, it is helpful to know how to use it and coding in F#.  Today I’ll take a qui">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Yaml-and-F" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/11/13/Yaml-and-F/" class="article-date">
+  <time datetime="2022-11-14T00:11:49.000Z" itemprop="datePublished">2022-11-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Yaml and F#
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 7 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Yaml is a useful format for both configuration and simple data representation that pops up from time to time.  As a result, it is helpful to know how to use it and coding in <a href="https://fsharp.org" target="_blank" rel="noopener">F#</a>.  Today I’ll take a quick look into using Yaml and how it can be integrated into an F# project.</p>
+<a id="more"></a>
+<p>There are several Yaml parsers in the .NET ecosystem; for this post I’ll use YamlDotNet.  It has a direct interface and decent documentation.  For the samples below I’ll use <code>dotnet add package YamlDotNet --version 12.3.1</code>.</p>
+<p>Below is a sample file, <code>config.yml</code>.  It is a mocked config file that could be seen for any random service.  To show some of the options available, it contains scalar (string and numeric), list, and object structures.  I’ll take this file as the case study to convert into F# types.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">stage: dev</span><br><span class="line">version: 1.2.3</span><br><span class="line">batchSize: 1000</span><br><span class="line">events:</span><br><span class="line">  - insert </span><br><span class="line">  - update</span><br><span class="line">  - query</span><br><span class="line">  - delete</span><br><span class="line">endPoints:</span><br><span class="line">  backup:</span><br><span class="line">    description: Data backups</span><br><span class="line">    uri: https://example.com/backup</span><br><span class="line">    timeout: 10</span><br><span class="line">    enabled: true</span><br><span class="line">  metrics:</span><br><span class="line">    description: Data backups</span><br><span class="line">    uri: https://example.com/metrics</span><br><span class="line">    timeout: 10</span><br><span class="line">    enabled: true</span><br><span class="line">dataSources:</span><br><span class="line">  users:</span><br><span class="line">    description: string</span><br><span class="line">    connectionString: postgresql://user1:pass1@10.0.0.1:5432/postgres</span><br><span class="line">    enabled: true</span><br><span class="line">  data:</span><br><span class="line">    description: string</span><br><span class="line">    connectionString: postgresql://user2:pass2@10.0.0.2:5432/postgres</span><br><span class="line">    enabled: true</span><br><span class="line">notes: |</span><br><span class="line">  This service should run periodically.</span><br><span class="line">  Check further documentation on the website for execution details.</span><br></pre></td></tr></table></figure>
+<p>Before I can work with the yaml, I’l need to define the types and structure of the config file.  A couple notes to get this to all work.  One, the types must be annotated with <code>[&lt;CLIMutable&gt;]</code>.  Also, I generally prefer to use F#’s <code>Map</code>, but for this case I need to use a <code>Dictionary</code>.  The serialization/deserialization doesn’t work otherwise.  This is all fine, it is just one of the compromises we F# devs need to make sometimes.  The structure of the file is represented with the <code>Config</code> type.  In addition to standard scalars and a list, it uses DataSource and Endpoint types.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System</span><br><span class="line"><span class="keyword">open</span> System.Collections.Generic</span><br><span class="line"><span class="keyword">open</span> YamlDotNet.Serialization</span><br><span class="line"><span class="keyword">open</span> YamlDotNet.Serialization.NamingConventions</span><br><span class="line"></span><br><span class="line"><span class="meta">[&lt;CLIMutable&gt;]</span></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">DataSource</span> </span>= &#123;</span><br><span class="line">  Description: string</span><br><span class="line">  ConnectionString: string</span><br><span class="line">  Enabled: bool</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">[&lt;CLIMutable&gt;]</span></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">EndPoint</span> </span>= &#123;</span><br><span class="line">  Description: string</span><br><span class="line">  Uri: string</span><br><span class="line">  Timeout: int</span><br><span class="line">  Enabled: bool</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">[&lt;CLIMutable&gt;]</span></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Config</span> </span>= &#123;</span><br><span class="line">  Stage: string</span><br><span class="line">  Version: string</span><br><span class="line">  BatchSize: int</span><br><span class="line">  EndPoints: Dictionary&lt;string, EndPoint&gt;</span><br><span class="line">  DataSources: Dictionary&lt;string, DataSource&gt;</span><br><span class="line">  Events: List&lt;string&gt;</span><br><span class="line">  Notes: string</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>As can often be the case, there are multiple ways to do things.  I prefer the above way to define types (using record types), but the types can be defined as classes with explicit getters and setters.  For the most part this is a stylist choice, but I wanted to provide both options.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">DataSource</span> </span>() =</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Description: string = <span class="string">""</span> <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> ConnectionString: string = <span class="string">""</span> <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Enabled: bool = <span class="keyword">false</span> <span class="keyword">with</span> get, set</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">EndPoint</span> </span>() =</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Description: string = <span class="string">""</span> <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Uri: string = <span class="string">""</span> <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Timeout: int = <span class="number">0</span> <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Enabled: bool = <span class="keyword">false</span> <span class="keyword">with</span> get, set</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">Config</span> </span>() =</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Stage: string = <span class="string">""</span> <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Version: string = <span class="string">""</span> <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> BatchSize: int = <span class="number">10000</span> <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> EndPoints: Dictionary&lt;string, EndPoint&gt; = <span class="keyword">new</span> Dictionary&lt;string, EndPoint&gt;() <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> DataSources: Dictionary&lt;string, DataSource&gt; = <span class="keyword">new</span> Dictionary&lt;string, DataSource&gt;() <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Events: List&lt;string&gt; = <span class="keyword">new</span> List&lt;string&gt;() <span class="keyword">with</span> get, set</span><br><span class="line">  <span class="keyword">member</span> <span class="keyword">val</span> Notes: string = <span class="string">""</span> <span class="keyword">with</span> get, set</span><br></pre></td></tr></table></figure>
+<p>Below I have the serialization and deserialization examples.  For my case I’m using camel casing in the yaml files, but other naming conventions are supported: Hyphenated, PascalCase, Underscored, LowerCase.  The process is pretty simple: create a builder, then serialized/deserialize as appropriate.  For the deserializer, I added some error handling, always a good practice.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Serialize config to yaml</span></span><br><span class="line"><span class="keyword">let</span> configToYaml (config: Config) :string =</span><br><span class="line">  <span class="keyword">let</span> serializer =</span><br><span class="line">    SerializerBuilder()</span><br><span class="line">      .WithNamingConvention(CamelCaseNamingConvention.Instance)</span><br><span class="line">      .Build()</span><br><span class="line"></span><br><span class="line">  serializer.Serialize(config)</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">// Save config</span></span><br><span class="line"><span class="keyword">let</span> yaml = configToYaml config</span><br><span class="line">IO.File.WriteAllText(<span class="string">"config_new.yml"</span>, yaml)</span><br></pre></td></tr></table></figure>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Deserialize yaml into Config object </span></span><br><span class="line"><span class="keyword">let</span> deserializeConfig (s: string) :Result&lt;Config, string&gt; =</span><br><span class="line">  <span class="keyword">let</span> deserializer =</span><br><span class="line">    DeserializerBuilder()</span><br><span class="line">      .WithNamingConvention(CamelCaseNamingConvention.Instance)</span><br><span class="line">      .Build()</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span></span><br><span class="line">    Ok(deserializer.Deserialize&lt;Config&gt;(s))</span><br><span class="line">  <span class="keyword">with</span></span><br><span class="line">  | e -&gt; Error (e.ToString())</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">// Read config</span></span><br><span class="line"><span class="keyword">let</span> config =</span><br><span class="line">  <span class="string">"config.yml"</span></span><br><span class="line">  |&gt; IO.File.ReadAllText</span><br><span class="line">  |&gt; deserializeConfig</span><br></pre></td></tr></table></figure>
+<p>Sometimes you don’t know the specific structure of the yaml.  The library provides a stream processor that allows an alternative method to navigate the yaml. It isn’t as convenient and you have to worry about casting errors, but it works.  Below I have an example of some simple data extraction. For readability I’ve excluded error handling from the example, but some try..with is definitely a requirement here with the necessary downcasting.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> configReader = <span class="keyword">new</span> System.IO.StreamReader(<span class="string">"config.yml"</span>)</span><br><span class="line"><span class="keyword">let</span> yaml = YamlStream()</span><br><span class="line">yaml.Load(configReader)</span><br><span class="line"></span><br><span class="line"><span class="comment">// root node</span></span><br><span class="line"><span class="keyword">let</span> root = yaml.Documents[<span class="number">0</span>].RootNode :?&gt; YamlMappingNode</span><br><span class="line"></span><br><span class="line"><span class="comment">// Show top level nodes </span></span><br><span class="line">printfn <span class="string">"top level:"</span></span><br><span class="line"><span class="keyword">for</span> entry <span class="keyword">in</span> root.Children <span class="keyword">do</span></span><br><span class="line">  printfn <span class="string">"  %s"</span> (entry.Key :?&gt; YamlScalarNode).Value</span><br><span class="line"></span><br><span class="line"><span class="comment">// Iterate through events</span></span><br><span class="line"><span class="keyword">let</span> events = root.Children[YamlScalarNode(<span class="string">"events"</span>)] :?&gt; YamlSequenceNode</span><br><span class="line"></span><br><span class="line">printfn <span class="string">"events:"</span></span><br><span class="line"><span class="keyword">for</span> event <span class="keyword">in</span> events <span class="keyword">do</span></span><br><span class="line">  printfn <span class="string">"  %A"</span> event </span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># Output: </span><br><span class="line">top level:</span><br><span class="line">  stage</span><br><span class="line">  version</span><br><span class="line">  batchSize</span><br><span class="line">  events</span><br><span class="line">  endPoints</span><br><span class="line">  dataSources</span><br><span class="line">  notes</span><br><span class="line">events:</span><br><span class="line">  insert</span><br><span class="line">  update</span><br><span class="line">  query</span><br><span class="line">  delete</span><br></pre></td></tr></table></figure>
+<p>This is a bit of a divergence, but the library also provides a nice option for json serialization.  So if you ever run into the case where you need to convert, this can do the trick.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Serialize config to json</span></span><br><span class="line"><span class="keyword">let</span> configToJson (config: Config) :string =</span><br><span class="line">  <span class="keyword">let</span> serializer =</span><br><span class="line">    SerializerBuilder()</span><br><span class="line">      .JsonCompatible()</span><br><span class="line">      .Build()</span><br><span class="line"></span><br><span class="line">  serializer.Serialize(config)</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> json = configToJson config</span><br><span class="line">printfn <span class="string">"%s"</span> json</span><br><span class="line">IO.File.WriteAllText(<span class="string">"config_new.json"</span>, json)</span><br></pre></td></tr></table></figure>
+<p>This has been a pretty light post, but if you have a quick need to use yaml with F#, hopefully you find this useful.  Until next time.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2020/11/29/Mqtt-Server-FSharp-2/">Building an MQTT server in F# - Part 2</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/01/07/Chiron-Introduction/">An Introduction to Chiron</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/10/11/FastDtw/">FastDtw, an F# Implementation</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2022/11/13/Yaml-and-F/" data-id="clco5l3tm0000udmwhq4ytw60" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/12/31/lvar/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          F# and LVars
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/08/13/Watc/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Watc</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 15px;">Accord.NET</a> <a href="/tags/Algorithms/" style="font-size: 15px;">Algorithms</a> <a href="/tags/Analytics/" style="font-size: 14px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 11px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 11px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 13px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 11px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 14px;">DTW</a> <a href="/tags/Data/" style="font-size: 18px;">Data</a> <a href="/tags/Database/" style="font-size: 13px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 11px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 13px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 12px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 11px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 11px;">Http</a> <a href="/tags/Images/" style="font-size: 12px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 12px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 13px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 11px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 12px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 19px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Mqtt/" style="font-size: 12px;">Mqtt</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 12px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 13px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Rust/" style="font-size: 10px;">Rust</a> <a href="/tags/STEM/" style="font-size: 11px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 11px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 13px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 11px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 13px;">Statistics</a> <a href="/tags/Text/" style="font-size: 14px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 11px;">Timeseries</a> <a href="/tags/Tips/" style="font-size: 12px;">Tips</a> <a href="/tags/Tools/" style="font-size: 10px;">Tools</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/Types/" style="font-size: 10px;">Types</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10px;">Web</a> <a href="/tags/Webapi/" style="font-size: 11px;">Webapi</a> <a href="/tags/admin/" style="font-size: 11px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/07/Json-Bakeoff/">The Great Json Bake-Off</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/31/lvar/">F# and LVars</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/13/Yaml-and-F/">Yaml and F#</a>
+          </li>
+        
+          <li>
+            <a href="/2022/08/13/Watc/">Watc</a>
+          </li>
+        
+          <li>
+            <a href="/2022/07/24/Data-in-Motion-Earthquakes/">Data in Motion - Earthquakes Map</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2023 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
