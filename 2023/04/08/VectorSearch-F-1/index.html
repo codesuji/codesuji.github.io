@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Vector Search using F# | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Vector search is an essential tool for many modern applications, particularly for information retrieval. It allows for efficient searching and retrieval of information based on similarity between vect">
+<meta name="keywords" content="F#,FSharp,Data">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Vector Search using F#">
+<meta property="og:url" content="http://codesuji.com/2023/04/08/VectorSearch-F-1/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Vector search is an essential tool for many modern applications, particularly for information retrieval. It allows for efficient searching and retrieval of information based on similarity between vect">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2024-05-23T02:32:12.249Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Vector Search using F#">
+<meta name="twitter:description" content="Vector search is an essential tool for many modern applications, particularly for information retrieval. It allows for efficient searching and retrieval of information based on similarity between vect">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-VectorSearch-F-1" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2023/04/08/VectorSearch-F-1/" class="article-date">
+  <time datetime="2023-04-08T10:27:11.000Z" itemprop="datePublished">2023-04-08</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Vector Search using F#
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 14 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Vector search is an essential tool for many modern applications, particularly for information retrieval. It allows for efficient searching and retrieval of information based on similarity between vectors. Today I will explore how to implement a naive vector search with <a href="https://fsharp" target="_blank" rel="noopener">F#</a>.  Whether you are a seasoned F# developer or just starting out, this will provide you some useful information if you want to better understand the basics of vector search in your own projects.</p>
+<a id="more"></a>
+<p>The impetus for this post is to dig into vector search and how it can be used in a project.  It has become such a hot topic as of late, it is valuable to dig into the underlying concepts. Even though what I show here isn’t large-scale high performance, it will describe some of the underlying concepts, which can help you understand what the big solutions are talking about.  This will be a multi-phase process. I first want to provide a simple breakdown of what vector search can do in the simpliest way.  The resulting code won’t be the best search algorithm, nor the fastest.  But once the basics are covered, I’ll start replacing pieces until I get to a more usable result.  It’ll also worthwhile to note up front, there isn’t one right way to do vector search. There are lots of variations, depending on the specific use case. I’ll at least show some of them and point in directions for deeper information.</p>
+<p>First things first. What is vector search?  Vector search is a way to find similar entries based on their features, specifically represented as vectors (or an array of numbers). For example, if you have a bunch of text documents, you can represent each document as a vector of numbers.  You can then compare these vectors to find documents that are similar to each other, even if they use different words.  This can be used for anything that can be represented, so although I’ll focus mostly on text, this conceptually works for other types of data, like images or audio. The idea is that similar things will have similar features, so their vectors will be similar too. And I know what you’re asking, how can text be represented as an array of numbers, for now “magic”, but I’ll dig into that a bit.</p>
+<p>The starting point is going to be comparing sentences.  I’ll get into the details soon, but for my implementation I’m going to need a list of already vectorized words.  There are several sources, but I’ve decided to use <a href="http://nlp.stanford.edu/data/glove.6B.zip" target="_blank" rel="noopener">GloVe</a> from Standford’s NLP lab.  They provide multiple vector size embeddings, I’m going to use a vector size of 300.  You can think of larger vectors providing a better representation, with the obvious tradeoff of slower and larger.  Once loaded, I’ll see the word -&gt; vector mappings in a Map.</p>
+<p>The loadGloVeModel function loads the downloaded pre-trained GloVe model from a file and returns it as a WordModel.   Each key in the map is a word, and each value is a 300-dimensional float array representing that word’s vector.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">WordModel</span> </span>= Map&lt;string, float[]&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Load the GloVe model</span></span><br><span class="line"><span class="keyword">let</span> loadGloVeModel (modelFile: string) :WordModel =</span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> model :WordModel = Map.empty&lt;string, float[]&gt;</span><br><span class="line">  IO.File.ReadAllLines(modelFile)</span><br><span class="line">  |&gt; Array.map (<span class="keyword">fun</span> line -&gt; </span><br><span class="line">      <span class="keyword">let</span> tokens = line.Split([|' '|])</span><br><span class="line">      <span class="keyword">let</span> word = tokens[<span class="number">0</span>]</span><br><span class="line">      <span class="keyword">let</span> vector =</span><br><span class="line">        tokens[<span class="number">1.</span>.tokens.Length<span class="number">-1</span>]</span><br><span class="line">        |&gt; Array.map float</span><br><span class="line">      (word, vector))</span><br><span class="line">  |&gt; Map.ofArray</span><br></pre></td></tr></table></figure>
+<p>Once I have a list of words and their associated vectors, I can use these to vectorize the sentence.  In this particular case I’ve decided to add the vectors of each word together to calculate a sentence’s vector.  Without going into too much detail just yet, this can be handled several different ways.  Other typical ways include averaging the word vectors and multiplying vectors.  There are more sophisticated methods, but I don’t want to get ahead of myself just yet.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Vectorize sentence</span></span><br><span class="line"><span class="comment">/// Aggregate word vectors into a single sentence vector</span></span><br><span class="line"><span class="keyword">let</span> vectorizeSentence (model: WordModel) (sentence: string) =</span><br><span class="line">  <span class="keyword">let</span> vectorLength = <span class="number">300</span></span><br><span class="line">  <span class="keyword">let</span> words = sentence.ToLower().Split([|' '|])</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">mutable</span> vector = Array.create vectorLength <span class="number">0.</span></span><br><span class="line">  <span class="keyword">let</span> wordVectors =</span><br><span class="line">    words</span><br><span class="line">    |&gt; Array.map (<span class="keyword">fun</span> word -&gt; Map.tryFind word model)</span><br><span class="line">    |&gt; Array.filter (<span class="keyword">fun</span> x -&gt; x.IsSome)</span><br><span class="line">    |&gt; Array.map (<span class="keyword">fun</span> x -&gt; x.Value)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Sum vectors</span></span><br><span class="line">  <span class="keyword">for</span> wordVector <span class="keyword">in</span> wordVectors <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">0.</span>.vectorLength - <span class="number">1</span>] <span class="keyword">do</span></span><br><span class="line">      vector[i] &lt;- vector[i] + wordVector[i]</span><br><span class="line"></span><br><span class="line">  vector</span><br></pre></td></tr></table></figure>
+<p>Before going much further, let’s take a look at how this looks in practice.  The below code snippet uses the GloVe word vectorizations to vectorize a sentence.  I’ve included the resulting vector.  Now that we know how to convert sentences to vectors we can start using all sorts of comparison tricks.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> modelFile = <span class="string">"./glove.6B/glove.6B.300d.txt"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> model = loadGloVeModel modelFile</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> vs = vectorizeSentence model <span class="string">"this is a test"</span></span><br><span class="line">printfn <span class="string">"%A"</span> vs</span><br><span class="line"></span><br><span class="line"><span class="comment">(* Results (300 dimension vector):</span></span><br><span class="line"><span class="comment">[|-0.64975; 1.224579; 0.339562; -1.924; -0.683991; 0.351187; -0.313945;</span></span><br><span class="line"><span class="comment">  -0.604948; -0.31373; -7.8024; 1.20313; -0.312192; -0.191178; 0.192142;</span></span><br><span class="line"><span class="comment">  0.393947; 0.9711565; -1.64555; 0.435215; 0.172147; -1.468; -0.741057; 0.72615;</span></span><br><span class="line"><span class="comment">  0.098328; 1.86091; -0.548895; -0.225667; 0.45209; -1.07928; -0.493058; 0.05875;</span></span><br><span class="line"><span class="comment">  0.090338; 0.71061; -1.39378; 0.29642; -3.17332; 1.51456; -1.170281; 0.55138;</span></span><br><span class="line"><span class="comment">  -1.75381; 1.178137; 1.021473; 0.878106; 0.156037; 0.0063756; 0.208939;</span></span><br><span class="line"><span class="comment">  0.132626; 0.2679; 0.054727; -0.714408; -0.39498; 0.256841; -0.344485; 0.165513;</span></span><br><span class="line"><span class="comment">  0.533583; 0.015597; 0.453348; -0.657536; 0.27526; 1.1971; -0.113965; 0.045459;</span></span><br><span class="line"><span class="comment">  -0.130756; 1.842526; -0.353876; -0.72542; -0.82638; -0.042127; -0.756783;</span></span><br><span class="line"><span class="comment">  0.609844; 0.30856; -0.802697; 1.045285; 0.43572; -0.540373; -1.55073;</span></span><br><span class="line"><span class="comment">  -0.371212; 0.52077; 0.192682; -0.819995; 0.952318; -0.829941; 0.725035;</span></span><br><span class="line"><span class="comment">  0.45467; -0.456168; 0.18888; 0.620742; -0.202445; 0.78332; 0.684417; 0.079607;</span></span><br><span class="line"><span class="comment">  -1.009762; 1.36058; 0.150918; -1.93009; 1.3126; 0.3376661; -0.66495; 0.580754;</span></span><br><span class="line"><span class="comment">  0.0967394; -1.257588; ...|]</span></span><br><span class="line"><span class="comment">*)</span></span><br></pre></td></tr></table></figure>
+<p>How do comparison between vectors work?  The options here are quite varied, but a couple common methods bubble to the top.  I’m going to use Cosine similarity, which essentially is a calculation of angle between the vectors of two sentences (in this case).  The results go from -1 to 1, where 1 is very similar and -1 indicates an opposite concept.  Right in the middle is 0, this indicates that the two vectors are orthoginal, and not related at all.  Like so many other parts of this process, there are a variety of methods, the Pearson Correlation Coefficient being one.  The last part just takes it a step further, given a set of sentences, which ones are closest to the “query” sentence. This is simply a map over the sentences, performing the required vectorization and comparisons.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// Cosine similarity between two vectors</span></span><br><span class="line"><span class="keyword">let</span> cosineSimilarity (v1: float[]) (v2: float[]) :float =</span><br><span class="line">  <span class="keyword">let</span> dotProduct = Array.map2 <span class="comment">(*) v1 v2 |&gt; Array.sum</span></span><br><span class="line"><span class="comment">  let magnitude1 = sqrt(Array.sumBy (fun x -&gt; x * x) v1)</span></span><br><span class="line"><span class="comment">  let magnitude2 = sqrt(Array.sumBy (fun x -&gt; x * x) v2)</span></span><br><span class="line"><span class="comment">  if magnitude1 &lt;&gt; 0. &amp;&amp; magnitude2 &lt;&gt; 0. then</span></span><br><span class="line"><span class="comment">    dotProduct / (magnitude1 * magnitude2)</span></span><br><span class="line"><span class="comment">  else</span></span><br><span class="line"><span class="comment">    0.</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">/// Compare and rank query to a list of other sentences</span></span><br><span class="line"><span class="comment">/// Note: Higher values mean they are more similar</span></span><br><span class="line"><span class="comment">let similarityVectorSearch (query: string) (sentences: string list) (model: WordModel) =</span></span><br><span class="line"><span class="comment">    let queryVector = vectorizeSentence model query</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    sentences</span></span><br><span class="line"><span class="comment">    |&gt; List.map (fun sentence -&gt; (sentence, vectorizeSentence model sentence ))</span></span><br><span class="line"><span class="comment">    |&gt; List.map (fun (sentence, sentenceVector) -&gt; (sentence, cosineSimilarity queryVector sentenceVector))</span></span><br><span class="line"><span class="comment">    |&gt; List.sortByDescending snd</span></span><br></pre></td></tr></table></figure>
+<p>Time to put it all together.  Below I have a query sentence as well as a corpus of other sentences that I’ll use for comparison.  The goal is to see which of those sentences are closest to the query sentence.  The key here being I’m not looking for specific word matches.  I expect to match closer to sentences that carry similarities, possibily related to apples, fruit, food, and eating. Time to see how well a very naive implementation can do.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> modelFile = <span class="string">"./glove.6B/glove.6B.300d.txt"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> model = loadGloVeModel modelFile</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> query = <span class="string">"This is a good apple to eat"</span></span><br><span class="line"><span class="keyword">let</span> queryVector = vectorizeSentence model query</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> sentences = [</span><br><span class="line">  <span class="string">"A man's got to do what a man's got to do"</span></span><br><span class="line">  <span class="string">"All those moments will be lost in time, like tears in rain"</span></span><br><span class="line">  <span class="string">"An apple a day keeps the doctor away"</span></span><br><span class="line">  <span class="string">"An apple is an excellent thing - until you have tried a peach"</span></span><br><span class="line">  <span class="string">"An idealist is one who, on noticing that roses smell better than a cabbage, concludes that it will also make better soup"</span></span><br><span class="line">  <span class="string">"As American as apple pie"</span></span><br><span class="line">  <span class="string">"Fruit does not grow on the trunk of a tree but on the tips of its branches"</span></span><br><span class="line">  <span class="string">"Game over, man"</span> </span><br><span class="line">  <span class="string">"I am not a robot, but I play one on TV"</span></span><br><span class="line">  <span class="string">"I have come here to chew bubblegum and kick ass and I'm all out of bubblegum"</span></span><br><span class="line">  <span class="string">"I never met a man I didn't like until I met that man"</span></span><br><span class="line">  <span class="string">"I'll be back"</span> </span><br><span class="line">  <span class="string">"I'm sorry, Dave. I'm afraid I can't do that"</span> </span><br><span class="line">  <span class="string">"I've got a bad feeling about this"</span> </span><br><span class="line">  <span class="string">"Knowledge is knowing a tomato is a fruit; wisdom is not putting it in a fruit salad"</span></span><br><span class="line">  <span class="string">"Let food be thy medicine and medicine be thy food"</span></span><br><span class="line">  <span class="string">"Life is uncertain. Eat dessert first"</span></span><br><span class="line">  <span class="string">"Open the pod bay doors HAL"</span> </span><br><span class="line">  <span class="string">"Resistance is futile"</span> </span><br><span class="line">  <span class="string">"The early bird gets the worm"</span></span><br><span class="line">  <span class="string">"The future is not set. There is no fate but what we make for ourselves"</span></span><br><span class="line">  <span class="string">"The needs of the many outweigh the needs of the few, or the one"</span> </span><br><span class="line">  <span class="string">"The only thing we have to fear is fear itself - and robots"</span></span><br><span class="line">  <span class="string">"There's no place like home"</span></span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> similarities =</span><br><span class="line">  sentences</span><br><span class="line">  |&gt; List.map (<span class="keyword">fun</span> sentence -&gt;</span><br><span class="line">      <span class="keyword">let</span> sentenceVector = vectorizeSentence model sentence</span><br><span class="line">      <span class="keyword">let</span> similarity = cosineSimilarity queryVector sentenceVector</span><br><span class="line">      (sentence, similarity))</span><br><span class="line">  |&gt; List.sortByDescending snd</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (sentence, similarity) <span class="keyword">in</span> similarities <span class="keyword">do</span></span><br><span class="line">  printfn $<span class="string">"%2.4f&#123;similarity&#125; &#123;sentence&#125;"</span></span><br></pre></td></tr></table></figure>
+<p>I said it before, but the big caveat is that this is meant to provide a general feeling for the components and methodologies involved.  The results below won’t be fast, or great (honestly), but it provides a base on which better things can be built.  I’ve starred the ones I would expect to match. There is higher concentration similar sentences at the top of the list, although there are some interesting matches.  For something simple, this is encouraging. </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">*0.9072 Knowledge is knowing a tomato is a fruit; wisdom is not putting it in a fruit salad</span><br><span class="line">*0.9022 An idealist is one who, on noticing that roses smell better than a cabbage, concludes that it will also make better soup</span><br><span class="line">*0.8949 An apple is an excellent thing - until you have tried a peach</span><br><span class="line"> 0.8730 A man&apos;s got to do what a man&apos;s got to do</span><br><span class="line">*0.8557 An apple a day keeps the doctor away</span><br><span class="line"> 0.8504 The future is not set. There is no fate but what we make for ourselves</span><br><span class="line">*0.8480 Life is uncertain. Eat dessert first</span><br><span class="line"> 0.8300 The only thing we have to fear is fear itself - and robots</span><br><span class="line">*0.8282 Fruit does not grow on the trunk of a tree but on the tips of its branches</span><br><span class="line"> 0.8215 I am not a robot, but I play one on TV</span><br><span class="line"> 0.8212 I&apos;ve got a bad feeling about this</span><br><span class="line"> 0.7758 There&apos;s no place like home</span><br><span class="line"> 0.7718 I never met a man I didn&apos;t like until I met that man</span><br><span class="line"> 0.7669 I have come here to chew bubblegum and kick ass and I&apos;m all out of bubblegum</span><br><span class="line"> 0.7598 The needs of the many outweigh the needs of the few, or the one</span><br><span class="line"> 0.7591 All those moments will be lost in time, like tears in rain</span><br><span class="line">*0.7405 As American as apple pie</span><br><span class="line"> 0.7347 I&apos;ll be back</span><br><span class="line"> 0.7315 I&apos;m sorry, Dave. I&apos;m afraid I can&apos;t do that</span><br><span class="line"> 0.7053 The early bird gets the worm</span><br><span class="line">*0.6668 Let food be thy medicine and medicine be thy food</span><br><span class="line"> 0.5982 Game over, man</span><br><span class="line"> 0.5306 Resistance is futile</span><br><span class="line"> 0.4955 Open the pod bay doors HAL</span><br></pre></td></tr></table></figure>
+<p>Now, the harsh truth. This is cool, but there are some severe limitations.  First, the results are better than random, but could use some boosting to be more useful.  This leads to the second point, the methodologies for vectorization and similarity comparisons are naive. There is room for improvement there.  Third, the implementation is not necessarily the most performant.  The good thing is, there are all solvable, or at least something that can be improved. Fourth, how can these techniques be applied to document search (this has its own set of nuances)?  These are good topics to dig into next time.  I hope you found this at least mildly informative.  Until then, keep coding.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2021/11/27/Data-in-Motion-Precipitation/">Data in Motion - Precipitation Map</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/26/Simple-Analysis-with-F/">Simple Analysis with F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2022/05/17/Data-in-Motion-Population/">Data in Motion - Population Map</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2023/04/08/VectorSearch-F-1/" data-id="clp3fsnrf0000wgmww279n3fs" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Data/">Data</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/09/23/F-Flurl/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Using F# and Flurl
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/03/07/Json-Bakeoff/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">The Great Json Bake-Off</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.27px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 14.55px;">Accord.NET</a> <a href="/tags/Algorithms/" style="font-size: 15.45px;">Algorithms</a> <a href="/tags/Analytics/" style="font-size: 13.64px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10.91px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 10.91px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 10.91px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 12.73px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 10.91px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 13.64px;">DTW</a> <a href="/tags/Data/" style="font-size: 18.18px;">Data</a> <a href="/tags/Database/" style="font-size: 12.73px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 10.91px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.73px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 11.82px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 10.91px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 10.91px;">Http</a> <a href="/tags/Images/" style="font-size: 11.82px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 11.82px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 12.73px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 10.91px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.36px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 11.82px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 19.09px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Mqtt/" style="font-size: 11.82px;">Mqtt</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 11.82px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 12.73px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Rust/" style="font-size: 10px;">Rust</a> <a href="/tags/STEM/" style="font-size: 10.91px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10.91px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.73px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 10.91px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 12.73px;">Statistics</a> <a href="/tags/Text/" style="font-size: 13.64px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10.91px;">Timeseries</a> <a href="/tags/Tips/" style="font-size: 12.73px;">Tips</a> <a href="/tags/Tools/" style="font-size: 10px;">Tools</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/Types/" style="font-size: 10px;">Types</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10.91px;">Web</a> <a href="/tags/Webapi/" style="font-size: 10.91px;">Webapi</a> <a href="/tags/admin/" style="font-size: 10.91px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/05/24/Distinct-Counting-in-F/">Estimating Distinct Element Counts with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/21/F-and-Anthropic/">Harnessing the Anthropic API with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2023/09/23/F-Flurl/">Using F# and Flurl</a>
+          </li>
+        
+          <li>
+            <a href="/2023/04/08/VectorSearch-F-1/">Vector Search using F#</a>
+          </li>
+        
+          <li>
+            <a href="/2023/03/07/Json-Bakeoff/">The Great Json Bake-Off</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2024 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

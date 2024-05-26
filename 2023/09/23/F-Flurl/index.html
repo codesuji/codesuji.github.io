@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Using F# and Flurl | codesuji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Today’s post is really light, and nothing too involved.  It is composed mostly of notes and examples using the fluent http client Flurl with F#.">
+<meta name="keywords" content="F#,FSharp,Tips,Web">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Using F# and Flurl">
+<meta property="og:url" content="http://codesuji.com/2023/09/23/F-Flurl/index.html">
+<meta property="og:site_name" content="codesuji">
+<meta property="og:description" content="Today’s post is really light, and nothing too involved.  It is composed mostly of notes and examples using the fluent http client Flurl with F#.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2023-09-23T14:16:32.962Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Using F# and Flurl">
+<meta name="twitter:description" content="Today’s post is really light, and nothing too involved.  It is composed mostly of notes and examples using the fluent http client Flurl with F#.">
+  
+    <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-89982547-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">codesuji</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-F-Flurl" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2023/09/23/F-Flurl/" class="article-date">
+  <time datetime="2023-09-23T17:32:52.000Z" itemprop="datePublished">2023-09-23</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Using F# and Flurl
+    </h1>
+  
+
+ 		<span class="post-count">Read Time: 5 minutes</span>
+ 	  </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Today’s post is really light, and nothing too involved.  It is composed mostly of notes and examples using the fluent http client <a href="https://flurl.dev/" target="_blank" rel="noopener">Flurl</a> with <a href="https://fsharp.org/" target="_blank" rel="noopener">F#</a>.</p>
+<a id="more"></a>
+<p>If you’re looking for an alternative to the HttpClient, Flurl offers some nice functionality and ergonomics. For reference I’m using version 3.2.4 of the client.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dotnet add package flurl.http --version 3.2.4</span><br></pre></td></tr></table></figure>
+<p>Before getting into examples, there is some small setup. I’ve defined a <code>User</code> type to send and receive data. Based on the Flurl response objects (which you’ll see in a moment) I have some response types specifically for HTTP GET and POST.  Note here, I’m only including the <code>args</code>, since that is all I care about, but this could also include things like <code>data</code> or <code>headers</code> as well.  For simplicity, I’m using httpbin.org, which echos what I send. </p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> System</span><br><span class="line"><span class="keyword">open</span> System.IO</span><br><span class="line"><span class="keyword">open</span> Flurl</span><br><span class="line"><span class="keyword">open</span> Flurl.Http</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">User</span> </span>=</span><br><span class="line">  &#123; Id: int</span><br><span class="line">    FirstName: string </span><br><span class="line">    LastName: string </span><br><span class="line">    Notes: string &#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">GetResult</span> </span>= </span><br><span class="line">  &#123; args: User &#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="title">PostResult</span> </span>= </span><br><span class="line">  &#123; json: User &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> targetUrl = <span class="string">"https://httpbin.org/anything"</span></span><br></pre></td></tr></table></figure>
+<p>A simple HTTP GET is straight-forward.  Here I am returning the raw result, so you can see the general structure of the data returned.  Query parameters are sent using the <code>SetQueryParams</code> method.  <code>GetStringAsync</code> returns the raw string result.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">task &#123;</span><br><span class="line">  <span class="keyword">let!</span> result =</span><br><span class="line">    targetUrl</span><br><span class="line">      .SetQueryParams(</span><br><span class="line">        &#123;| Id = <span class="number">123</span></span><br><span class="line">           FirstName = <span class="string">"James"</span></span><br><span class="line">           LastName = <span class="string">"Cole"</span></span><br><span class="line">           Notes = <span class="string">""</span> |&#125;)</span><br><span class="line">      .GetStringAsync()</span><br><span class="line"></span><br><span class="line">  printfn <span class="string">"%A"</span> result &#125;</span><br><span class="line">|&gt; Async.AwaitTask</span><br><span class="line">|&gt; Async.RunSynchronously</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&quot;&#123;</span><br><span class="line">  &quot;args&quot;: &#123;</span><br><span class="line">    &quot;FirstName&quot;: &quot;James&quot;, </span><br><span class="line">    &quot;Id&quot;: &quot;123&quot;, </span><br><span class="line">    &quot;LastName&quot;: &quot;Cole&quot;, </span><br><span class="line">    &quot;Notes&quot;: &quot;&quot;</span><br><span class="line">  &#125;, </span><br><span class="line">  &quot;data&quot;: &quot;&quot;, </span><br><span class="line">  &quot;files&quot;: &#123;&#125;, </span><br><span class="line">  &quot;form&quot;: &#123;&#125;, </span><br><span class="line">  &quot;headers&quot;: &#123;</span><br><span class="line">    &quot;Accept-Encoding&quot;: &quot;gzip, deflate&quot;, </span><br><span class="line">    &quot;Host&quot;: &quot;httpbin.org&quot;, </span><br><span class="line">    &quot;X-Amzn-Trace-Id&quot;: &quot;Root=1-712ae14b-12b5a0fd70cfafb2213dd1b2&quot;</span><br><span class="line">  &#125;, </span><br><span class="line">  &quot;json&quot;: null, </span><br><span class="line">  &quot;method&quot;: &quot;GET&quot;, </span><br><span class="line">  &quot;origin&quot;: &quot;###.###.###.###&quot;, </span><br><span class="line">  &quot;url&quot;: &quot;https://httpbin.org/anything?FirstName=James&amp;Id=123&amp;LastName=Cole&amp;Notes=&quot;</span><br><span class="line">&#125;</span><br><span class="line">&quot;</span><br></pre></td></tr></table></figure>
+<p>It is nice to see the raw result, but it is much more practical to deserialize the response into the desired object.  To do this, change the Get call to <code>GetJsonAsync&lt;GetResult&gt;</code>.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">task &#123;</span><br><span class="line">  <span class="keyword">let!</span> result =</span><br><span class="line">    targetUrl</span><br><span class="line">      .SetQueryParams(</span><br><span class="line">        &#123;| Id = <span class="number">456</span></span><br><span class="line">           FirstName = <span class="string">"Jeffrey"</span></span><br><span class="line">           LastName = <span class="string">"Goines"</span></span><br><span class="line">           Notes = <span class="string">""</span> |&#125;)</span><br><span class="line">      .GetJsonAsync&lt;GetResult&gt;()</span><br><span class="line"></span><br><span class="line">  printfn <span class="string">"%A"</span> result &#125;</span><br><span class="line">|&gt; Async.AwaitTask</span><br><span class="line">|&gt; Async.RunSynchronously</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123; args = &#123; Id = 456</span><br><span class="line">           FirstName = &quot;Jeffrey&quot;</span><br><span class="line">           LastName = &quot;Goines&quot;</span><br><span class="line">           Notes = &quot;&quot; &#125; &#125;</span><br></pre></td></tr></table></figure>
+<p>Often you want to send additional http headers with your request.  To do this, use the <code>WithHeaders</code> method. It takes an array of key/value pairs.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">task &#123;</span><br><span class="line">  <span class="keyword">let!</span> getResult =</span><br><span class="line">    targetUrl</span><br><span class="line">      .WithHeaders(</span><br><span class="line">        &#123;| X_CUSTOM_HEADER = <span class="string">"12 Monkeys"</span> |&#125;,</span><br><span class="line">        <span class="keyword">true</span>)</span><br><span class="line">      .GetStringAsync()</span><br><span class="line"></span><br><span class="line">  printfn <span class="string">"%A"</span> getResult &#125;</span><br><span class="line">|&gt; Async.AwaitTask</span><br><span class="line">|&gt; Async.RunSynchronously</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&quot;&#123;</span><br><span class="line">  &quot;args&quot;: &#123;&#125;, </span><br><span class="line">  &quot;data&quot;: &quot;&quot;, </span><br><span class="line">  &quot;files&quot;: &#123;&#125;, </span><br><span class="line">  &quot;form&quot;: &#123;&#125;, </span><br><span class="line">  &quot;headers&quot;: &#123;</span><br><span class="line">    &quot;Accept-Encoding&quot;: &quot;gzip, deflate&quot;, </span><br><span class="line">    &quot;Host&quot;: &quot;httpbin.org&quot;, </span><br><span class="line">    &quot;X-Amzn-Trace-Id&quot;: &quot;Root=1-712ae14b-887a539f672c4c3360afd11e&quot;, </span><br><span class="line">    &quot;X-Custom-Header&quot;: &quot;12 Monkeys&quot;</span><br><span class="line">  &#125;, </span><br><span class="line">  &quot;json&quot;: null, </span><br><span class="line">  &quot;method&quot;: &quot;GET&quot;, </span><br><span class="line">  &quot;origin&quot;: &quot;###.###.###.###&quot;, </span><br><span class="line">  &quot;url&quot;: &quot;https://httpbin.org/anything&quot;</span><br><span class="line">&#125;</span><br><span class="line">&quot;</span><br></pre></td></tr></table></figure>
+<p>Performing an HTTP POST is similar to a GET.  In this case use the <code>PostJsonAsync</code> method along with the object to serialize.  Like the previous example, <code>ReceiveJson&lt;PostResult&gt;</code> will deserialize the response into the desired object.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">task &#123;</span><br><span class="line">  <span class="keyword">let!</span> postResult =</span><br><span class="line">    targetUrl</span><br><span class="line">      .PostJsonAsync(</span><br><span class="line">          &#123;| Id = <span class="number">789</span></span><br><span class="line">             FirstName = <span class="string">"Kathryn"</span></span><br><span class="line">             LastName = <span class="string">"Railly"</span></span><br><span class="line">             Notes = <span class="string">""</span> |&#125;)</span><br><span class="line">      .ReceiveJson&lt;PostResult&gt;()</span><br><span class="line"></span><br><span class="line">  printfn <span class="string">"%A"</span> postResult &#125;</span><br><span class="line">|&gt; Async.AwaitTask</span><br><span class="line">|&gt; Async.RunSynchronously</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123; json = &#123; Id = 789</span><br><span class="line">           FirstName = &quot;Kathryn&quot;</span><br><span class="line">           LastName = &quot;Railly&quot;</span><br><span class="line">           Notes = &quot;&quot; &#125; &#125;</span><br></pre></td></tr></table></figure>
+<p>To put these components into a larger call, here is an HTTP POST that also sends headers.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">task &#123;</span><br><span class="line">  <span class="keyword">let!</span> postResult =</span><br><span class="line">    targetUrl</span><br><span class="line">      .WithHeaders(</span><br><span class="line">        &#123;| Accept = <span class="string">"application/json"</span></span><br><span class="line">           ContentType = <span class="string">"application/json"</span></span><br><span class="line">           X_CUSTOM_HEADER = <span class="string">"12 Monkeys"</span> |&#125;,</span><br><span class="line">        <span class="keyword">true</span> <span class="comment">// replace _ with -</span></span><br><span class="line">      )</span><br><span class="line">      .PostJsonAsync(</span><br><span class="line">        &#123;| Id = <span class="number">101112</span></span><br><span class="line">           FirstName = <span class="string">"Lelan"</span></span><br><span class="line">           LastName = <span class="string">"Goines"</span></span><br><span class="line">           Notes = <span class="string">""</span> |&#125;)</span><br><span class="line">      .ReceiveJson&lt;PostResult&gt;()</span><br><span class="line"></span><br><span class="line">  printfn <span class="string">"%A"</span> postResult &#125;</span><br><span class="line">|&gt; Async.AwaitTask</span><br><span class="line">|&gt; Async.RunSynchronously</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123; json = &#123; Id = 101112</span><br><span class="line">           FirstName = &quot;Lelan&quot;</span><br><span class="line">           LastName = &quot;Goines&quot;</span><br><span class="line">           Notes = &quot;&quot; &#125; &#125;</span><br></pre></td></tr></table></figure>
+<p>Up until now, it has been send/receiving json payloads.  But Flurl can be used to download files as well.  Here I how a pdf can be downloaded and saved using <code>DownloadFileAsync</code>.</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">task &#123;</span><br><span class="line">  <span class="keyword">let!</span> result =</span><br><span class="line">    <span class="string">"https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf"</span></span><br><span class="line">      .DownloadFileAsync(<span class="string">"./"</span>, <span class="string">"entropy.pdf"</span>)</span><br><span class="line">  printfn $<span class="string">"&#123;result&#125;"</span> &#125;</span><br><span class="line">|&gt; Async.AwaitTask</span><br><span class="line">|&gt; Async.RunSynchronously</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./entropy.pdf</span><br></pre></td></tr></table></figure>
+<p>Hopefully these short notes have been helpful if you want to use Flurl with F#.  Until next time.</p>
+
+        <div class="related-posts-box">
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2020/04/25/Web-Scraping-with-F/">Web Scraping with F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2021/04/10/F-Vim/">F# the Vim way</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2021/03/09/F-Scripting/">F# Scripting</a></li></ul>        </div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://codesuji.com/2023/09/23/F-Flurl/" data-id="clmw3d4hp0000h3mwg78msa90" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/F/">F#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FSharp/">FSharp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Tips/">Tips</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Web/">Web</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2024/05/21/F-and-Anthropic/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Harnessing the Anthropic API with F#
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/04/08/VectorSearch-F-1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Vector Search using F#</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/NET-Core/" style="font-size: 17.27px;">.NET Core</a> <a href="/tags/Accord-NET/" style="font-size: 14.55px;">Accord.NET</a> <a href="/tags/Algorithms/" style="font-size: 15.45px;">Algorithms</a> <a href="/tags/Analytics/" style="font-size: 13.64px;">Analytics</a> <a href="/tags/Audio/" style="font-size: 10px;">Audio</a> <a href="/tags/Benchmarking/" style="font-size: 10.91px;">Benchmarking</a> <a href="/tags/Chiron/" style="font-size: 10px;">Chiron</a> <a href="/tags/Classification/" style="font-size: 10.91px;">Classification</a> <a href="/tags/Cognitive-Services/" style="font-size: 10.91px;">Cognitive Services</a> <a href="/tags/Compiler/" style="font-size: 12.73px;">Compiler</a> <a href="/tags/Computer-Vision/" style="font-size: 10.91px;">Computer Vision</a> <a href="/tags/Cordova/" style="font-size: 10px;">Cordova</a> <a href="/tags/DTW/" style="font-size: 13.64px;">DTW</a> <a href="/tags/Data/" style="font-size: 18.18px;">Data</a> <a href="/tags/Database/" style="font-size: 12.73px;">Database</a> <a href="/tags/Decision-Trees/" style="font-size: 10.91px;">Decision Trees</a> <a href="/tags/Deedle/" style="font-size: 10px;">Deedle</a> <a href="/tags/Delegate/" style="font-size: 10px;">Delegate</a> <a href="/tags/Detection/" style="font-size: 10px;">Detection</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Dynamic-Time-Warping/" style="font-size: 12.73px;">Dynamic Time Warping</a> <a href="/tags/EEG/" style="font-size: 10px;">EEG</a> <a href="/tags/Edges/" style="font-size: 10px;">Edges</a> <a href="/tags/Education/" style="font-size: 10px;">Education</a> <a href="/tags/Elmish/" style="font-size: 10px;">Elmish</a> <a href="/tags/EmguCV/" style="font-size: 10px;">EmguCV</a> <a href="/tags/Entropy/" style="font-size: 10px;">Entropy</a> <a href="/tags/F/" style="font-size: 20px;">F#</a> <a href="/tags/FParsec/" style="font-size: 11.82px;">FParsec</a> <a href="/tags/FSAdvent/" style="font-size: 10px;">FSAdvent</a> <a href="/tags/FSharp/" style="font-size: 20px;">FSharp</a> <a href="/tags/Fable/" style="font-size: 10px;">Fable</a> <a href="/tags/Faces/" style="font-size: 10.91px;">Faces</a> <a href="/tags/Filters/" style="font-size: 10px;">Filters</a> <a href="/tags/Http/" style="font-size: 10.91px;">Http</a> <a href="/tags/Images/" style="font-size: 11.82px;">Images</a> <a href="/tags/Ionide/" style="font-size: 10px;">Ionide</a> <a href="/tags/Kaggle/" style="font-size: 11.82px;">Kaggle</a> <a href="/tags/Keyboard/" style="font-size: 12.73px;">Keyboard</a> <a href="/tags/Legos/" style="font-size: 10.91px;">Legos</a> <a href="/tags/Logging/" style="font-size: 10px;">Logging</a> <a href="/tags/MLNet/" style="font-size: 16.36px;">MLNet</a> <a href="/tags/MSIL/" style="font-size: 11.82px;">MSIL</a> <a href="/tags/Machine-Learning/" style="font-size: 19.09px;">Machine Learning</a> <a href="/tags/MathNet/" style="font-size: 10px;">MathNet</a> <a href="/tags/Messaging/" style="font-size: 10px;">Messaging</a> <a href="/tags/Mobile/" style="font-size: 10px;">Mobile</a> <a href="/tags/Mono/" style="font-size: 10px;">Mono</a> <a href="/tags/Morse-Code/" style="font-size: 10px;">Morse Code</a> <a href="/tags/Mqtt/" style="font-size: 11.82px;">Mqtt</a> <a href="/tags/Nix/" style="font-size: 10px;">Nix</a> <a href="/tags/OpenCV/" style="font-size: 10px;">OpenCV</a> <a href="/tags/Optimization/" style="font-size: 10px;">Optimization</a> <a href="/tags/Parsing/" style="font-size: 11.82px;">Parsing</a> <a href="/tags/Performance/" style="font-size: 12.73px;">Performance</a> <a href="/tags/Presentations/" style="font-size: 10px;">Presentations</a> <a href="/tags/Propagator/" style="font-size: 10px;">Propagator</a> <a href="/tags/Racket/" style="font-size: 10px;">Racket</a> <a href="/tags/Regression/" style="font-size: 10px;">Regression</a> <a href="/tags/Rekognition/" style="font-size: 10px;">Rekognition</a> <a href="/tags/Robotics/" style="font-size: 10px;">Robotics</a> <a href="/tags/Rust/" style="font-size: 10px;">Rust</a> <a href="/tags/STEM/" style="font-size: 10.91px;">STEM</a> <a href="/tags/Scoring/" style="font-size: 10px;">Scoring</a> <a href="/tags/Search/" style="font-size: 10.91px;">Search</a> <a href="/tags/Serialization/" style="font-size: 10px;">Serialization</a> <a href="/tags/SignalR/" style="font-size: 10px;">SignalR</a> <a href="/tags/Signals/" style="font-size: 12.73px;">Signals</a> <a href="/tags/Similarity/" style="font-size: 10.91px;">Similarity</a> <a href="/tags/Sound/" style="font-size: 10px;">Sound</a> <a href="/tags/Statistics/" style="font-size: 12.73px;">Statistics</a> <a href="/tags/Text/" style="font-size: 13.64px;">Text</a> <a href="/tags/Timeseries/" style="font-size: 10.91px;">Timeseries</a> <a href="/tags/Tips/" style="font-size: 12.73px;">Tips</a> <a href="/tags/Tools/" style="font-size: 10px;">Tools</a> <a href="/tags/Translation/" style="font-size: 10px;">Translation</a> <a href="/tags/Types/" style="font-size: 10px;">Types</a> <a href="/tags/VS-Code/" style="font-size: 10px;">VS Code</a> <a href="/tags/Web/" style="font-size: 10.91px;">Web</a> <a href="/tags/Webapi/" style="font-size: 10.91px;">Webapi</a> <a href="/tags/admin/" style="font-size: 10.91px;">admin</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/05/24/Distinct-Counting-in-F/">Estimating Distinct Element Counts with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/21/F-and-Anthropic/">Harnessing the Anthropic API with F#</a>
+          </li>
+        
+          <li>
+            <a href="/2023/09/23/F-Flurl/">Using F# and Flurl</a>
+          </li>
+        
+          <li>
+            <a href="/2023/04/08/VectorSearch-F-1/">Vector Search using F#</a>
+          </li>
+        
+          <li>
+            <a href="/2023/03/07/Json-Bakeoff/">The Great Json Bake-Off</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2024 codesuji.com<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
