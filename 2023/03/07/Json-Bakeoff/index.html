@@ -28,19 +28,6 @@
   
   <link rel="stylesheet" href="/css/style.css">
   
-<!-- Google Analytics -->
-<script type="text/javascript">
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-ga('create', 'UA-89982547-1', 'auto');
-ga('send', 'pageview');
-
-</script>
-<!-- End Google Analytics -->
-
 
 </head>
 
@@ -2012,7 +1999,7 @@ ga('send', 'pageview');
 <p>What does all this mean?  Well, it depends (I hope you weren’t expecting a simple answer).  Clearly there is a performance difference between the libraries, sometimes up to an order of magnitude (that is more the exception than the rule).  When talking nanoseconds and microseconds, most use cases honestly aren’t going to see a noticeable difference.  This is where ergonomics and flexibility need to factor into a decision.  Everything has its trade off, and finding what works for your specific case is a process. If straight-up performance matters most, there are some clear leaders.  Admittedly, the benchmark results surprised me.  I didn’t expect the F#-specific libraries to have such a large gap.  I also expected manual encoding to offer a better performance benefit over reflection than it did.  As they say, you learn something new every day, and today is no exception.   So there you have it, a comparison with some of the major json encoding libraries supported in F#.  Seeing all the trade-offs in one place can assist in decisions moving forward and understanding what makes the best library for particular use cases.  A better grasp on all the impact of all components in a system will help make any project stronger.  As I mentioned in the beginning, if you see any errors or opportunities for improvement, let me know.  Until next time, stay calm and keep encoding…</p>
 
         <div class="related-posts-box">
-        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2017/01/26/Simple-Analysis-with-F/">Simple Analysis with F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2023/04/08/VectorSearch-F-1/">Vector Search using F#</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1/">Decision Trees with F# and Accord.NET (Part 1)</a></li></ul>        </div>
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2022/07/24/Data-in-Motion-Earthquakes/">Data in Motion - Earthquakes Map</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/13/F-and-Dynamic-Time-Warping/">F# and Dynamic Time Warping</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/10/13/F-Performance-Profiling/">Performance Profiling F#</a></li></ul>        </div>
       
     </div>
     <footer class="article-footer">
@@ -2115,7 +2102,7 @@ ga('send', 'pageview');
 </nav>
     
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 
 
   <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
