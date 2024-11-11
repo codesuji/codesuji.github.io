@@ -17,6 +17,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Building an MQTT server in F# - Part 3">
 <meta name="twitter:description" content="Today I continue the MQTT server series by expanding capabilities to include Publish and Subscribe packets.  This will build upon the previous F#-based server foundation.">
+    <link rel="stylesheet" href="css/fontawesome.css" type="text/css">
   
     <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
   
@@ -53,10 +54,10 @@
         
       </nav>
       <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+          <a id="nav-share-link" class="nav-icon fa-solid fa-user" href="https://bsky.app/profile/codesuji.bsky.social" title="BlueSky" target="_blank"></a>
+          <a id="nav-share-link" class="nav-icon fa-solid fa-user" href="https://hachyderm.io/@codesuji" title="Mastodon" target="_blank"></a>
+          <a id="nav-rss-link" class="nav-icon fa-solid fa-rss" href="/atom.xml" title="RSS Feed"></a>
+          <a id="nav-search-btn" class="nav-icon fa-solid fa-search" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
@@ -64,6 +65,7 @@
     </div>
   </div>
 </header>
+
       <div class="outer">
         <section id="main"><article id="post-Mqtt-Server-FSharp-3" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
@@ -111,7 +113,7 @@
 <p>At this point, I’ve completed the primary loop of MQTT functionality.  Clients can connect, publish, and subscribe to my MQTT server.  I’d say that’s pretty cool.  This is by no means complete, there are still many smaller supporting bits to add, but this gets it to a point where it is easy to iteratively improve.  Adding Subscribe and Publish weren’t particularly difficult once I had the underlying foundation in place, including types defining the system.  I think this is another good example of how F# can be a valuable tool when writing servers.  A solid underlying structure and a productive language can go a long way to ensure a properly functioning system.  I hope you enjoyed this little adventure and found it useful.  </p>
 
         <div class="related-posts-box">
-        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2020/11/22/Mqtt-Server-FSharp-1/">Building an MQTT server in F# - Part 1</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2020/11/29/Mqtt-Server-FSharp-2/">Building an MQTT server in F# - Part 2</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/11/30/F-and-MLNet-Clustering-V2/">F# and ML.NET Clustering (V2)</a></li></ul>        </div>
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2020/11/29/Mqtt-Server-FSharp-2/">Building an MQTT server in F# - Part 2</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2020/11/22/Mqtt-Server-FSharp-1/">Building an MQTT server in F# - Part 1</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/02/19/Building-Game-with-SignalR-and-F/">Building a Game with SignalR and F#</a></li></ul>        </div>
       
     </div>
     <footer class="article-footer">

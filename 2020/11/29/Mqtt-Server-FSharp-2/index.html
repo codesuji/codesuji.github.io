@@ -17,6 +17,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Building an MQTT server in F# - Part 2">
 <meta name="twitter:description" content="Today I’ll continue the process of building an MQTT server with F#.  The basic networking capabilities I put together last time will be expanded upon to support basic MQTT functionality, specifically">
+    <link rel="stylesheet" href="css/fontawesome.css" type="text/css">
   
     <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
   
@@ -53,10 +54,10 @@
         
       </nav>
       <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+          <a id="nav-share-link" class="nav-icon fa-solid fa-user" href="https://bsky.app/profile/codesuji.bsky.social" title="BlueSky" target="_blank"></a>
+          <a id="nav-share-link" class="nav-icon fa-solid fa-user" href="https://hachyderm.io/@codesuji" title="Mastodon" target="_blank"></a>
+          <a id="nav-rss-link" class="nav-icon fa-solid fa-rss" href="/atom.xml" title="RSS Feed"></a>
+          <a id="nav-search-btn" class="nav-icon fa-solid fa-search" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
@@ -64,6 +65,7 @@
     </div>
   </div>
 </header>
+
       <div class="outer">
         <section id="main"><article id="post-Mqtt-Server-FSharp-2" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
@@ -130,7 +132,7 @@
 <p>At this point I have the server supporting very basic MQTT functionality, specifically Connect messages.  As is often the case, the beginning of a project often includes a lot of setup and yak shaving before I can get to the ultimate, or even preliminary, goal.  But this process is also informative.  It is a view into how system state and basic MQTT types can be modeled in F#.  I’m probably a little biased, but F#’s ability to model proper state and structure is a definite asset, and makes refactoring through this process a breeze.  With my goal met, this is a good stopping point.  I hope you found this post informative.  Next time I’ll venture further into the MQTT spec and tackle Subcribe and Publish.</p>
 
         <div class="related-posts-box">
-        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2020/12/12/Mqtt-Server-FSharp-3/">Building an MQTT server in F# - Part 3</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2020/11/22/Mqtt-Server-FSharp-1/">Building an MQTT server in F# - Part 1</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2018/11/30/F-and-MLNet-Clustering-V2/">F# and ML.NET Clustering (V2)</a></li></ul>        </div>
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2020/12/12/Mqtt-Server-FSharp-3/">Building an MQTT server in F# - Part 3</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2020/11/22/Mqtt-Server-FSharp-1/">Building an MQTT server in F# - Part 1</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2021/04/10/F-Vim/">F# the Vim way</a></li></ul>        </div>
       
     </div>
     <footer class="article-footer">

@@ -17,6 +17,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="The Great Json Bake-Off">
 <meta name="twitter:description" content="It is difficult to build much without needing to deal with json at some point. In the world of F# there are several options.  Today I want to lay out some of the popular choices and offer some some co">
+    <link rel="stylesheet" href="css/fontawesome.css" type="text/css">
   
     <link rel="alternate" href="/atom.xml" title="codesuji" type="application/atom+xml">
   
@@ -53,10 +54,10 @@
         
       </nav>
       <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+          <a id="nav-share-link" class="nav-icon fa-solid fa-user" href="https://bsky.app/profile/codesuji.bsky.social" title="BlueSky" target="_blank"></a>
+          <a id="nav-share-link" class="nav-icon fa-solid fa-user" href="https://hachyderm.io/@codesuji" title="Mastodon" target="_blank"></a>
+          <a id="nav-rss-link" class="nav-icon fa-solid fa-rss" href="/atom.xml" title="RSS Feed"></a>
+          <a id="nav-search-btn" class="nav-icon fa-solid fa-search" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://codesuji.com"></form>
@@ -64,6 +65,7 @@
     </div>
   </div>
 </header>
+
       <div class="outer">
         <section id="main"><article id="post-Json-Bakeoff" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
@@ -1999,7 +2001,7 @@
 <p>What does all this mean?  Well, it depends (I hope you weren’t expecting a simple answer).  Clearly there is a performance difference between the libraries, sometimes up to an order of magnitude (that is more the exception than the rule).  When talking nanoseconds and microseconds, most use cases honestly aren’t going to see a noticeable difference.  This is where ergonomics and flexibility need to factor into a decision.  Everything has its trade off, and finding what works for your specific case is a process. If straight-up performance matters most, there are some clear leaders.  Admittedly, the benchmark results surprised me.  I didn’t expect the F#-specific libraries to have such a large gap.  I also expected manual encoding to offer a better performance benefit over reflection than it did.  As they say, you learn something new every day, and today is no exception.   So there you have it, a comparison with some of the major json encoding libraries supported in F#.  Seeing all the trade-offs in one place can assist in decisions moving forward and understanding what makes the best library for particular use cases.  A better grasp on all the impact of all components in a system will help make any project stronger.  As I mentioned in the beginning, if you see any errors or opportunities for improvement, let me know.  Until next time, stay calm and keep encoding…</p>
 
         <div class="related-posts-box">
-        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2022/07/24/Data-in-Motion-Earthquakes/">Data in Motion - Earthquakes Map</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/13/F-and-Dynamic-Time-Warping/">F# and Dynamic Time Warping</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2019/10/13/F-Performance-Profiling/">Performance Profiling F#</a></li></ul>        </div>
+        Related Posts:<ul class="related-posts"><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/07/Decision-Trees-with-F-and-Accord-NET-Part-2/">Decision Trees with F# and Accord.NET (Part 2)</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2016/12/05/Decision-Trees-with-F-and-Accord-NET-Part-1/">Decision Trees with F# and Accord.NET (Part 1)</a></li><li class="related-posts-item"><a class="related-posts-link" href="/2022/08/13/Watc/">Watc</a></li></ul>        </div>
       
     </div>
     <footer class="article-footer">
